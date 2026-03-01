@@ -7,10 +7,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.res.painterResource
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color as AndroidColor
 import android.media.RingtoneManager
 import android.net.Uri
+import android.provider.ContactsContract
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -46,6 +49,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import com.elroi.alarmpal.domain.manager.GeminiNanoStatus
 import com.elroi.alarmpal.ui.screen.alarm.MathDifficultyChips
+import com.elroi.alarmpal.ui.components.BuddySelectionDialog
 import com.elroi.alarmpal.ui.components.SettingHelpIcon
 import com.elroi.alarmpal.ui.viewmodel.SettingsViewModel
 
@@ -243,169 +247,173 @@ fun SettingsScreen(
                         )
                     }
                     
-                    Spacer(modifier = Modifier.height(8.dp))
                     val preferredTier by viewModel.preferredAiTier.collectAsState()
                     val isAdvancedSupported by viewModel.isAdvancedAiSupported.collectAsState()
-                    
-                    if (isAdvancedSupported == GeminiNanoStatus.SUPPORTED) {
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.1f))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Advanced Local AI (Gemma 2B)", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "Privacy-first generation using a 2 billion parameter model on-device.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                        Switch(
+                            checked = preferredTier == "ADVANCED",
+                            onCheckedChange = { checked -> 
+                                viewModel.updatePreferredAiTier(if (checked) "ADVANCED" else "STANDARD")
+                            },
+                            enabled = isAdvancedSupported != GeminiNanoStatus.NOT_SUPPORTED
+                        )
+                    }
+
+                    AnimatedVisibility(visible = preferredTier == "ADVANCED") {
+                        Column(modifier = Modifier.padding(top = 12.dp)) {
+                            if (isAdvancedSupported == GeminiNanoStatus.SUPPORTED) {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                                        Text(
+                                            "Model is ready. Advanced local briefings enabled.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            } else if (isAdvancedSupported == GeminiNanoStatus.CHECKING) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
+                                    Text(
+                                        "Checking device capabilities...",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                }
+                            } else if (isAdvancedSupported == GeminiNanoStatus.DOWNLOAD_REQUIRED) {
+                                var showNanoHelpDialogLocal by remember { mutableStateOf(false) }
+
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Icon(Icons.Default.Info, contentDescription = "Info", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                                        Text(
+                                            "A ~1.5GB model download is required. Using Standard briefings until complete.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                    }
+
+                                    if (showNanoHelpDialogLocal) {
+                                        AlertDialog(
+                                            onDismissRequest = { showNanoHelpDialogLocal = false },
+                                            title = { Text("On-Device AI (Gemma 2B)") },
+                                            text = {
+                                                Column {
+                                                    Text("This application uses Google's Gemma 2B model for local, privacy-first AI generation.")
+                                                    Spacer(modifier = Modifier.height(8.dp))
+                                                    Text("Because the model file is large (~1.5GB), it must be downloaded separately.")
+                                                    Spacer(modifier = Modifier.height(8.dp))
+                                                    Text("You must have Wi-Fi enabled to download the model.")
+                                                }
+                                            },
+                                            confirmButton = {
+                                                TextButton(onClick = { showNanoHelpDialogLocal = false }) {
+                                                    Text("Got it")
+                                                }
+                                            }
+                                        )
+                                    }
+
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        OutlinedButton(
+                                            onClick = { showNanoHelpDialogLocal = true },
+                                            modifier = Modifier.weight(1f),
+                                            contentPadding = PaddingValues(horizontal = 8.dp)
+                                        ) {
+                                            Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Learn More", fontSize = 12.sp)
+                                        }
+                                        Button(
+                                            onClick = { viewModel.triggerLocalModelDownload() },
+                                            modifier = Modifier.weight(1f),
+                                            contentPadding = PaddingValues(horizontal = 8.dp)
+                                        ) {
+                                            Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Download", fontSize = 12.sp)
+                                        }
+                                    }
+                                }
+                            } else if (isAdvancedSupported == GeminiNanoStatus.DOWNLOADING) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
+                                    Text(
+                                        "Downloading model... please wait.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                }
+                            } else if (isAdvancedSupported == GeminiNanoStatus.NOT_SUPPORTED) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Icon(Icons.Default.Warning, contentDescription = "Warning", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
+                                    Text(
+                                        "Not supported on this device. Using Standard local briefings.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Fallback Order Selector (Only if Cloud is also enabled and Nano is supported)
+                    if (isCloudAiEnabled && isAdvancedSupported != GeminiNanoStatus.NOT_SUPPORTED) {
+                        Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            "Local AI Intelligence Tier",
+                            "Primary Intelligence Source",
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         
+                        val fallbackOrder by viewModel.aiFallbackOrder.collectAsState()
                         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                            val tiers = listOf("STANDARD", "ADVANCED")
-                            tiers.forEachIndexed { index, tier ->
+                            val orders = listOf("CLOUD_THEN_LOCAL", "LOCAL_THEN_CLOUD")
+                            orders.forEachIndexed { index, order ->
                                 SegmentedButton(
-                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = tiers.size),
-                                    onClick = { viewModel.updatePreferredAiTier(tier) },
-                                    selected = preferredTier == tier,
+                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = orders.size),
+                                    onClick = { viewModel.updateAiFallbackOrder(order) },
+                                    selected = fallbackOrder == order,
                                     label = {
-                                        Text(if (tier == "STANDARD") "Standard" else "Advanced")
+                                        Text(if (order == "CLOUD_THEN_LOCAL") "Cloud First" else "Local First", fontSize = 12.sp)
                                     }
                                 )
                             }
                         }
-                        
                         Text(
-                            if (preferredTier == "ADVANCED") 
-                                "Advanced: Real on-device LLM (Gemma 2B) for creative briefings."
+                            if (fallbackOrder == "CLOUD_THEN_LOCAL") 
+                                "Prioritize Cloud (Gemini) for best quality, fallback to Local if offline."
                             else 
-                                "Standard: Fast & consistent on-device briefings.",
+                                "Prioritize Local (Nano) for best privacy/speed, fallback to Cloud if needed.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.padding(top = 4.dp)
                         )
-
-                        // Fallback Order Selector (Only if Cloud is also enabled and Nano is supported)
-                        if (isCloudAiEnabled) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                "Primary Intelligence Source",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            
-                            val fallbackOrder by viewModel.aiFallbackOrder.collectAsState()
-                            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                                val orders = listOf("CLOUD_THEN_LOCAL", "LOCAL_THEN_CLOUD")
-                                orders.forEachIndexed { index, order ->
-                                    SegmentedButton(
-                                        shape = SegmentedButtonDefaults.itemShape(index = index, count = orders.size),
-                                        onClick = { viewModel.updateAiFallbackOrder(order) },
-                                        selected = fallbackOrder == order,
-                                        label = {
-                                            Text(if (order == "CLOUD_THEN_LOCAL") "Cloud First" else "Local First")
-                                        }
-                                    )
-                                }
-                            }
-                            Text(
-                                if (fallbackOrder == "CLOUD_THEN_LOCAL") 
-                                    "Prioritize Cloud (Gemini) for best quality, fallback to Local (Nano) if offline."
-                                else 
-                                    "Prioritize Local (Nano) for best privacy/speed, fallback to Cloud if needed.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
-                    } else if (isAdvancedSupported == GeminiNanoStatus.CHECKING) {
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.1f))
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
-                            Text(
-                                "Checking device capabilities...",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-                    }
-
-                    var showNanoHelpDialogLocal by remember { mutableStateOf(false) }
-
-                    if (isAdvancedSupported == GeminiNanoStatus.DOWNLOAD_REQUIRED) {
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.1f))
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Default.Info, contentDescription = "Info", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                            Text(
-                                "Advanced On-Device AI (Gemma 2B) requires a ~1.5GB model download from official Hugging Face servers. Using Standard local briefings until downloaded.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-
-                        if (showNanoHelpDialogLocal) {
-                            AlertDialog(
-                                onDismissRequest = { showNanoHelpDialogLocal = false },
-                                title = { Text("On-Device AI (Gemma 2B)") },
-                                text = {
-                                    Column {
-                                        Text("This application uses Google's Gemma 2B model for local, privacy-first AI generation.")
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text("Because the model file is large (~1.5GB), it must be downloaded separately.")
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text("You must have Wi-Fi enabled to download the model.")
-                                    }
-                                },
-                                confirmButton = {
-                                    TextButton(onClick = { showNanoHelpDialogLocal = false }) {
-                                        Text("Got it")
-                                    }
-                                }
-                            )
-                        }
-                        OutlinedButton(
-                            onClick = { showNanoHelpDialogLocal = true },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.Info, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Learn More")
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            onClick = { viewModel.triggerLocalModelDownload() },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.Download, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Download Model")
-                        }
-                    }
-                    if (isAdvancedSupported == GeminiNanoStatus.DOWNLOADING) {
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.1f))
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
-                            Text(
-                                "Downloading Gemma 2B model... please wait.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-                    }
-                    if (isAdvancedSupported == GeminiNanoStatus.NOT_SUPPORTED) {
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.1f))
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Default.Info, contentDescription = "Info", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    "Advanced On-Device AI (Gemma 2B) is not supported on this device. Using Standard local briefings.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                                Text(
-                                    "Tap here to learn how to enable it.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
-                                    modifier = Modifier.clickable { showNanoHelpDialogLocal = true }.padding(top = 4.dp)
-                                )
-                            }
-                        }
                     }
                 }
             }
@@ -548,6 +556,8 @@ fun SettingsScreen(
                     }
                 )
             }
+            BuddyManagementSection(viewModel)
+
             IntelligenceHealthView(viewModel, onWipeBrainMemory = { showWipeConfirmationLocal = true })
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -1355,4 +1365,119 @@ fun EditPromptsDialog(
             }
         }
     )
+}
+
+@Composable
+fun BuddyManagementSection(viewModel: SettingsViewModel) {
+    val buddies by viewModel.globalBuddies.collectAsState()
+    val confirmedNumbers by viewModel.confirmedBuddyNumbers.collectAsState()
+    var showAddDialog by remember { mutableStateOf(false) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Accountability Buddies 🛡️", style = MaterialTheme.typography.titleLarge)
+            TextButton(onClick = { showAddDialog = true }) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Add")
+            }
+        }
+
+        if (buddies.isEmpty()) {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    "No buddies added yet. Your buddies help you stay accountable if you sleep through an alarm.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        } else {
+            buddies.forEach { buddyStr ->
+                val parts = buddyStr.split("|")
+                val name = parts.getOrNull(0) ?: "Unknown"
+                val phone = parts.getOrNull(1) ?: ""
+                val isConfirmed = confirmedNumbers.any { it.replace(Regex("[^\\d+]"), "").endsWith(phone.replace(Regex("[^\\d+]"), "")) || phone.replace(Regex("[^\\d+]"), "").endsWith(it.replace(Regex("[^\\d+]"), "")) }
+
+                BuddyListItem(
+                    name = name,
+                    phone = phone,
+                    isConfirmed = isConfirmed,
+                    onDelete = { viewModel.removeGlobalBuddy(name, phone) }
+                )
+            }
+        }
+    }
+
+    if (showAddDialog) {
+        BuddySelectionDialog(
+            onDismiss = { showAddDialog = false },
+            onBuddySelected = { name, phone ->
+                viewModel.addGlobalBuddy(name, phone)
+                showAddDialog = false
+            },
+            globalBuddies = buddies,
+            startInManualMode = true
+        )
+    }
+}
+
+@Composable
+fun BuddyListItem(
+    name: String,
+    phone: String,
+    isConfirmed: Boolean,
+    onDelete: () -> Unit
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = if (isConfirmed) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = name.take(1).uppercase(),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = if (isConfirmed) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(phone, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (isConfirmed) "• Confirmed" else "• Pending Opt-in",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isConfirmed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
+                    )
+                }
+            }
+
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = "Remove Buddy", tint = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
 }

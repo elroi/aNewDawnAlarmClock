@@ -19,8 +19,18 @@ import javax.inject.Inject
 class AlarmViewModel @Inject constructor(
     private val repository: AlarmRepository,
     private val scheduler: AlarmScheduler,
-    private val settingsManager: SettingsManager
+    private val settingsManager: SettingsManager,
+    private val accountabilityManager: com.elroi.alarmpal.domain.manager.AccountabilityManager
 ) : ViewModel() {
+
+    val confirmedBuddyNumbers: StateFlow<Set<String>> = settingsManager.confirmedBuddyNumbersFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
+    val pendingBuddyCodes: StateFlow<Set<String>> = settingsManager.pendingBuddyCodesFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
+    val globalBuddies: StateFlow<Set<String>> = settingsManager.globalBuddiesFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     val alarms: StateFlow<List<Alarm>> = repository.getAllAlarms()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -57,5 +67,17 @@ class AlarmViewModel @Inject constructor(
     
     suspend fun getAlarm(id: String): Alarm? {
         return repository.getAlarmById(id)
+    }
+
+    fun sendBuddyOptInRequest(phoneNumber: String, buddyName: String?, userName: String?) {
+        viewModelScope.launch {
+            accountabilityManager.sendBuddyOptInRequest(phoneNumber, buddyName, userName)
+        }
+    }
+
+    fun addGlobalBuddy(name: String, phoneNumber: String) {
+        viewModelScope.launch {
+            settingsManager.addGlobalBuddy(name, phoneNumber)
+        }
     }
 }

@@ -21,4 +21,10 @@ class OnboardingViewModel @Inject constructor(
     suspend fun completeOnboarding() {
         settingsManager.saveOnboardingComplete()
     }
+
+    fun addGlobalBuddy(name: String, phoneNumber: String) {
+        viewModelScope.launch {
+            settingsManager.addGlobalBuddy(name, phoneNumber)
+        }
+    }
 }

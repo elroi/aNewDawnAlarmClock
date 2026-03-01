@@ -18,10 +18,9 @@ class AccountabilityManager @Inject constructor(
 
     /**
      * Sends an opt-in confirmation SMS to a newly assigned buddy.
-     * The buddy's phone number should be added to the confirmed set in SettingsManager
-     * after this call so AlarmPal knows their opt-in was requested.
+     * The buddy must reply with the generated 4-digit code to be confirmed.
      */
-    fun sendBuddyOptInRequest(
+    suspend fun sendBuddyOptInRequest(
         phoneNumber: String,
         buddyName: String?,
         userName: String?
@@ -36,13 +35,26 @@ class AccountabilityManager @Inject constructor(
             return
         }
 
+        val code = generateBuddyCode()
+        settingsManager.addPendingBuddyCode(code, phoneNumber)
+
         val name = buddyName?.trim()?.takeIf { it.isNotBlank() } ?: "Hey"
         val user = userName?.trim()?.takeIf { it.isNotBlank() } ?: "Someone"
-        val message = "⏰ $name, $user just added you as their AlarmPal accountability buddy! " +
-            "If they miss an alarm, you'll get a quick text to check in on them. " +
-            "Text $user directly to opt out at any time. — AlarmPal"
+        val message = "⏰ $name, $user wants you as their AlarmPal accountability buddy! " +
+            "If they miss an alarm, you'll get a quick text to check in. " +
+            "Reply with code $code to confirm. — AlarmPal"
 
         sendSms(phoneNumber, message)
+    }
+
+    fun sendBuddyConfirmationSuccess(phoneNumber: String) {
+        val message = "✅ Success! You are now confirmed as an AlarmPal accountability buddy. " +
+            "You will only be notified if an alarm is missed. — AlarmPal"
+        sendSms(phoneNumber, message)
+    }
+
+    private fun generateBuddyCode(): String {
+        return (1000..9999).random().toString()
     }
 
     fun sendMissedAlarmMessage(

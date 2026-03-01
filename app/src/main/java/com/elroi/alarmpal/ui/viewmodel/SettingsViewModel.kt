@@ -76,6 +76,12 @@ class SettingsViewModel @Inject constructor(
     val briefingError = settingsManager.lastGenErrorFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     val lastBriefingScript = settingsManager.lastBriefingScriptFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    val globalBuddies: StateFlow<Set<String>> = settingsManager.globalBuddiesFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
+    val confirmedBuddyNumbers: StateFlow<Set<String>> = settingsManager.confirmedBuddyNumbersFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
     // Original values to detect changes
     private val _originalLocation = MutableStateFlow("")
     private val _originalIsCelsius = MutableStateFlow(true)
@@ -372,6 +378,18 @@ class SettingsViewModel @Inject constructor(
             }
         } catch (e: Exception) {
             // Ignore failure, falls back to whatever was manually typed or Default.
+        }
+    }
+
+    fun addGlobalBuddy(name: String, phoneNumber: String) {
+        viewModelScope.launch {
+            settingsManager.addGlobalBuddy(name, phoneNumber)
+        }
+    }
+
+    fun removeGlobalBuddy(name: String, phoneNumber: String) {
+        viewModelScope.launch {
+            settingsManager.removeGlobalBuddy(name, phoneNumber)
         }
     }
 

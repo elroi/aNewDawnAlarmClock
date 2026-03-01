@@ -29,9 +29,11 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.elroi.alarmpal.ui.components.BuddySelectionDialog
 import com.elroi.alarmpal.ui.components.SettingHelpIcon
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -874,6 +876,10 @@ fun AlarmDetailScreen(
 
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
 
+                val confirmedBuddies by viewModel.confirmedBuddyNumbers.collectAsState()
+                val pendingCodes by viewModel.pendingBuddyCodes.collectAsState()
+                val globalBuddies by viewModel.globalBuddies.collectAsState()
+
                 // Accountability Buddy
                 AccountabilityBuddyContent(
                     enabled               = buddyEnabled,
@@ -888,7 +894,16 @@ fun AlarmDetailScreen(
                     onCustomMessageChange = { buddyMessage = it },
                     alertDelayMinutes     = buddyAlertDelay,
                     onAlertDelayChange    = { buddyAlertDelay = it },
-                    alarmLabel            = label.ifBlank { "your alarm" }
+                    alarmLabel            = label.ifBlank { "your alarm" },
+                    confirmedBuddyNumbers = confirmedBuddies,
+                    pendingBuddyCodes     = pendingCodes,
+                    globalBuddies         = globalBuddies,
+                    onSendOptInRequest    = { phone, bName, uName ->
+                        viewModel.sendBuddyOptInRequest(phone, bName, uName)
+                    },
+                    onAddGlobalBuddy      = { name, phone ->
+                        viewModel.addGlobalBuddy(name, phone)
+                    }
                 )
             }
 
@@ -1153,24 +1168,36 @@ fun AccountabilityBuddyContent(
     onCustomMessageChange: (String) -> Unit,
     alertDelayMinutes: Int,
     onAlertDelayChange: (Int) -> Unit,
-    alarmLabel: String
+    alarmLabel: String,
+    confirmedBuddyNumbers: Set<String>,
+    pendingBuddyCodes: Set<String>,
+    globalBuddies: Set<String>,
+    onSendOptInRequest: (String, String?, String?) -> Unit,
+    onAddGlobalBuddy: (String, String) -> Unit
 ) {
     val context = LocalContext.current
-    var hasSmsPermission by remember {
+    val smsPermissions = listOf(Manifest.permission.SEND_SMS, Manifest.permission.RECEIVE_SMS)
+    var hasSmsPermissions by remember {
         mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
+            smsPermissions.all {
+                ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+            }
         )
     }
     // SMS rationale dialog: show this BEFORE the system permission dialog
     var showSmsRationale by remember { mutableStateOf(false) }
-    // Opt-in request state
-    var optInSent by remember { mutableStateOf(false) }
+
+    // Derive status from ViewModel flows
+    val normalizedPhone = phoneNumber.replace(Regex("[^\\d+]"), "")
+    val isConfirmed = confirmedBuddyNumbers.any { it.replace(Regex("[^\\d+]"), "").endsWith(normalizedPhone) || normalizedPhone.endsWith(it.replace(Regex("[^\\d+]"), "")) }
+    val pendingEntry = pendingBuddyCodes.find { it.replace(Regex("[^\\d+]"), "").endsWith(normalizedPhone) || normalizedPhone.endsWith(it.replace(Regex("[^\\d+]"), "")) }
+    val pendingCode = pendingEntry?.split(":")?.getOrNull(0)
 
     val smsPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        hasSmsPermission = granted
-        if (granted) onEnabledChange(true)
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        hasSmsPermissions = result.values.all { it }
+        if (hasSmsPermissions) onEnabledChange(true)
     }
 
     // SMS rationale dialog
@@ -1180,8 +1207,9 @@ fun AccountabilityBuddyContent(
             title = { Text("📱 SMS Permission Required") },
             text = {
                 Text(
-                    "AlarmPal needs to send SMS messages on your behalf to:\n\n" +
+                    "AlarmPal needs to send and receive SMS messages on your behalf to:\n\n" +
                     "• Invite your buddy to opt in as your accountability partner\n" +
+                    "• Detect their confirmation code automatically\n" +
                     "• Alert them if you miss an alarm\n\n" +
                     "You control when messages are sent. No spam, ever."
                 )
@@ -1189,7 +1217,7 @@ fun AccountabilityBuddyContent(
             confirmButton = {
                 TextButton(onClick = {
                     showSmsRationale = false
-                    smsPermissionLauncher.launch(Manifest.permission.SEND_SMS)
+                    smsPermissionLauncher.launch(smsPermissions.toTypedArray())
                 }) { Text("Allow SMS") }
             },
             dismissButton = {
@@ -1198,27 +1226,6 @@ fun AccountabilityBuddyContent(
         )
     }
 
-    val contactPickerLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickContact()
-    ) { uri: Uri? ->
-        uri ?: return@rememberLauncherForActivityResult
-        context.contentResolver.query(uri, arrayOf(ContactsContract.Contacts.DISPLAY_NAME), null, null, null)?.use { cursor ->
-            if (cursor.moveToFirst()) onContactNameChange(cursor.getString(0) ?: "")
-        }
-        context.contentResolver.query(uri, arrayOf(ContactsContract.Contacts._ID), null, null, null)?.use { cursor ->
-            if (cursor.moveToFirst()) {
-                val contactId = cursor.getString(0)
-                context.contentResolver.query(
-                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                    arrayOf(ContactsContract.CommonDataKinds.Phone.NUMBER),
-                    "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
-                    arrayOf(contactId), null
-                )?.use { phoneCursor ->
-                    if (phoneCursor.moveToFirst()) onPhoneNumberChange(phoneCursor.getString(0) ?: "")
-                }
-            }
-        }
-    }
 
     val alarmDesc      = if (alarmLabel.isNotBlank()) "\"$alarmLabel\"" else "an alarm"
     val whoText        = if (userName.isNotBlank()) userName else "Someone"
@@ -1246,7 +1253,7 @@ fun AccountabilityBuddyContent(
                 checked = enabled,
                 onCheckedChange = { shouldEnable ->
                     if (shouldEnable) {
-                        if (hasSmsPermission) {
+                        if (hasSmsPermissions) {
                             onEnabledChange(true)
                         } else {
                             // Show rationale BEFORE the system dialog
@@ -1263,34 +1270,60 @@ fun AccountabilityBuddyContent(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Divider(modifier = Modifier.padding(vertical = 4.dp))
 
-                if (hasContact) {
-                    InputChip(
-                        selected = true,
-                        onClick  = {},
-                        label    = { Text(contactName) },
-                        leadingIcon = {
-                            Icon(Icons.Default.Person, contentDescription = null,
-                                modifier = Modifier.size(InputChipDefaults.AvatarSize))
-                        },
-                        trailingIcon = {
-                            IconButton(
-                                onClick  = { onContactNameChange(""); onPhoneNumberChange("") },
-                                modifier = Modifier.size(InputChipDefaults.AvatarSize)
-                            ) {
-                                Icon(Icons.Default.Close, contentDescription = "Remove contact",
-                                    modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    )
-                } else {
+                var showBuddySelection by remember { mutableStateOf(false) }
+
+                if (contactName.isBlank() && phoneNumber.isBlank()) {
                     OutlinedButton(
-                        onClick  = { contactPickerLauncher.launch(null) },
+                        onClick = { showBuddySelection = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Pick from Contacts")
+                        Text("Select Buddy")
                     }
+                } else {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.AccountCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(contactName, fontWeight = FontWeight.Bold)
+                                Text(phoneNumber, style = MaterialTheme.typography.bodySmall)
+                            }
+                            IconButton(onClick = { onContactNameChange(""); onPhoneNumberChange("") }) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear buddy")
+                            }
+                        }
+                    }
+                    
+                    TextButton(
+                        onClick = { showBuddySelection = true },
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
+                        Text("Change Buddy")
+                    }
+                }
+
+                if (showBuddySelection) {
+                    BuddySelectionDialog(
+                        onDismiss = { showBuddySelection = false },
+                        onBuddySelected = { name, phone ->
+                            onContactNameChange(name)
+                            onPhoneNumberChange(phone)
+                            // If it's a new buddy (not in the list yet), it will be added in the parent/ViewModel
+                            // via the callback
+                            onAddGlobalBuddy(name, phone)
+                            showBuddySelection = false
+                        },
+                        globalBuddies = globalBuddies
+                    )
                 }
 
                 OutlinedTextField(
@@ -1359,16 +1392,16 @@ fun AccountabilityBuddyContent(
                     }
                 }
 
-                if (!hasSmsPermission) {
+                if (!hasSmsPermissions) {
                     Text(
-                        "⚠️ SMS permission required to send messages",
+                        "⚠️ SMS permissions required to send/receive messages",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error
                     )
                 }
 
                 // Buddy opt-in section — shown when phone number is entered
-                if (phoneNumber.isNotBlank() && hasSmsPermission) {
+                if (phoneNumber.isNotBlank() && hasSmsPermissions) {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -1377,52 +1410,50 @@ fun AccountabilityBuddyContent(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = if (optInSent) "⏳ Opt-in requested" else "📲 Notify buddy",
+                                text = when {
+                                    isConfirmed -> "✅ Buddy Confirmed"
+                                    pendingCode != null -> "⏳ Awaiting code: $pendingCode"
+                                    else -> "📲 Notify buddy"
+                                },
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.Medium,
-                                color = if (optInSent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                color = when {
+                                    isConfirmed -> MaterialTheme.colorScheme.primary
+                                    pendingCode != null -> MaterialTheme.colorScheme.tertiary
+                                    else -> MaterialTheme.colorScheme.onSurface
+                                }
                             )
                             Text(
-                                text = if (optInSent)
-                                    "Opt-in request sent. They're on the team!"
-                                else
-                                    "Send them an invite SMS so they know what to expect.",
+                                text = when {
+                                    isConfirmed -> "They've opted in! They'll be alerted if you miss this."
+                                    pendingCode != null -> "Invite sent. Ask them to reply with the code."
+                                    else -> "Send them an invite SMS so they can opt-in to help you."
+                                },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        if (!optInSent) {
+                        if (!isConfirmed && pendingCode == null) {
                             OutlinedButton(
                                 onClick = {
-                                    // Send opt-in SMS directly via SmsManager
-                                    val smsManager: android.telephony.SmsManager = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                                        val subId = android.telephony.SubscriptionManager.getDefaultSmsSubscriptionId()
-                                        context.getSystemService(android.telephony.SmsManager::class.java)
-                                            .createForSubscriptionId(subId)
-                                    } else {
-                                        @Suppress("DEPRECATION")
-                                        android.telephony.SmsManager.getDefault()
-                                    }
-                                    val buddyDisplayName = contactName.takeIf { it.isNotBlank() } ?: "there"
-                                    val userDisplayName = userName.takeIf { it.isNotBlank() } ?: "Someone"
-                                    val optInMsg = "⏰ Hey $buddyDisplayName, $userDisplayName just added you as their AlarmPal " +
-                                        "accountability buddy! If they miss an alarm, you'll get a text to check in. " +
-                                        "Text $userDisplayName directly to opt out. — AlarmPal"
-                                    try {
-                                        val parts = smsManager.divideMessage(optInMsg)
-                                        if (parts.size == 1) {
-                                            smsManager.sendTextMessage(phoneNumber, null, optInMsg, null, null)
-                                        } else {
-                                            smsManager.sendMultipartTextMessage(phoneNumber, null, parts, null, null)
-                                        }
-                                        optInSent = true
-                                    } catch (e: Exception) {
-                                        android.widget.Toast.makeText(context, "SMS failed: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                                    onSendOptInRequest(phoneNumber, contactName, userName)
+                                    // Auto-save to global buddies if not already there
+                                    if (globalBuddies.none { it.endsWith("|$phoneNumber") }) {
+                                        onAddGlobalBuddy(contactName.ifBlank { "Buddy" }, phoneNumber)
                                     }
                                 },
                                 modifier = Modifier.padding(start = 12.dp)
                             ) {
                                 Text("Send")
+                            }
+                        } else if (pendingCode != null) {
+                            TextButton(
+                                onClick = {
+                                    onSendOptInRequest(phoneNumber, contactName, userName)
+                                },
+                                modifier = Modifier.padding(start = 12.dp)
+                            ) {
+                                Text("Resend", style = MaterialTheme.typography.labelMedium)
                             }
                         }
                     }

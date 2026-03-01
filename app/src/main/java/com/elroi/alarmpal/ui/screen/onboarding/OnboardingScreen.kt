@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.provider.ContactsContract
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -45,7 +46,10 @@ fun OnboardingScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var currentPage by remember { mutableStateOf(0) }
-    val totalPages = 4
+    val totalPages = 5
+
+    var buddyName by remember { mutableStateOf("") }
+    var buddyPhone by remember { mutableStateOf("") }
 
     // Permission launchers
     val notificationLauncher = rememberLauncherForActivityResult(
@@ -59,6 +63,43 @@ fun OnboardingScreen(
     val locationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { /* no-op */ }
+
+    val smsLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { /* result shown via permission check */ }
+
+    val contactPickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickContact()
+    ) { uri: Uri? ->
+        uri ?: return@rememberLauncherForActivityResult
+        context.contentResolver.query(uri, arrayOf(ContactsContract.Contacts.DISPLAY_NAME), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) buddyName = cursor.getString(0) ?: ""
+        }
+        context.contentResolver.query(uri, arrayOf(ContactsContract.Contacts._ID), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val contactId = cursor.getString(0)
+                context.contentResolver.query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    arrayOf(ContactsContract.CommonDataKinds.Phone.NUMBER),
+                    "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
+                    arrayOf(contactId), null
+                )?.use { phoneCursor ->
+                    if (phoneCursor.moveToFirst()) {
+                        buddyPhone = phoneCursor.getString(0) ?: ""
+                        if (buddyName.isNotBlank() && buddyPhone.isNotBlank()) {
+                            viewModel.addGlobalBuddy(buddyName, buddyPhone)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    val contactPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) contactPickerLauncher.launch(null)
+    }
 
     val pages = listOf(
         OnboardingPage(
@@ -126,6 +167,29 @@ fun OnboardingScreen(
                 currentPage++
             },
             secondaryLabel = "Skip for Now",
+            onSecondary = { currentPage++ }
+        ),
+        OnboardingPage(
+            emoji = "🤝",
+            title = "Never Wake Up Alone",
+            body = "Add an accountability buddy who will get a text if you snooze too many times or miss your alarm entirely.\n\nIt's the ultimate safety net.",
+            primaryLabel = if (buddyName.isBlank()) "Add First Buddy" else "Change Buddy",
+            onPrimary = {
+                // Request SMS permissions
+                val smsGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                if (!smsGranted) {
+                    smsLauncher.launch(arrayOf(Manifest.permission.SEND_SMS, Manifest.permission.RECEIVE_SMS))
+                }
+                
+                // Then launch contact picker
+                val hasContactPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                if (hasContactPermission) {
+                    contactPickerLauncher.launch(null)
+                } else {
+                    contactPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+                }
+            },
+            secondaryLabel = if (buddyName.isBlank()) "Skip for Now" else "Next",
             onSecondary = { currentPage++ }
         ),
         OnboardingPage(
@@ -234,6 +298,22 @@ fun OnboardingScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 24.sp
             )
+
+            if (currentPage == 3 && buddyName.isNotBlank()) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("✅ Buddy assigned: ", style = MaterialTheme.typography.bodyMedium)
+                        Text(buddyName, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.weight(1f))
 

@@ -140,6 +140,8 @@ class SettingsManager @Inject constructor(
         val PROMPT_HYPEMAN = stringPreferencesKey("prompt_hypeman")
         val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
         val CONFIRMED_BUDDY_NUMBERS = stringSetPreferencesKey("confirmed_buddy_numbers")
+        val PENDING_BUDDY_CODES = stringSetPreferencesKey("pending_buddy_codes") // Format: "CODE:PHONE_NUMBER"
+        val GLOBAL_BUDDIES = stringSetPreferencesKey("global_buddies") // Format: "Name|Phone"
         
         // AI Briefing Cache & Diagnostics
         val LAST_BRIEFING_SCRIPT = stringPreferencesKey("last_briefing_script")
@@ -361,5 +363,63 @@ class SettingsManager @Inject constructor(
             val current = settings[CONFIRMED_BUDDY_NUMBERS] ?: emptySet()
             settings[CONFIRMED_BUDDY_NUMBERS] = current - phoneNumber
         }
+    }
+
+    // ---------- Pending Buddy Codes ----------
+    val pendingBuddyCodesFlow: Flow<Set<String>> = context.dataStore.data.map { preferences ->
+        preferences[PENDING_BUDDY_CODES] ?: emptySet()
+    }
+
+    suspend fun addPendingBuddyCode(code: String, phoneNumber: String) {
+        context.dataStore.edit { settings ->
+            val current = settings[PENDING_BUDDY_CODES] ?: emptySet()
+            // Clean up any existing codes for this phone number first
+            val filtered = current.filterNot { it.endsWith(":$phoneNumber") }.toSet()
+            settings[PENDING_BUDDY_CODES] = filtered + "$code:$phoneNumber"
+        }
+    }
+
+    suspend fun removePendingBuddyCode(code: String, phoneNumber: String) {
+        context.dataStore.edit { settings ->
+            val current = settings[PENDING_BUDDY_CODES] ?: emptySet()
+            settings[PENDING_BUDDY_CODES] = current - "$code:$phoneNumber"
+        }
+    }
+
+    suspend fun removeAllPendingCodesForNumber(phoneNumber: String) {
+        context.dataStore.edit { settings ->
+            val current = settings[PENDING_BUDDY_CODES] ?: emptySet()
+            settings[PENDING_BUDDY_CODES] = current.filterNot { it.endsWith(":$phoneNumber") }.toSet()
+        }
+    }
+
+    // ---------- Global Buddies ----------
+    val globalBuddiesFlow: Flow<Set<String>> = context.dataStore.data.map { preferences ->
+        preferences[GLOBAL_BUDDIES] ?: emptySet()
+    }
+
+    suspend fun addGlobalBuddy(name: String, phoneNumber: String) {
+        context.dataStore.edit { settings ->
+            val current = settings[GLOBAL_BUDDIES] ?: emptySet()
+            // Remove existing entry for this phone number if it exists
+            val filtered = current.filterNot { it.split("|").getOrNull(1) == phoneNumber }.toSet()
+            settings[GLOBAL_BUDDIES] = filtered + "$name|$phoneNumber"
+        }
+    }
+
+    suspend fun removeGlobalBuddy(name: String, phoneNumber: String) {
+        context.dataStore.edit { settings ->
+            val current = settings[GLOBAL_BUDDIES] ?: emptySet()
+            settings[GLOBAL_BUDDIES] = current - "$name|$phoneNumber"
+        }
+    }
+
+    // ---------- Buddy Helpers ----------
+    fun isBuddyConfirmed(phoneNumber: String): Flow<Boolean> = confirmedBuddyNumbersFlow.map { confirmed ->
+        confirmed.contains(phoneNumber)
+    }
+
+    fun getBuddyNameFromGlobalList(phoneNumber: String): Flow<String?> = globalBuddiesFlow.map { buddies ->
+        buddies.find { it.split("|").getOrNull(1) == phoneNumber }?.split("|")?.getOrNull(0)
     }
 }
