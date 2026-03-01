@@ -1,0 +1,149 @@
+package com.elroi.alarmpal.data.scheduler
+
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import com.elroi.alarmpal.domain.model.Alarm
+import com.elroi.alarmpal.domain.scheduler.AlarmScheduler
+import com.elroi.alarmpal.receiver.AlarmReceiver
+import java.time.LocalDateTime
+import java.time.ZoneId
+import androidx.work.WorkManager
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.ExistingWorkPolicy
+import java.time.Duration
+import com.elroi.alarmpal.domain.worker.BriefingWorker
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Dispatchers
+
+class AndroidAlarmScheduler(
+    private val context: Context,
+    private val briefingGenerator: com.elroi.alarmpal.domain.generator.BriefingGenerator
+) : AlarmScheduler {
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    private val alarmManager = context.getSystemService(AlarmManager::class.java)
+    private val workManager = WorkManager.getInstance(context)
+
+    @android.annotation.SuppressLint("ScheduleExactAlarm")
+    override fun schedule(alarm: Alarm) {
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            putExtra("ALARM_ID", alarm.id)
+            putExtra("ALARM_LABEL", alarm.label)
+            putExtra("ALARM_MATH_DIFFICULTY", alarm.mathDifficulty)
+            putExtra("ALARM_MATH_PROBLEM_COUNT", alarm.mathProblemCount)
+            putExtra("ALARM_MATH_GRADUAL_DIFFICULTY", alarm.mathGraduallyIncreaseDifficulty)
+            putExtra("ALARM_SNOOZE_DURATION", alarm.snoozeDurationMinutes)
+            putExtra("ALARM_SMILE_TO_DISMISS", alarm.smileToDismiss)
+            putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_SMILE_FALLBACK_METHOD, alarm.smileFallbackMethod)
+            putExtra("ALARM_BRIEFING_ENABLED", alarm.isBriefingEnabled)
+            putExtra("ALARM_TTS_ENABLED", alarm.isTtsEnabled)
+            putExtra("ALARM_IS_EVASIVE_SNOOZE", alarm.isEvasiveSnooze)
+            putExtra("ALARM_EVASIVE_SNOOZES_BEFORE_MOVING", alarm.evasiveSnoozesBeforeMoving)
+            putExtra("ALARM_SOUND_URI", alarm.soundUri)
+            putExtra("ALARM_IS_SMOOTH_FADE_OUT", alarm.isSmoothFadeOut)
+            putExtra("ALARM_IS_VIBRATE", alarm.isVibrate)
+            putExtra("ALARM_IS_SOUND_ENABLED", alarm.isSoundEnabled)
+            putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_IS_SMART_WAKEUP_ENABLED, alarm.isSmartWakeupEnabled)
+            putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_DELAY, alarm.wakeupCheckDelayMinutes)
+            putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_TIMEOUT, alarm.wakeupCheckTimeoutSeconds)
+        }
+        
+        // Calculate next alarm time
+        val now = LocalDateTime.now()
+        val alarmTimeToday = now.withHour(alarm.time.hour).withMinute(alarm.time.minute).withSecond(0).withNano(0)
+        var alarmTime: LocalDateTime = alarmTimeToday
+        
+        if (alarm.daysOfWeek.isEmpty()) {
+            // Non-repeating: if past, schedule for tomorrow
+            if (alarmTime.isBefore(now)) {
+                alarmTime = alarmTime.plusDays(1)
+            }
+        } else {
+            // Repeating: find next matching day
+            // 1 = Monday, 7 = Sunday
+            val currentDay = now.dayOfWeek.value 
+            
+            // Check if today is a selected day and time is in future
+            if (alarm.daysOfWeek.contains(currentDay) && alarmTime.isAfter(now)) {
+                // Schedule for today
+                alarmTime = alarmTimeToday
+            } else {
+                // Find next day
+                var daysUntilNext = -1
+                for (i in 1..7) {
+                    val nextDay = (currentDay + i - 1) % 7 + 1
+                    if (alarm.daysOfWeek.contains(nextDay)) {
+                        daysUntilNext = i
+                        break
+                    }
+                }
+                
+                if (daysUntilNext != -1) {
+                     alarmTime = alarmTimeToday.plusDays(daysUntilNext.toLong())
+                } else {
+                    // Should not happen if daysOfWeek is not empty, but fallback
+                    alarmTime = alarmTimeToday.plusDays(1)
+                }
+            }
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            alarm.id.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // For an alarm clock app, setAlarmClock is the ONLY way to guarantee the device
+        // wakes up from deep Doze mode at the exact minute. setExactAndAllowWhileIdle
+        // can still be delayed by the OS for battery optimization in extreme doze.
+        val alarmClockInfo = AlarmManager.AlarmClockInfo(
+            alarmTime.atZone(ZoneId.systemDefault()).toEpochSecond() * 1000,
+            pendingIntent // Could ideally be a deep link to the app, but reusing pendingIntent is fine
+        )
+        alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+        
+        // Schedule AI Briefing pre-generation 30 minutes before the alarm
+        if (alarm.isBriefingEnabled) {
+            val briefingTime = alarmTime.minusMinutes(30)
+            val delayMillis = Duration.between(LocalDateTime.now(), briefingTime).toMillis().coerceAtLeast(0)
+            
+            val workRequest = OneTimeWorkRequestBuilder<BriefingWorker>()
+                .setInitialDelay(Duration.ofMillis(delayMillis))
+                .build()
+                
+            workManager.enqueueUniqueWork(
+                "briefing_${alarm.id}",
+                ExistingWorkPolicy.REPLACE,
+                workRequest
+            )
+            
+            // Proactively trigger generation if it's "now" or "soon" (< 30 mins)
+            if (delayMillis == 0L) {
+                android.util.Log.d("AndroidAlarmScheduler", "Alarm is imminent. Triggering immediate briefing generation...")
+                scope.launch {
+                    briefingGenerator.refreshBriefing()
+                }
+            }
+        }
+    }
+
+    override fun cancel(alarm: Alarm) {
+        val intent = Intent(context, AlarmReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            alarm.id.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
+        
+        // Also cancel any pending briefing work
+        workManager.cancelUniqueWork("briefing_${alarm.id}")
+    }
+}

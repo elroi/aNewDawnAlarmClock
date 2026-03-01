@@ -1,0 +1,365 @@
+package com.elroi.alarmpal.domain.manager
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
+
+data class PersonaTemperament(
+    val styleRules: String,
+    val examplePhrases: String
+) {
+    companion object {
+        val COACH = PersonaTemperament(
+            styleRules = """
+                - Write in ALL CAPS for commands and emphasis (e.g. "MOVE IT!", "REPORT!")
+                - Use short, barking military sentences. No fluff. No softness.
+                - Address the user as "SOLDIER" or "RECRUIT".
+                - End the briefing with a military signoff like "DISMISSED!" or "EXECUTE!".
+                - Every sentence should feel like a direct ORDER, not a suggestion.
+            """.trimIndent(),
+            examplePhrases = "SOLDIER! RISE AND SHINE! That is NOT a request. MOVE IT, RECRUIT. No excuses. Zero tolerance for weakness today. DISMISSED!"
+        )
+
+        val COMEDIAN = PersonaTemperament(
+            styleRules = """
+                - Use dry, sardonic wit. State the obvious with fake astonishment.
+                - Undercut good news with a sarcastic twist.
+                - Use phrases like "Wow, revolutionary", "Truly shocking", "Groundbreaking stuff".
+                - End sentences with ironic commentary in parentheses or as an aside.
+                - Never sound sincere. Everything should have a mild eye-roll energy.
+            """.trimIndent(),
+            examplePhrases = "Oh look, you're awake. Truly a miracle of modern science. The world has noted your consciousness and remains unimpressed. You're welcome."
+        )
+
+        val ZEN = PersonaTemperament(
+            styleRules = """
+                - Write in short, contemplative, haiku-like fragments. Strategic pauses with "...".
+                - Use nature metaphors: rivers, mountains, breath, seasons, light.
+                - Never use exclamation marks. Let silence speak.
+                - Each sentence should feel like a gentle observation, not a statement.
+                - End with a single, calming instruction about breath or presence.
+            """.trimIndent(),
+            examplePhrases = "The day begins... as all days do. Softly. Without demand. Breathe in. The world has no urgency that you have not given it."
+        )
+
+        val HYPEMAN = PersonaTemperament(
+            styleRules = """
+                - USE ALL CAPS FREQUENTLY. Exclamation marks after every sentence.
+                - Every fact is INCREDIBLE. Every moment is LEGENDARY.
+                - Use energetic interjections: "BOOM!", "LET'S GO!", "INSANE!", "WE'RE DOING THIS!"
+                - Address the user as "CHAMP", "LEGEND", or "ABSOLUTE UNIT".
+                - Energy must be borderline unhinged. This is the most important briefing ever delivered.
+            """.trimIndent(),
+            examplePhrases = "BOOM! LEGEND IS AWAKE! LET'S GOOO! Today is YOUR day, CHAMP! Nothing can stop you! NOTHING! WE ARE DOING THIS!"
+        )
+    }
+}
+
+
+data class AlarmDefaults(
+    val snoozeDurationMinutes: Int = 5,
+    val isGentleWake: Boolean = false,
+    val crescendoDurationMinutes: Int = 1,
+    val mathDifficulty: Int = 0,
+    val mathProblemCount: Int = 1,
+    val mathGraduallyIncreaseDifficulty: Boolean = false,
+    val smileToDismiss: Boolean = false,
+    val smileFallbackMethod: String = "MATH", // "NONE", "MATH"
+    val isBriefingEnabled: Boolean = true,
+    val briefingIncludeWeather: Boolean = true,
+    val briefingIncludeCalendar: Boolean = true,
+    val briefingIncludeFact: Boolean = true,
+    val briefingUserName: String = "",
+    val isTtsEnabled: Boolean = true,
+    val isVibrate: Boolean = true,
+    val isSoundEnabled: Boolean = true,
+    val isEvasiveSnooze: Boolean = false,
+    val evasiveSnoozesBeforeMoving: Int = 0,
+    val isSmoothFadeOut: Boolean = true,
+    val weekendDays: Set<Int> = setOf(6, 7), // ISO indices: 1=Mon...6=Sat, 7=Sun
+    val defaultSoundUri: String? = null,
+    val aiPersona: String = "COACH", // Options: COACH, COMEDIAN, ZEN, HYPEMAN, SURPRISE
+    val promptCoach: String = "The Drill Sergeant. You are loud, demanding, and use military terms. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
+    val promptComedian: String = "The Sarcastic Best Friend. You are witty, dry, and slightly ironic. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
+    val promptZen: String = "The Zen Master. You are calm, poetic, and mindful. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
+    val promptHypeman: String = "The Hype-Man. You are extremely energetic, use caps, and over-the-top excited. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text."
+)
+
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_settings")
+
+@Singleton
+class SettingsManager @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
+    companion object {
+        val LOCATION_KEY = stringPreferencesKey("location")
+        val IS_CELSIUS_KEY = booleanPreferencesKey("is_celsius")
+        val IS_AUTO_LOCATION_KEY = booleanPreferencesKey("is_auto_location")
+        
+        // Alarm Defaults
+        val DEFAULT_SNOOZE_DURATION = intPreferencesKey("default_snooze_duration")
+        val DEFAULT_IS_GENTLE_WAKE = booleanPreferencesKey("default_is_gentle_wake")
+        val DEFAULT_CRESCENDO_DURATION = intPreferencesKey("default_crescendo_duration")
+        val DEFAULT_MATH_DIFFICULTY = intPreferencesKey("default_math_difficulty")
+        val DEFAULT_MATH_PROBLEM_COUNT = intPreferencesKey("default_math_problem_count")
+        val DEFAULT_MATH_GRADUAL_DIFFICULTY = booleanPreferencesKey("default_math_gradual_difficulty")
+        val DEFAULT_SMILE_TO_DISMISS = booleanPreferencesKey("default_smile_to_dismiss")
+        val DEFAULT_SMILE_FALLBACK_METHOD = stringPreferencesKey("default_smile_fallback_method")
+        val DEFAULT_IS_BRIEFING_ENABLED = booleanPreferencesKey("default_is_briefing_enabled")
+        val BRIEFING_INCLUDE_WEATHER = booleanPreferencesKey("briefing_include_weather")
+        val BRIEFING_INCLUDE_CALENDAR = booleanPreferencesKey("briefing_include_calendar")
+        val BRIEFING_INCLUDE_FACT = booleanPreferencesKey("briefing_include_fact")
+        val BRIEFING_USER_NAME = stringPreferencesKey("briefing_user_name")
+        val DEFAULT_IS_TTS_ENABLED = booleanPreferencesKey("default_is_tts_enabled")
+        val DEFAULT_IS_EVASIVE_SNOOZE = booleanPreferencesKey("default_is_evasive_snooze")
+        val DEFAULT_EVASIVE_SNOOZES_BEFORE = intPreferencesKey("default_evasive_snoozes_before")
+        val DEFAULT_IS_SMOOTH_FADE_OUT = booleanPreferencesKey("default_is_smooth_fade_out")
+        val WEEKEND_DAYS = stringSetPreferencesKey("weekend_days")
+        val DEFAULT_SOUND_URI = stringPreferencesKey("default_sound_uri")
+        val DEFAULT_IS_VIBRATE = booleanPreferencesKey("default_is_vibrate")
+        val DEFAULT_IS_SOUND_ENABLED = booleanPreferencesKey("default_is_sound_enabled")
+        val GEMINI_API_KEY = stringPreferencesKey("gemini_api_key")
+        val IS_CLOUD_AI_ENABLED = booleanPreferencesKey("is_cloud_ai_enabled")
+        val PREFERRED_AI_TIER = stringPreferencesKey("preferred_ai_tier") // STANDARD, ADVANCED, CLOUD
+        val AI_FALLBACK_ORDER = stringPreferencesKey("ai_fallback_order") // CLOUD_THEN_LOCAL, LOCAL_THEN_CLOUD
+        val AI_PERSONA = stringPreferencesKey("ai_persona")
+        val PROMPT_COACH = stringPreferencesKey("prompt_coach")
+        val PROMPT_COMEDIAN = stringPreferencesKey("prompt_comedian")
+        val PROMPT_ZEN = stringPreferencesKey("prompt_zen")
+        val PROMPT_HYPEMAN = stringPreferencesKey("prompt_hypeman")
+        val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
+        val CONFIRMED_BUDDY_NUMBERS = stringSetPreferencesKey("confirmed_buddy_numbers")
+        
+        // AI Briefing Cache & Diagnostics
+        val LAST_BRIEFING_SCRIPT = stringPreferencesKey("last_briefing_script")
+        val LAST_BRIEFING_TIME = androidx.datastore.preferences.core.longPreferencesKey("last_briefing_time")
+        val LAST_WEATHER_CACHE = stringPreferencesKey("last_weather_cache")
+        val LAST_FACT_CACHE = stringPreferencesKey("last_fact_cache")
+        val LAST_GEN_STATUS = stringPreferencesKey("last_gen_status") // Format: "weather:ok|calendar:ok|gemini:fail"
+        val LAST_GEN_ERROR = stringPreferencesKey("last_gen_error")
+        val WORKING_GEMINI_MODEL = stringPreferencesKey("working_gemini_model")
+        val WORKING_GEMINI_VERSION = stringPreferencesKey("working_gemini_version")
+    }
+
+    val locationFlow: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[LOCATION_KEY] ?: "New York"
+    }
+
+    val isCelsiusFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[IS_CELSIUS_KEY] ?: true // Default to Celsius
+    }
+
+    val geminiApiKeyFlow: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[GEMINI_API_KEY] ?: ""
+    }
+
+    val isCloudAiEnabledFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[IS_CLOUD_AI_ENABLED] ?: false
+    }
+
+    val preferredAiTierFlow: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[PREFERRED_AI_TIER] ?: "STANDARD"
+    }
+
+    val aiFallbackOrderFlow: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[AI_FALLBACK_ORDER] ?: "CLOUD_THEN_LOCAL"
+    }
+
+    val workingGeminiModelFlow: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[WORKING_GEMINI_MODEL]
+    }
+
+    val workingGeminiVersionFlow: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[WORKING_GEMINI_VERSION]
+    }
+
+    suspend fun saveLocation(location: String) {
+        context.dataStore.edit { settings ->
+            settings[LOCATION_KEY] = location
+        }
+    }
+
+    suspend fun saveIsCelsius(isCelsius: Boolean) {
+        context.dataStore.edit { settings ->
+            settings[IS_CELSIUS_KEY] = isCelsius
+        }
+    }
+
+    suspend fun saveGeminiApiKey(apiKey: String) {
+        context.dataStore.edit { settings ->
+            settings[GEMINI_API_KEY] = apiKey
+            // Reset working config when key changes
+            settings.remove(WORKING_GEMINI_MODEL)
+            settings.remove(WORKING_GEMINI_VERSION)
+        }
+    }
+
+    suspend fun saveIsCloudAiEnabled(isEnabled: Boolean) {
+        context.dataStore.edit { settings ->
+            settings[IS_CLOUD_AI_ENABLED] = isEnabled
+        }
+    }
+
+    suspend fun savePreferredAiTier(tier: String) {
+        context.dataStore.edit { settings ->
+            settings[PREFERRED_AI_TIER] = tier
+        }
+    }
+
+    suspend fun saveAiFallbackOrder(order: String) {
+        context.dataStore.edit { settings ->
+            settings[AI_FALLBACK_ORDER] = order
+        }
+    }
+
+    suspend fun saveWorkingGeminiConfig(model: String, version: String) {
+        context.dataStore.edit { settings ->
+            settings[WORKING_GEMINI_MODEL] = model
+            settings[WORKING_GEMINI_VERSION] = version
+        }
+    }
+
+    val lastBriefingScriptFlow: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[LAST_BRIEFING_SCRIPT]
+    }
+
+    val lastBriefingTimeFlow: Flow<Long> = context.dataStore.data.map { preferences ->
+        preferences[LAST_BRIEFING_TIME] ?: 0L
+    }
+
+    suspend fun saveBriefingCache(
+        script: String, 
+        timestamp: Long, 
+        weather: String? = null, 
+        fact: String? = null,
+        status: String? = null,
+        error: String? = null
+    ) {
+        context.dataStore.edit { settings ->
+            settings[LAST_BRIEFING_SCRIPT] = script
+            settings[LAST_BRIEFING_TIME] = timestamp
+            weather?.let { settings[LAST_WEATHER_CACHE] = it } ?: settings.remove(LAST_WEATHER_CACHE)
+            fact?.let { settings[LAST_FACT_CACHE] = it } ?: settings.remove(LAST_FACT_CACHE)
+            status?.let { settings[LAST_GEN_STATUS] = it } ?: settings.remove(LAST_GEN_STATUS)
+            error?.let { settings[LAST_GEN_ERROR] = it } ?: settings.remove(LAST_GEN_ERROR)
+        }
+    }
+
+    val lastWeatherCacheFlow: Flow<String?> = context.dataStore.data.map { it[LAST_WEATHER_CACHE] }
+    val lastFactCacheFlow: Flow<String?> = context.dataStore.data.map { it[LAST_FACT_CACHE] }
+    val lastGenStatusFlow: Flow<String> = context.dataStore.data.map { it[LAST_GEN_STATUS] ?: "waiting:pending" }
+    val lastGenErrorFlow: Flow<String?> = context.dataStore.data.map { it[LAST_GEN_ERROR] }
+
+    val isAutoLocationFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[IS_AUTO_LOCATION_KEY] ?: false // Default to manual location
+    }
+
+    suspend fun saveIsAutoLocation(isAuto: Boolean) {
+        context.dataStore.edit { settings ->
+            settings[IS_AUTO_LOCATION_KEY] = isAuto
+        }
+    }
+
+    val alarmDefaultsFlow: Flow<AlarmDefaults> = context.dataStore.data.map { preferences ->
+        AlarmDefaults(
+            snoozeDurationMinutes = preferences[DEFAULT_SNOOZE_DURATION] ?: 5,
+            isGentleWake = preferences[DEFAULT_IS_GENTLE_WAKE] ?: false,
+            crescendoDurationMinutes = preferences[DEFAULT_CRESCENDO_DURATION] ?: 1,
+            mathDifficulty = preferences[DEFAULT_MATH_DIFFICULTY] ?: 1,
+            mathProblemCount = preferences[DEFAULT_MATH_PROBLEM_COUNT] ?: 3,
+            mathGraduallyIncreaseDifficulty = preferences[DEFAULT_MATH_GRADUAL_DIFFICULTY] ?: false,
+            smileToDismiss = preferences[DEFAULT_SMILE_TO_DISMISS] ?: false,
+            smileFallbackMethod = preferences[DEFAULT_SMILE_FALLBACK_METHOD] ?: "MATH",
+            isBriefingEnabled = preferences[DEFAULT_IS_BRIEFING_ENABLED] ?: true,
+            briefingIncludeWeather = preferences[BRIEFING_INCLUDE_WEATHER] ?: true,
+            briefingIncludeCalendar = preferences[BRIEFING_INCLUDE_CALENDAR] ?: true,
+            briefingIncludeFact = preferences[BRIEFING_INCLUDE_FACT] ?: true,
+            briefingUserName = preferences[BRIEFING_USER_NAME] ?: "",
+            isTtsEnabled = preferences[DEFAULT_IS_TTS_ENABLED] ?: true,
+            isVibrate = preferences[DEFAULT_IS_VIBRATE] ?: true,
+            isSoundEnabled = preferences[DEFAULT_IS_SOUND_ENABLED] ?: true,
+            isEvasiveSnooze = preferences[DEFAULT_IS_EVASIVE_SNOOZE] ?: false,
+            evasiveSnoozesBeforeMoving = preferences[DEFAULT_EVASIVE_SNOOZES_BEFORE] ?: 0,
+            isSmoothFadeOut = preferences[DEFAULT_IS_SMOOTH_FADE_OUT] ?: true,
+            weekendDays = preferences[WEEKEND_DAYS]?.map { it.toInt() }?.toSet() ?: setOf(6, 7),
+            defaultSoundUri = preferences[DEFAULT_SOUND_URI],
+            aiPersona = preferences[AI_PERSONA] ?: "COACH",
+            promptCoach = preferences[PROMPT_COACH] ?: "The Drill Sergeant. You are loud, demanding, and use military terms. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
+            promptComedian = preferences[PROMPT_COMEDIAN] ?: "The Sarcastic Best Friend. You are witty, dry, and slightly ironic. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
+            promptZen = preferences[PROMPT_ZEN] ?: "The Zen Master. You are calm, poetic, and mindful. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
+            promptHypeman = preferences[PROMPT_HYPEMAN] ?: "The Hype-Man. You are extremely energetic, use caps, and over-the-top excited. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text."
+        )
+    }
+
+    suspend fun saveAlarmDefaults(defaults: AlarmDefaults) {
+        context.dataStore.edit { preferences ->
+            preferences[DEFAULT_SNOOZE_DURATION] = defaults.snoozeDurationMinutes
+            preferences[DEFAULT_IS_GENTLE_WAKE] = defaults.isGentleWake
+            preferences[DEFAULT_CRESCENDO_DURATION] = defaults.crescendoDurationMinutes
+            preferences[DEFAULT_MATH_DIFFICULTY] = defaults.mathDifficulty
+            preferences[DEFAULT_MATH_PROBLEM_COUNT] = defaults.mathProblemCount
+            preferences[DEFAULT_MATH_GRADUAL_DIFFICULTY] = defaults.mathGraduallyIncreaseDifficulty
+            preferences[DEFAULT_SMILE_TO_DISMISS] = defaults.smileToDismiss
+            preferences[DEFAULT_SMILE_FALLBACK_METHOD] = defaults.smileFallbackMethod
+            preferences[DEFAULT_IS_BRIEFING_ENABLED] = defaults.isBriefingEnabled
+            preferences[BRIEFING_INCLUDE_WEATHER] = defaults.briefingIncludeWeather
+            preferences[BRIEFING_INCLUDE_CALENDAR] = defaults.briefingIncludeCalendar
+            preferences[BRIEFING_INCLUDE_FACT] = defaults.briefingIncludeFact
+            preferences[BRIEFING_USER_NAME] = defaults.briefingUserName
+            preferences[DEFAULT_IS_TTS_ENABLED] = defaults.isTtsEnabled
+            preferences[DEFAULT_IS_VIBRATE] = defaults.isVibrate
+            preferences[DEFAULT_IS_SOUND_ENABLED] = defaults.isSoundEnabled
+            preferences[DEFAULT_IS_EVASIVE_SNOOZE] = defaults.isEvasiveSnooze
+            preferences[DEFAULT_EVASIVE_SNOOZES_BEFORE] = defaults.evasiveSnoozesBeforeMoving
+            preferences[DEFAULT_IS_SMOOTH_FADE_OUT] = defaults.isSmoothFadeOut
+            preferences[WEEKEND_DAYS] = defaults.weekendDays.map { it.toString() }.toSet()
+            defaults.defaultSoundUri?.let { preferences[DEFAULT_SOUND_URI] = it } ?: preferences.remove(DEFAULT_SOUND_URI)
+            preferences[AI_PERSONA] = defaults.aiPersona
+            preferences[PROMPT_COACH] = defaults.promptCoach
+            preferences[PROMPT_COMEDIAN] = defaults.promptComedian
+            preferences[PROMPT_ZEN] = defaults.promptZen
+            preferences[PROMPT_HYPEMAN] = defaults.promptHypeman
+        }
+    }
+
+    // ---------- Onboarding ----------
+    val onboardingCompleteFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[ONBOARDING_COMPLETE] ?: false
+    }
+
+    suspend fun saveOnboardingComplete() {
+        context.dataStore.edit { settings ->
+            settings[ONBOARDING_COMPLETE] = true
+        }
+    }
+
+    // ---------- Confirmed Buddy Numbers ----------
+    val confirmedBuddyNumbersFlow: Flow<Set<String>> = context.dataStore.data.map { preferences ->
+        preferences[CONFIRMED_BUDDY_NUMBERS] ?: emptySet()
+    }
+
+    suspend fun addConfirmedBuddyNumber(phoneNumber: String) {
+        context.dataStore.edit { settings ->
+            val current = settings[CONFIRMED_BUDDY_NUMBERS] ?: emptySet()
+            settings[CONFIRMED_BUDDY_NUMBERS] = current + phoneNumber
+        }
+    }
+
+    suspend fun removeConfirmedBuddyNumber(phoneNumber: String) {
+        context.dataStore.edit { settings ->
+            val current = settings[CONFIRMED_BUDDY_NUMBERS] ?: emptySet()
+            settings[CONFIRMED_BUDDY_NUMBERS] = current - phoneNumber
+        }
+    }
+}

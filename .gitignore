@@ -1,0 +1,54 @@
+# Android / Gradle
+*.iml
+**/.gradle/
+.gradle/
+/local.properties
+**/.idea/
+.idea/
+.DS_Store
+**/build/
+build/
+/captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Kotlin errors log
+.kotlin/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Kotlin / Java
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# Build logs (scratch files, not source)
+build_log*.txt
+build_log*.log
+build.log
+build_debug.log
+build_error.log
+build_full.log
+build_log_info.txt
+compile_debug.log
+ksp_fail.log
+
+# Heap dumps
+*.hprof
+
+# Python scratch scripts
+*.py
+
+# Android key stores (sensitive)
+*.jks
+*.keystore
+google-services.json
+*.orig
