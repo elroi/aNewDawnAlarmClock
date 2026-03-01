@@ -1206,7 +1206,7 @@ fun IntelligenceHealthView(viewModel: SettingsViewModel, onWipeBrainMemory: () -
                     .clickable {
                         val intent = Intent(
                             Intent.ACTION_VIEW,
-                            Uri.parse("https://elroiluria.github.io/alarmpal-privacy-policy/")
+                            Uri.parse("https://elroi.github.io/aNewDawnAlarmClock/privacy-policy/")
                         )
                         privacyPolicyContext.startActivity(intent)
                     }
