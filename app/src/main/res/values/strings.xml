@@ -3,7 +3,7 @@
 
     <!-- Onboarding - Page 1 -->
     <string name="onboarding_back">Back</string>
-    <string name="onboarding_1_title">Never Wake Up Alone Again</string>
+    <string name="onboarding_1_title">Meet Your New Wake-Up Companion</string>
     <string name="onboarding_1_body">AlarmPal is the alarm that doesn\'t just wake you up — it makes it fun! \nIt briefs you on the weather, your calendar, and a morning mission, all configurable and delivered in the voice of a character you choose.</string>
     <string name="onboarding_1_primary">Let\'s Go</string>
 
@@ -13,6 +13,12 @@
     <string name="onboarding_2_primary">Grant Permissions</string>
     <string name="onboarding_2_continue">Continue</string>
     <string name="onboarding_2_secondary">Skip (Not Recommended)</string>
+    <string name="onboarding_2_permission_notifications">Notifications</string>
+    <string name="onboarding_2_desc_notifications">Required to alert you when your alarm goes off.</string>
+    <string name="onboarding_2_permission_alarms">Exact Alarms</string>
+    <string name="onboarding_2_desc_alarms">Allows the app to wake you up at the precise minute you set.</string>
+    <string name="onboarding_2_permission_overlay">Screen Overlay</string>
+    <string name="onboarding_2_desc_overlay">Lets the alarm appear over other apps or on your lock screen.</string>
 
     <!-- Onboarding - Page 3 (Briefing) -->
     <string name="onboarding_3_title">Personas &amp; Personalization</string>
@@ -23,7 +29,11 @@
     <string name="onboarding_3_primary">Enable Briefing Features</string>
     <string name="onboarding_3_continue">Continue</string>
     <string name="onboarding_3_setup_progress">Briefing Setup: %1$d / %2$d</string>
-    <string name="onboarding_3_setup_instructions">Grant permissions to personalize your wake-up</string>
+    <string name="onboarding_3_setup_instructions">Grant permissions for your morning briefing</string>
+    <string name="onboarding_3_permission_calendar">Calendar Events</string>
+    <string name="onboarding_3_desc_calendar">Briefs you on today\'s schedule so you know what\'s ahead.</string>
+    <string name="onboarding_3_permission_weather">Weather Report</string>
+    <string name="onboarding_3_desc_weather">Tells you if you need an umbrella or sunglasses (requires location).</string>
     <string name="onboarding_3_setup_complete">Personalization ready! Click below to continue.</string>
     <string name="onboarding_3_secondary">Skip for Now</string>
 
@@ -40,6 +50,18 @@
     <string name="onboarding_5_body">Create your first alarm with the + button.\n\nChoose a wake-up persona in Settings to personalise your morning briefing.</string>
     <string name="onboarding_5_primary">Create My First Alarm</string>
     <string name="onboarding_5_secondary">Maybe Later</string>
+    <!-- Alarm Wizard -->
+    <string name="wizard_1_title">When should we wake you?</string>
+    <string name="wizard_1_body">Pick a time and the days you want this alarm to repeat.</string>
+    <string name="wizard_2_title">Choose Your Wake-Up Style</string>
+    <string name="wizard_2_body">Select a persona to deliver your morning briefing and choose which features to include.</string>
+    <string name="wizard_3_title">The Anti-Snooze Guard 🛡️</string>
+    <string name="wizard_3_body">Assign an accountability buddy and set a challenge (Math or Face) to ensure you\'re truly awake.</string>
+    <string name="wizard_3_face_title">Face Challenge</string>
+    <string name="wizard_3_face_desc">Smile to dismiss - use AI to verify you\'re awake</string>
+    <string name="wizard_4_title">Almost Done!</string>
+    <string name="wizard_4_body">Give your alarm a label and review your settings before we set it in stone.</string>
+    <string name="wizard_btn_finish">Set Alarm ⏰</string>
 
     <!-- Common -->
     <string name="btn_cancel">Cancel</string>

@@ -80,4 +80,10 @@ class AlarmViewModel @Inject constructor(
             settingsManager.addGlobalBuddy(name, phoneNumber)
         }
     }
+
+    fun updateAlarmDefaults(defaults: AlarmDefaults) {
+        viewModelScope.launch {
+            settingsManager.saveAlarmDefaults(defaults)
+        }
+    }
 }

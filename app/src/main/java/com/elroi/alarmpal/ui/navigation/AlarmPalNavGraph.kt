@@ -20,7 +20,7 @@ fun AlarmPalNavGraph(
             OnboardingScreen(
                 onFinished = { createAlarm ->
                     if (createAlarm) {
-                        navController.navigate(Screen.AlarmDetail.createRoute("")) {
+                        navController.navigate(Screen.AlarmWizard.route) {
                             popUpTo(Screen.Onboarding.route) { inclusive = true }
                         }
                     } else {
@@ -35,7 +35,11 @@ fun AlarmPalNavGraph(
         composable(Screen.AlarmList.route) {
             AlarmListScreen(
                 onNavigateToDetail = { alarmId ->
-                    navController.navigate(Screen.AlarmDetail.createRoute(alarmId ?: ""))
+                    if (alarmId == "WIZARD") {
+                        navController.navigate(Screen.AlarmWizard.route)
+                    } else {
+                        navController.navigate(Screen.AlarmDetail.createRoute(alarmId ?: ""))
+                    }
                 },
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
@@ -51,6 +55,15 @@ fun AlarmPalNavGraph(
             com.elroi.alarmpal.ui.screen.alarm.AlarmDetailScreen(
                 alarmId = alarmId,
                 onNavigateUp = { navController.navigateUp() }
+            )
+        }
+
+        composable(Screen.AlarmWizard.route) {
+            com.elroi.alarmpal.ui.screen.alarm.AlarmCreationWizard(
+                onFinished = { 
+                    navController.popBackStack(Screen.AlarmList.route, false)
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 

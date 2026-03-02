@@ -92,7 +92,7 @@ fun AlarmListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { onNavigateToDetail(null) }) {
+            FloatingActionButton(onClick = { onNavigateToDetail("WIZARD") }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Alarm")
             }
         }

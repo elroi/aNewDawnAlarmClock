@@ -351,7 +351,7 @@ fun OnboardingScreen(
                             onSecondary = null
                         }
                         1 -> {
-                            emoji = "🔔"
+                            emoji = "🛡️"
                             title = stringResource(R.string.onboarding_2_title)
                             body = stringResource(R.string.onboarding_2_body)
                             primaryLabel = if (grantedCount == totalCount && totalCount > 0)
@@ -368,13 +368,48 @@ fun OnboardingScreen(
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
                                         Text(
-                                            text = "Setup Progress: $grantedCount / $totalCount",
+                                            text = "Core Setup: $grantedCount / $totalCount",
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary,
                                             textAlign = TextAlign.Center
                                         )
-                                        Spacer(modifier = Modifier.height(12.dp))
+
+                                        Spacer(modifier = Modifier.height(16.dp))
+
+                                        // Permission Checklist
+                                        val notifGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                                        } else true
+
+                                        val alarmGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                            context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
+                                        } else true
+
+                                        val overlayGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                            Settings.canDrawOverlays(context)
+                                        } else true
+
+                                        PermissionStatusRow(
+                                            icon = "🔔",
+                                            title = stringResource(R.string.onboarding_2_permission_notifications),
+                                            desc = stringResource(R.string.onboarding_2_desc_notifications),
+                                            isGranted = notifGranted
+                                        )
+                                        PermissionStatusRow(
+                                            icon = "⏰",
+                                            title = stringResource(R.string.onboarding_2_permission_alarms),
+                                            desc = stringResource(R.string.onboarding_2_desc_alarms),
+                                            isGranted = alarmGranted
+                                        )
+                                        PermissionStatusRow(
+                                            icon = "🪟",
+                                            title = stringResource(R.string.onboarding_2_permission_overlay),
+                                            desc = stringResource(R.string.onboarding_2_desc_overlay),
+                                            isGranted = overlayGranted
+                                        )
+
+                                        Spacer(modifier = Modifier.height(16.dp))
                                         
                                         Box(
                                             modifier = Modifier
@@ -449,7 +484,7 @@ fun OnboardingScreen(
                                         )
                                     }
 
-                                    // Briefing Setup Progress Bar
+                                    // Briefing Setup Progress Card
                                     Column(
                                         modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
                                         horizontalAlignment = Alignment.CenterHorizontally
@@ -461,7 +496,27 @@ fun OnboardingScreen(
                                             color = MaterialTheme.colorScheme.primary,
                                             textAlign = TextAlign.Center
                                         )
-                                        Spacer(modifier = Modifier.height(12.dp))
+                                        
+                                        Spacer(modifier = Modifier.height(16.dp))
+
+                                        // Permission Checklist
+                                        val calGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                                        val locGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+                                        PermissionStatusRow(
+                                            icon = "📅",
+                                            title = stringResource(R.string.onboarding_3_permission_calendar),
+                                            desc = stringResource(R.string.onboarding_3_desc_calendar),
+                                            isGranted = calGranted
+                                        )
+                                        PermissionStatusRow(
+                                            icon = "🌤️",
+                                            title = stringResource(R.string.onboarding_3_permission_weather),
+                                            desc = stringResource(R.string.onboarding_3_desc_weather),
+                                            isGranted = locGranted
+                                        )
+
+                                        Spacer(modifier = Modifier.height(16.dp))
                                         
                                         Box(
                                             modifier = Modifier
@@ -600,6 +655,38 @@ fun OnboardingScreen(
 
                     Spacer(modifier = Modifier.height(40.dp))
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PermissionStatusRow(icon: String, title: String, desc: String, isGranted: Boolean) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = if (isGranted) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(icon, fontSize = 24.sp, modifier = Modifier.padding(end = 12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    desc,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isGranted) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (isGranted) {
+                Text("✅", fontSize = 16.sp)
             }
         }
     }
