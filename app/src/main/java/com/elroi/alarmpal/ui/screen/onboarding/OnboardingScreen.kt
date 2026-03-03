@@ -40,18 +40,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.zIndex
 import com.elroi.alarmpal.ui.viewmodel.OnboardingViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun OnboardingScreen(
+    isReplay: Boolean = false,
     onFinished: (Boolean) -> Unit,
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
+    var showInternalSplash by remember { mutableStateOf(isReplay) }
+
+    LaunchedEffect(isReplay) {
+        if (isReplay) {
+            kotlinx.coroutines.delay(1500)
+            showInternalSplash = false
+        }
+    }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var currentPage by remember { mutableStateOf(0) }
-    val totalPages = 5
+    val totalPages = 6
 
     val userName by viewModel.userName.collectAsState()
 
@@ -66,7 +76,11 @@ fun OnboardingScreen(
 
     val locationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { /* no-op */ }
+    ) { isGranted -> 
+        if (isGranted) {
+            viewModel.setAutoLocation(true)
+        }
+    }
 
     val smsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -142,6 +156,10 @@ fun OnboardingScreen(
                 currentPage++
             }
             3 -> {
+                // AI Features Page - no special permissions needed
+                currentPage++
+            }
+            4 -> {
                 // Buddy Page
                 val smsGranted = ContextCompat.checkSelfPermission(
                     context, Manifest.permission.SEND_SMS
@@ -246,6 +264,26 @@ fun OnboardingScreen(
                 )
             }
     ) {
+        // Internal Splash Screen for Replay
+        androidx.compose.animation.AnimatedVisibility(
+            visible = showInternalSplash,
+            enter = androidx.compose.animation.fadeIn(),
+            exit = androidx.compose.animation.fadeOut(),
+            modifier = Modifier.zIndex(10f)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFFFF8E1)), // LemurLoop Cream
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(id = R.mipmap.ic_launcher_foreground),
+                    contentDescription = "LemurLoop Logo",
+                    modifier = Modifier.size(192.dp)
+                )
+            }
+        }
         // Back Button
         if (currentPage > 0) {
             TextButton(
@@ -534,6 +572,15 @@ fun OnboardingScreen(
                             }
                         }
                         3 -> {
+                            emoji = "🧠"
+                            title = stringResource(R.string.onboarding_ai_title)
+                            body = stringResource(R.string.onboarding_ai_body)
+                            primaryLabel = stringResource(R.string.onboarding_ai_primary)
+                            onPrimary = { handleNext() }
+                            secondaryLabel = null
+                            onSecondary = null
+                        }
+                        4 -> {
                             emoji = "🤝"
                             title = stringResource(R.string.onboarding_4_title)
                             body = stringResource(R.string.onboarding_4_body)

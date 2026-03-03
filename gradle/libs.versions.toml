@@ -21,7 +21,9 @@ generativeai = "0.9.0"
 mediapipeTasksGenai = "0.10.14"
 googleServices = "4.4.4"
 firebaseBom = "34.9.0"
+coreSplashscreen = "1.0.1"
 [libraries]
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

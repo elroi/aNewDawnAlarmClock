@@ -10,10 +10,26 @@ import androidx.compose.ui.Modifier
 import com.elroi.alarmpal.ui.theme.LemurLoopTheme
 import dagger.hilt.android.AndroidEntryPoint
 
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+        var keepSplash = true
+        splashScreen.setKeepOnScreenCondition { keepSplash }
+        
         super.onCreate(savedInstanceState)
+        
+        // Artificial delay for branding
+        lifecycleScope.launch {
+            delay(1500)
+            keepSplash = false
+        }
+        
         setContent {
             LemurLoopTheme {
                 Surface(

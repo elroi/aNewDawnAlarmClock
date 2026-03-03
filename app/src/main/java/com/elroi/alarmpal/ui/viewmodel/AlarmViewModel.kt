@@ -41,6 +41,12 @@ class AlarmViewModel @Inject constructor(
     val alarmCreationStyle: StateFlow<String> = settingsManager.alarmCreationStyleFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "WIZARD")
 
+    val isCloudAiEnabled: StateFlow<Boolean> = settingsManager.isCloudAiEnabledFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val geminiApiKey: StateFlow<String> = settingsManager.geminiApiKeyFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
+
     fun toggleAlarm(alarm: Alarm, isEnabled: Boolean) {
         viewModelScope.launch {
             repository.updateAlarmToggle(alarm.id, isEnabled)
@@ -93,6 +99,24 @@ class AlarmViewModel @Inject constructor(
     fun updateAlarmCreationStyle(style: String) {
         viewModelScope.launch {
             settingsManager.saveAlarmCreationStyle(style)
+        }
+    }
+
+    fun updateCloudAiEnabled(isEnabled: Boolean) {
+        viewModelScope.launch {
+            settingsManager.saveIsCloudAiEnabled(isEnabled)
+        }
+    }
+
+    fun updateGeminiApiKey(apiKey: String) {
+        viewModelScope.launch {
+            settingsManager.saveGeminiApiKey(apiKey.trim())
+        }
+    }
+
+    fun updateUserName(name: String) {
+        viewModelScope.launch {
+            settingsManager.saveBriefingUserName(name.trim())
         }
     }
 }

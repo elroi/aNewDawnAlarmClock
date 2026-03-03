@@ -16,8 +16,13 @@ fun LemurLoopNavGraph(
         navController = navController,
         startDestination = startDestination
     ) {
-        composable(Screen.Onboarding.route) {
+        composable(
+            route = Screen.Onboarding.route,
+            arguments = Screen.Onboarding.arguments
+        ) { backStackEntry ->
+            val isReplay = backStackEntry.arguments?.getBoolean("isReplay") ?: false
             OnboardingScreen(
+                isReplay = isReplay,
                 onFinished = { createAlarm ->
                     if (createAlarm) {
                         // First establishing the AlarmList as the base of the backstack
@@ -88,12 +93,19 @@ fun LemurLoopNavGraph(
             com.elroi.alarmpal.ui.screen.settings.SettingsScreen(
                 onNavigateUp = { navController.navigateUp() },
                 onNavigateToHelp = { navController.navigate(Screen.Help.route) },
-                onNavigateToOnboarding = { navController.navigate(Screen.Onboarding.route) }
+                onNavigateToOnboarding = { navController.navigate(Screen.Onboarding.createRoute(isReplay = true)) },
+                onNavigateToAbout = { navController.navigate(Screen.About.route) }
             )
         }
 
         composable(Screen.Help.route) {
             com.elroi.alarmpal.ui.screen.settings.HelpScreen(navController = navController)
+        }
+
+        composable(Screen.About.route) {
+            com.elroi.alarmpal.ui.screen.settings.AboutScreen(
+                onNavigateBack = { navController.navigateUp() }
+            )
         }
     }
 }

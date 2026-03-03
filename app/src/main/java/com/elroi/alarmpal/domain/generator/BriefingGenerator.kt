@@ -43,7 +43,7 @@ class BriefingGenerator @Inject constructor(
             val postLockCached = getCachedBriefing()
             if (postLockCached != null) return@withLock postLockCached
             
-            BriefingStateManager.updateStatus("Activating Alarm-Pal brain cells...")
+            BriefingStateManager.updateStatus("Activating LemurLoop brain cells...")
             val generated = generateFullBriefing()
             
             if (generated != null && generated.isNotBlank() && !generated.startsWith("ERROR:")) {

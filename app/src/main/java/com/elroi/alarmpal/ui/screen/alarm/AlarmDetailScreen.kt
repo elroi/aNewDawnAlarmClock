@@ -128,6 +128,9 @@ fun AlarmDetailScreen(
         initialState != null && current != initialState
     }
 
+    val geminiApiKey by viewModel.geminiApiKey.collectAsState()
+    var showCloudAiSetupDialog by remember { mutableStateOf(false) }
+
     // Preview — launches AlarmActivity in preview mode + plays audio
     // When AlarmActivity is dismissed, the MediaPlayer stops automatically
     val context = LocalContext.current
@@ -859,8 +862,8 @@ fun AlarmDetailScreen(
                 }
             }
 
-            // ── 🧠 Alarm-Pal Intelligence card ──────────────────────────
-            SectionCard(emoji = "🧠", title = "Alarm-Pal Intelligence") {
+            // ── 🧠 LemurLoop Intelligence card ──────────────────────────
+            SectionCard(emoji = "🧠", title = "LemurLoop Intelligence") {
                 // Wake-up Briefing (Gen AI element)
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -871,7 +874,13 @@ fun AlarmDetailScreen(
                         Text("Wake-up Briefing", fontWeight = FontWeight.Medium)
                         Text("Personalized AI briefing when you wake up", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Switch(checked = isBriefingEnabled, onCheckedChange = { isBriefingEnabled = it })
+                    Switch(checked = isBriefingEnabled, onCheckedChange = { enabled -> 
+                        if (enabled && geminiApiKey.isBlank()) {
+                            showCloudAiSetupDialog = true
+                        } else {
+                            isBriefingEnabled = enabled
+                        }
+                    })
                 }
                 
                 AnimatedVisibility(visible = isBriefingEnabled, enter = expandVertically(), exit = shrinkVertically()) {
@@ -903,7 +912,10 @@ fun AlarmDetailScreen(
                     contactName           = buddyName,
                     onContactNameChange   = { buddyName = it },
                     userName              = buddyUserName,
-                    onUserNameChange      = { buddyUserName = it },
+                    onUserNameChange      = { 
+                        buddyUserName = it 
+                        viewModel.updateUserName(it)
+                    },
                     customMessage         = buddyMessage,
                     onCustomMessageChange = { buddyMessage = it },
                     alertDelayMinutes     = buddyAlertDelay,
@@ -1009,6 +1021,19 @@ fun AlarmDetailScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showTimePicker = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showCloudAiSetupDialog) {
+        CloudAiSetupDialog(
+            currentKey = geminiApiKey,
+            onDismiss = { showCloudAiSetupDialog = false },
+            onSave = { key ->
+                viewModel.updateGeminiApiKey(key)
+                viewModel.updateCloudAiEnabled(true)
+                isBriefingEnabled = true
+                showCloudAiSetupDialog = false
             }
         )
     }
@@ -1135,6 +1160,15 @@ fun AccountabilityBuddyContent(
     ) { result ->
         hasSmsPermissions = result.values.all { it }
         if (hasSmsPermissions) onEnabledChange(true)
+    }
+
+    var cooldownRemaining by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(cooldownRemaining) {
+        if (cooldownRemaining > 0) {
+            kotlinx.coroutines.delay(1000)
+            cooldownRemaining--
+        }
     }
 
     // SMS rationale dialog
@@ -1373,24 +1407,32 @@ fun AccountabilityBuddyContent(
                         if (!isConfirmed && pendingCode == null) {
                             OutlinedButton(
                                 onClick = {
-                                    onSendOptInRequest(phoneNumber, contactName, userName)
-                                    // Auto-save to global buddies if not already there
-                                    if (globalBuddies.none { it.endsWith("|$phoneNumber") }) {
-                                        onAddGlobalBuddy(contactName.ifBlank { "Buddy" }, phoneNumber)
+                                    if (cooldownRemaining == 0) {
+                                        onSendOptInRequest(phoneNumber, contactName, userName)
+                                        // Auto-save to global buddies if not already there
+                                        if (globalBuddies.none { it.endsWith("|$phoneNumber") }) {
+                                            onAddGlobalBuddy(contactName.ifBlank { "Buddy" }, phoneNumber)
+                                        }
+                                        cooldownRemaining = 30
                                     }
                                 },
+                                enabled = cooldownRemaining == 0,
                                 modifier = Modifier.padding(start = 12.dp)
                             ) {
-                                Text(stringResource(R.string.btn_add))
+                                Text(if (cooldownRemaining > 0) "Wait ${cooldownRemaining}s" else stringResource(R.string.btn_add))
                             }
                         } else if (pendingCode != null) {
                             TextButton(
                                 onClick = {
-                                    onSendOptInRequest(phoneNumber, contactName, userName)
+                                    if (cooldownRemaining == 0) {
+                                        onSendOptInRequest(phoneNumber, contactName, userName)
+                                        cooldownRemaining = 30
+                                    }
                                 },
+                                enabled = cooldownRemaining == 0,
                                 modifier = Modifier.padding(start = 12.dp)
                             ) {
-                                Text(stringResource(R.string.alarm_detail_buddy_btn_resend), style = MaterialTheme.typography.labelMedium)
+                                Text(if (cooldownRemaining > 0) "Wait ${cooldownRemaining}s" else stringResource(R.string.alarm_detail_buddy_btn_resend), style = MaterialTheme.typography.labelMedium)
                             }
                         }
                     }

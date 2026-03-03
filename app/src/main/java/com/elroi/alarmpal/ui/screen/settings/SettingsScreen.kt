@@ -61,6 +61,7 @@ fun SettingsScreen(
     onNavigateUp: () -> Unit,
     onNavigateToHelp: () -> Unit = {},
     onNavigateToOnboarding: () -> Unit = {},
+    onNavigateToAbout: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val location by viewModel.location.collectAsState()
@@ -603,7 +604,7 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            Text("Alarm-Pal Personality 🎭", style = MaterialTheme.typography.titleLarge)
+            Text("LemurLoop Personality 🎭", style = MaterialTheme.typography.titleLarge)
             Text(
                 "Choose how your AI companion should wake you up.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -653,6 +654,39 @@ fun SettingsScreen(
                         )
                         Text(
                             stringResource(R.string.settings_onboarding_replay_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Icon(
+                        Icons.Default.ArrowForward,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .clickable { onNavigateToAbout() }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.settings_about_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "App version, legal, and credits",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

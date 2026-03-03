@@ -46,4 +46,10 @@ class OnboardingViewModel @Inject constructor(
             settingsManager.saveBriefingUserName(name)
         }
     }
+
+    fun setAutoLocation(isAuto: Boolean) {
+        viewModelScope.launch {
+            settingsManager.saveIsAutoLocation(isAuto)
+        }
+    }
 }

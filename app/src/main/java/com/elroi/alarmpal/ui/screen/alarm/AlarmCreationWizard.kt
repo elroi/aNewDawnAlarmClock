@@ -45,7 +45,10 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import com.elroi.alarmpal.util.AlarmUtils
 import kotlinx.coroutines.launch
-
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.window.Dialog
+import android.content.Intent
+import android.net.Uri
 @Immutable
 data class Persona(val id: String, val title: String, val emoji: String)
 
@@ -67,6 +70,7 @@ fun AlarmCreationWizard(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val defaultSettings by viewModel.defaultAlarmSettings.collectAsState()
+    val isCloudAiEnabled by viewModel.isCloudAiEnabled.collectAsState()
     var currentPage by remember { mutableIntStateOf(0) }
     val totalPages = 5
 
@@ -103,14 +107,19 @@ fun AlarmCreationWizard(
     var buddyAlertAfterMinutes by remember { mutableIntStateOf(5) }
     
     var showBuddyDialog by remember { mutableStateOf(false) }
+    var showCloudAiSetupDialog by remember { mutableStateOf(false) }
     val globalBuddies by viewModel.globalBuddies.collectAsState()
     val confirmedNumbers by viewModel.confirmedBuddyNumbers.collectAsState()
     val pendingCodes by viewModel.pendingBuddyCodes.collectAsState()
+    val geminiApiKey by viewModel.geminiApiKey.collectAsState()
 
-    // Sync persona with defaults when loaded
+    // Sync persona and name with defaults when loaded
     LaunchedEffect(defaultSettings) {
         if (selectedPersona == "COACH" && defaultSettings.aiPersona != "COACH") {
             selectedPersona = defaultSettings.aiPersona
+        }
+        if (buddyUserName.isBlank() && defaultSettings.briefingUserName.isNotBlank()) {
+            buddyUserName = defaultSettings.briefingUserName
         }
     }
 
@@ -132,6 +141,9 @@ fun AlarmCreationWizard(
         if (currentPage < totalPages - 1) {
             currentPage++
         } else {
+            if (buddyPhone.isNotBlank() && globalBuddies.none { it.endsWith("|$buddyPhone") }) {
+                viewModel.addGlobalBuddy(buddyName.ifBlank { "Buddy" }, buddyPhone)
+            }
             val newAlarm = Alarm(
                 time = selectedTime,
                 daysOfWeek = selectedDays,
@@ -260,7 +272,13 @@ fun AlarmCreationWizard(
                         0 -> TimeAndDayStep(timePickerState, selectedDays, { selectedDays = it }, defaultSettings.weekendDays)
                         1 -> WakeUpStyleStep(
                             selectedPersona, { selectedPersona = it },
-                            isBriefingEnabled, { isBriefingEnabled = it },
+                            isBriefingEnabled, { enabled -> 
+                                if (enabled && geminiApiKey.isBlank()) {
+                                    showCloudAiSetupDialog = true
+                                } else {
+                                    isBriefingEnabled = enabled
+                                }
+                            },
                             isTtsEnabled, { isTtsEnabled = it },
                             isSoundEnabled, { isSoundEnabled = it },
                             isVibrate, { isVibrate = it },
@@ -269,7 +287,14 @@ fun AlarmCreationWizard(
                             snoozeDurationMinutes, { snoozeDurationMinutes = it },
                             isSmoothFadeOut, { isSmoothFadeOut = it },
                             isEvasiveSnooze, { isEvasiveSnooze = it },
-                            evasiveSnoozesBeforeMoving, { evasiveSnoozesBeforeMoving = it }
+                            evasiveSnoozesBeforeMoving, { evasiveSnoozesBeforeMoving = it },
+                            isCloudAiEnabled, { enabled -> 
+                                if (enabled && geminiApiKey.isBlank()) {
+                                    showCloudAiSetupDialog = true
+                                } else {
+                                    viewModel.updateCloudAiEnabled(enabled)
+                                }
+                            }
                         )
                         2 -> WakeUpChallengeStep(
                             selectedMathDifficulty, { selectedMathDifficulty = it },
@@ -284,9 +309,17 @@ fun AlarmCreationWizard(
                         3 -> WakeUpBuddyStep(
                             buddyName, buddyPhone, buddyMessage, { buddyMessage = it },
                             buddyAlertAfterMinutes, { buddyAlertAfterMinutes = it },
-                            buddyUserName, { buddyUserName = it },
+                            buddyUserName, { 
+                                buddyUserName = it
+                                viewModel.updateUserName(it)
+                            },
                             confirmedNumbers, pendingCodes, { showBuddyDialog = true },
-                            onSendInvite = { viewModel.sendBuddyOptInRequest(buddyPhone, buddyName, buddyUserName) }
+                            onSendInvite = { 
+                                viewModel.sendBuddyOptInRequest(buddyPhone, buddyName, buddyUserName)
+                                if (globalBuddies.none { it.endsWith("|$buddyPhone") }) {
+                                    viewModel.addGlobalBuddy(buddyName.ifBlank { "Buddy" }, buddyPhone)
+                                }
+                            }
                         )
                         4 -> FinalSummaryStep(
                             selectedTime, selectedDays, alarmLabel, { alarmLabel = it },
@@ -320,6 +353,19 @@ fun AlarmCreationWizard(
                 showBuddyDialog = false
             },
             globalBuddies = globalBuddies
+        )
+    }
+
+    if (showCloudAiSetupDialog) {
+        CloudAiSetupDialog(
+            currentKey = geminiApiKey,
+            onDismiss = { showCloudAiSetupDialog = false },
+            onSave = { key ->
+                viewModel.updateGeminiApiKey(key)
+                viewModel.updateCloudAiEnabled(true)
+                isBriefingEnabled = true
+                showCloudAiSetupDialog = false
+            }
         )
     }
 }
@@ -429,7 +475,9 @@ fun WakeUpStyleStep(
     isEvasiveSnooze: Boolean,
     onEvasiveSnoozeChange: (Boolean) -> Unit,
     evasiveSnoozesBefore: Int,
-    onEvasiveSnoozesBeforeChange: (Int) -> Unit
+    onEvasiveSnoozesBeforeChange: (Int) -> Unit,
+    isCloudAiEnabled: Boolean,
+    onCloudAiEnabledChange: (Boolean) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         Text(
@@ -508,6 +556,42 @@ fun WakeUpStyleStep(
         }
 
         WizardAdvancedSection {
+            // AI Engine Section
+            Surface(
+                color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Text(text = "🧠", fontSize = 18.sp)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = stringResource(R.string.wizard_2_ai_engine),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+
+            FeatureToggle(
+                title = stringResource(R.string.wizard_2_cloud_ai_title),
+                desc = stringResource(R.string.wizard_2_cloud_ai_desc),
+                checked = isCloudAiEnabled,
+                onCheckedChange = onCloudAiEnabledChange,
+                icon = "☁️",
+                enabled = isBriefingEnabled
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider(modifier = Modifier.padding(bottom = 24.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
             // Slick Audio Section
             Surface(
                 color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
@@ -833,11 +917,21 @@ fun WakeUpBuddyStep(
     val isConfirmed = confirmedNumbers.contains(buddyPhone)
     val isPending = pendingCodes.any { it.endsWith(":$buddyPhone") }
 
+    var cooldownRemaining by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(cooldownRemaining) {
+        if (cooldownRemaining > 0) {
+            kotlinx.coroutines.delay(1000)
+            cooldownRemaining--
+        }
+    }
+
     val smsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             onSendInvite()
+            cooldownRemaining = 30
         }
     }
 
@@ -893,12 +987,16 @@ fun WakeUpBuddyStep(
             
             Button(
                 onClick = {
-                    if (ContextCompat.checkSelfPermission(context, smsPermission) == PackageManager.PERMISSION_GRANTED) {
-                        onSendInvite()
-                    } else {
-                        smsLauncher.launch(smsPermission)
+                    if (cooldownRemaining == 0) {
+                        if (ContextCompat.checkSelfPermission(context, smsPermission) == PackageManager.PERMISSION_GRANTED) {
+                            onSendInvite()
+                            cooldownRemaining = 30
+                        } else {
+                            smsLauncher.launch(smsPermission)
+                        }
                     }
                 },
+                enabled = cooldownRemaining == 0,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isPending) MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.secondary
@@ -911,7 +1009,8 @@ fun WakeUpBuddyStep(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (isPending) stringResource(R.string.wizard_4_btn_resend) 
+                    text = if (cooldownRemaining > 0) "Wait ${cooldownRemaining}s"
+                           else if (isPending) stringResource(R.string.wizard_4_btn_resend) 
                            else stringResource(R.string.wizard_4_btn_invite)
                 )
             }
@@ -964,10 +1063,10 @@ fun WakeUpBuddyStep(
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
                 value = buddyUserName,
-                onValueChange = onBuddyUserNameChange,
-                placeholder = { Text(stringResource(R.string.wizard_4_user_name_hint)) },
+                onValueChange = { onBuddyUserNameChange(it) },
+                label = { Text(stringResource(R.string.wizard_4_your_name_label)) },
+                placeholder = { Text(stringResource(R.string.wizard_4_your_name_hint)) },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
                 singleLine = true
             )
         }
@@ -1253,4 +1352,62 @@ fun ChallengeCard(
             }
         }
     }
+}
+
+@Composable
+fun CloudAiSetupDialog(
+    currentKey: String,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+    var keyInput by remember { mutableStateOf(currentKey) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(stringResource(R.string.wizard_cloud_ai_setup_title), fontWeight = FontWeight.Bold)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(
+                    stringResource(R.string.wizard_cloud_ai_setup_body),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                
+                OutlinedTextField(
+                    value = keyInput,
+                    onValueChange = { keyInput = it },
+                    label = { Text(stringResource(R.string.wizard_cloud_ai_setup_hint)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = PasswordVisualTransformation()
+                )
+                
+                Button(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://aistudio.google.com/app/apikey"))
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.filledTonalButtonColors()
+                ) {
+                    Text(stringResource(R.string.wizard_cloud_ai_setup_get_key))
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSave(keyInput) },
+                enabled = keyInput.isNotBlank()
+            ) {
+                Text(stringResource(R.string.wizard_cloud_ai_setup_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.btn_cancel))
+            }
+        }
+    )
 }
