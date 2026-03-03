@@ -166,488 +166,44 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("General Settings", style = MaterialTheme.typography.titleLarge)
-
-            val creationStyle by viewModel.alarmCreationStyle.collectAsState()
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text("Alarm Creation Style", style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    "Choose between a simple one-step setup or a guided wizard.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    val styles = listOf("WIZARD", "SIMPLE")
-                    styles.forEachIndexed { index, style ->
-                        SegmentedButton(
-                            shape = SegmentedButtonDefaults.itemShape(index = index, count = styles.size),
-                            onClick = { viewModel.updateAlarmCreationStyle(style) },
-                            selected = creationStyle == style,
-                            label = {
-                                Text(if (style == "WIZARD") "Guided Wizard" else "Simple Setup", fontSize = 12.sp)
-                            }
+            // About LemurLoop
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .clickable { onNavigateToAbout() }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.settings_about_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "App version, legal, and credits",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                }
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            Text("Wake-Up Briefing", style = MaterialTheme.typography.titleLarge)
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text("Auto-detect Location", style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        "Use device location for weather",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Icon(
+                        Icons.Default.ArrowForward,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                }
-                Switch(
-                    checked = isAutoLocation,
-                    onCheckedChange = { checked -> 
-                        if (checked) {
-                            val hasPermission = ContextCompat.checkSelfPermission(
-                                context,
-                                android.Manifest.permission.ACCESS_COARSE_LOCATION
-                            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-                            
-                            if (hasPermission) {
-                                viewModel.updateIsAutoLocation(true, context)
-                            } else {
-                                locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
-                            }
-                        } else {
-                            viewModel.updateIsAutoLocation(false)
-                        }
-                    }
-                )
-            }
-
-            OutlinedTextField(
-                value = location,
-                onValueChange = { viewModel.updateLocation(it) },
-                label = { Text(if (isAutoLocation) "Auto-detected city" else "Weather Location (e.g., New York, NY)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                enabled = !isAutoLocation
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text("Temperature Unit", style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        if (isCelsius) "Celsius (°C)" else "Fahrenheit (°F)",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(
-                    checked = isCelsius,
-                    onCheckedChange = { viewModel.updateIsCelsius(it) }
-                )
-            }
-
-            val userName by viewModel.userName.collectAsState()
-            OutlinedTextField(
-                value = userName,
-                onValueChange = { viewModel.updateUserName(it) },
-                label = { Text(stringResource(R.string.onboarding_3_label_name)) },
-                placeholder = { Text(stringResource(R.string.onboarding_3_hint_name)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            Text("Weekdays & Weekend", style = MaterialTheme.typography.titleLarge)
-
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text("Select your weekend days", style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    "Unselected days will be considered weekdays",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                val days = listOf(
-                    7 to "Su", 1 to "Mo", 2 to "Tu", 3 to "We",
-                    4 to "Th", 5 to "Fr", 6 to "Sa"
-                )
-                
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    days.forEach { (isoIndex, label) ->
-                        val isWeekend = alarmDefaults.weekendDays.contains(isoIndex)
-                        Surface(
-                            selected = isWeekend,
-                            onClick = {
-                                val newWeekend = if (isWeekend) alarmDefaults.weekendDays - isoIndex else alarmDefaults.weekendDays + isoIndex
-                                viewModel.updateAlarmDefaults(alarmDefaults.copy(weekendDays = newWeekend))
-                            },
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (isWeekend) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
-                            border = if (isWeekend) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                            modifier = Modifier.weight(1f).height(36.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                Text(
-                                    text = label,
-                                    fontSize = 11.sp,
-                                    color = if (isWeekend) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
                 }
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            Text("New Alarm Defaults", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // --- AUDIO & VIBRATION ---
-            Text("Audio & Vibration", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(vertical = 8.dp))
-            
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Default Alarm Sound", fontWeight = FontWeight.Medium)
-                    Text("New alarms will have sound enabled by default", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(checked = alarmDefaults.isSoundEnabled, onCheckedChange = { 
-                    viewModel.updateAlarmDefaults(alarmDefaults.copy(isSoundEnabled = it)) 
-                })
-            }
-
-            AnimatedVisibility(visible = alarmDefaults.isSoundEnabled, enter = expandVertically(), exit = shrinkVertically()) {
-                Surface(
-                    onClick = {
-                        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
-                            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
-                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
-                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
-                            val existingUri = alarmDefaults.defaultSoundUri?.let { Uri.parse(it) } ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                            putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, existingUri)
-                        }
-                        ringtonePickerLauncher.launch(intent)
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text("Sound Source", fontWeight = FontWeight.Medium)
-                            Text(defaultSoundName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                        }
-                    }
-                }
-            }
-            
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Vibrate", fontWeight = FontWeight.Medium)
-                }
-                Switch(checked = alarmDefaults.isVibrate, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isVibrate = it)) })
-            }
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Smooth Fade-Out", fontWeight = FontWeight.Medium)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        SettingHelpIcon(title = "Smooth Fade-Out", content = "Gradually reduces the alarm volume over 1 second when you snooze or dismiss, instead of an abrupt stop.")
-                    }
-                    Text("Gradually fade sound on dismiss or snooze", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(checked = alarmDefaults.isSmoothFadeOut, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isSmoothFadeOut = it)) })
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Gentle Wake", fontWeight = FontWeight.Medium)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        SettingHelpIcon(title = "Gentle Wake", content = "Starts the alarm volume at 0% and gradually increases to your maximum settings over the specified duration. Great for a peaceful start to the day.")
-                    }
-                    Text("Volume crescendo", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(checked = alarmDefaults.isGentleWake, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isGentleWake = it)) })
-            }
-            
-            AnimatedVisibility(visible = alarmDefaults.isGentleWake, enter = expandVertically(), exit = shrinkVertically()) {
-                Column(modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Fade-in duration", style = MaterialTheme.typography.bodyMedium)
-                        Text(if (alarmDefaults.crescendoDurationMinutes == 0) "Instant" else "${alarmDefaults.crescendoDurationMinutes} min", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                    }
-                    Slider(
-                        value = alarmDefaults.crescendoDurationMinutes.toFloat(),
-                        onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(crescendoDurationMinutes = it.toInt())) },
-                        valueRange = 0f..20f,
-                        steps = 19
-                    )
-                }
-            }
-            
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-
-            // --- SNOOZE & DISMISSAL ---
-            Text("Snooze & Dismissal", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(vertical = 8.dp))
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Snooze duration", fontWeight = FontWeight.Medium)
-                Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.secondaryContainer) {
-                    Text(
-                        text = if (alarmDefaults.snoozeDurationMinutes == 0) "Off" else "${alarmDefaults.snoozeDurationMinutes} min",
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-            }
-            Slider(
-                value = alarmDefaults.snoozeDurationMinutes.toFloat(),
-                onValueChange = { 
-                    val newSnooze = it.toInt()
-                    viewModel.updateAlarmDefaults(alarmDefaults.copy(
-                        snoozeDurationMinutes = newSnooze,
-                        isEvasiveSnooze = alarmDefaults.isEvasiveSnooze 
-                    ))
-                },
-                valueRange = 1f..60f,
-                steps = 58
-            )
-
-            AnimatedVisibility(visible = alarmDefaults.snoozeDurationMinutes > 0, enter = expandVertically(), exit = shrinkVertically()) {
-                Column {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Evasive Snooze", fontWeight = FontWeight.Medium)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                SettingHelpIcon(title = "Evasive Snooze", content = "The Snooze button will randomly jump around the screen each time you try to press it, forcing you to pay attention.")
-                            }
-                        }
-                        Switch(checked = alarmDefaults.isEvasiveSnooze, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isEvasiveSnooze = it)) })
-                    }
-                    
-                    AnimatedVisibility(visible = alarmDefaults.isEvasiveSnooze, enter = expandVertically(), exit = shrinkVertically()) {
-                        Column(modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Starts moving after", style = MaterialTheme.typography.bodyMedium)
-                                Text(if (alarmDefaults.evasiveSnoozesBeforeMoving == 0) "1st snooze" else "${alarmDefaults.evasiveSnoozesBeforeMoving + 1} snoozes", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                            }
-                            Slider(
-                                value = alarmDefaults.evasiveSnoozesBeforeMoving.toFloat(),
-                                onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(evasiveSnoozesBeforeMoving = it.toInt())) },
-                                valueRange = 0f..5f,
-                                steps = 4
-                            )
-                        }
-                    }
-                }
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Math challenge", fontWeight = FontWeight.Medium)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        SettingHelpIcon(title = "Math Challenge", content = "Requires you to solve math problems before you can dismiss the alarm. You can adjust the difficulty and the number of problems.")
-                    }
-                    Text("Solve a problem to dismiss", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(
-                    checked = alarmDefaults.mathDifficulty > 0,
-                    onCheckedChange = {
-                        val newDiff = if (!it) 0 else if (alarmDefaults.mathDifficulty == 0) 1 else alarmDefaults.mathDifficulty
-                        viewModel.updateAlarmDefaults(alarmDefaults.copy(mathDifficulty = newDiff))
-                    }
-                )
-            }
-
-            AnimatedVisibility(visible = alarmDefaults.mathDifficulty > 0 && !alarmDefaults.smileToDismiss, enter = expandVertically(), exit = shrinkVertically()) {
-                Column {
-                    MathDifficultyChips(
-                        difficulty = alarmDefaults.mathDifficulty,
-                        onSelected = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathDifficulty = it)) }
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("Number of problems: ${alarmDefaults.mathProblemCount}", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Slider(
-                        value = alarmDefaults.mathProblemCount.toFloat(),
-                        onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathProblemCount = it.toInt())) },
-                        valueRange = 1f..10f,
-                        steps = 8
-                    )
-                    
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Gradually Increase Difficulty", fontWeight = FontWeight.Medium)
-                            Text("Starts easy and gets harder up to your selected level", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Switch(
-                            checked = alarmDefaults.mathGraduallyIncreaseDifficulty,
-                            onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathGraduallyIncreaseDifficulty = it)) }
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-            
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Face game", fontWeight = FontWeight.Medium)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        SettingHelpIcon(title = "Face Game", content = "Uses the front camera to detect your face and asks you to mimic 3 random facial expressions (like smiling or winking) to prove you're awake.")
-                    }
-                    Text("3 random face challenges to dismiss", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(
-                    checked = alarmDefaults.smileToDismiss,
-                    onCheckedChange = { 
-                        val newMath = if (it && alarmDefaults.smileFallbackMethod == "MATH" && alarmDefaults.mathDifficulty == 0) 1 else alarmDefaults.mathDifficulty
-                        viewModel.updateAlarmDefaults(alarmDefaults.copy(smileToDismiss = it, mathDifficulty = newMath))
-                    }
-                )
-            }
-            
-            AnimatedVisibility(visible = alarmDefaults.smileToDismiss, enter = expandVertically(), exit = shrinkVertically()) {
-                Column(modifier = Modifier.padding(top = 8.dp)) {
-                    Text(
-                        text = "Fallback Method",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = "If face detection fails, use this method:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                        val fallbackOptions = listOf("NONE", "MATH")
-                        fallbackOptions.forEachIndexed { index, option ->
-                            SegmentedButton(
-                                shape = SegmentedButtonDefaults.itemShape(index = index, count = fallbackOptions.size),
-                                onClick = { viewModel.updateAlarmDefaults(alarmDefaults.copy(smileFallbackMethod = option)) },
-                                selected = alarmDefaults.smileFallbackMethod == option,
-                                label = { Text(if (option == "NONE") "No Fallback" else "Math Challenge", fontSize = 12.sp) }
-                            )
-                        }
-                    }
-                }
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-
-            // --- SMART FEATURES ---
-            Text("Smart Features", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(vertical = 8.dp))
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Wake-Up Briefing", fontWeight = FontWeight.Medium)
-                    Text("Personalized AI briefing when you wake up", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(checked = alarmDefaults.isBriefingEnabled, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isBriefingEnabled = it)) })
-            }
-
-            AnimatedVisibility(visible = alarmDefaults.isBriefingEnabled, enter = expandVertically(), exit = shrinkVertically()) {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp, horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Read Aloud (TTS)", fontWeight = FontWeight.Medium)
-                            Text("Speak the briefing out loud", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Switch(checked = alarmDefaults.isTtsEnabled, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isTtsEnabled = it)) })
-                    }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Briefing Content", fontWeight = FontWeight.Medium, modifier = Modifier.padding(horizontal = 16.dp))
-                    
-                    OutlinedTextField(
-                        value = alarmDefaults.briefingUserName,
-                        onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingUserName = it.take(20))) },
-                        label = { Text("Your Name (Optional)") },
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                        singleLine = true
-                    )
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Include Weather", style = MaterialTheme.typography.bodyMedium)
-                        Switch(checked = alarmDefaults.briefingIncludeWeather, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingIncludeWeather = it)) })
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Include Calendar Events", style = MaterialTheme.typography.bodyMedium)
-                        Switch(checked = alarmDefaults.briefingIncludeCalendar, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingIncludeCalendar = it)) })
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Include Daily Fun Fact", style = MaterialTheme.typography.bodyMedium)
-                        Switch(checked = alarmDefaults.briefingIncludeFact, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingIncludeFact = it)) })
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
+            BuddyManagementSection(viewModel)
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -971,6 +527,8 @@ fun SettingsScreen(
                 }
             }
 
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
             var showWipeConfirmationLocal by remember { mutableStateOf(false) }
             if (showWipeConfirmationLocal) {
                 AlertDialog(
@@ -994,6 +552,36 @@ fun SettingsScreen(
                     }
                 )
             }
+
+            Text("General Settings", style = MaterialTheme.typography.titleLarge)
+
+            val creationStyle by viewModel.alarmCreationStyle.collectAsState()
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text("Alarm Creation Style", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    "Choose between a simple one-step setup or a guided wizard.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    val styles = listOf("WIZARD", "SIMPLE")
+                    styles.forEachIndexed { index, style ->
+                        SegmentedButton(
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = styles.size),
+                            onClick = { viewModel.updateAlarmCreationStyle(style) },
+                            selected = creationStyle == style,
+                            label = {
+                                Text(if (style == "WIZARD") "Guided Wizard" else "Simple Setup", fontSize = 12.sp)
+                            }
+                        )
+                    }
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            IntelligenceHealthView(viewModel, onWipeBrainMemory = { showWipeConfirmationLocal = true })
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -1052,13 +640,268 @@ fun SettingsScreen(
                 )
             }
 
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            Text("New Alarm Defaults", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- AUDIO & VIBRATION ---
+            Text("Audio & Vibration", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(vertical = 8.dp))
+            
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Default Alarm Sound", fontWeight = FontWeight.Medium)
+                    Text("New alarms will have sound enabled by default", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(checked = alarmDefaults.isSoundEnabled, onCheckedChange = { 
+                    viewModel.updateAlarmDefaults(alarmDefaults.copy(isSoundEnabled = it)) 
+                })
+            }
+
+            AnimatedVisibility(visible = alarmDefaults.isSoundEnabled, enter = expandVertically(), exit = shrinkVertically()) {
+                Surface(
+                    onClick = {
+                        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
+                            val existingUri = alarmDefaults.defaultSoundUri?.let { Uri.parse(it) } ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, existingUri)
+                        }
+                        ringtonePickerLauncher.launch(intent)
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Sound Source", fontWeight = FontWeight.Medium)
+                            Text(defaultSoundName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
+            }
+            
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Vibrate", fontWeight = FontWeight.Medium)
+                }
+                Switch(checked = alarmDefaults.isVibrate, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isVibrate = it)) })
+            }
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Smooth Fade-Out", fontWeight = FontWeight.Medium)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        SettingHelpIcon(title = "Smooth Fade-Out", content = "Gradually reduces the alarm volume over 1 second when you snooze or dismiss, instead of an abrupt stop.")
+                    }
+                    Text("Gradually fade sound on dismiss or snooze", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(checked = alarmDefaults.isSmoothFadeOut, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isSmoothFadeOut = it)) })
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Gentle Wake", fontWeight = FontWeight.Medium)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        SettingHelpIcon(title = "Gentle Wake", content = "Starts the alarm volume at 0% and gradually increases to your maximum settings over the specified duration. Great for a peaceful start to the day.")
+                    }
+                    Text("Volume crescendo", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(checked = alarmDefaults.isGentleWake, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isGentleWake = it)) })
+            }
+            
+            AnimatedVisibility(visible = alarmDefaults.isGentleWake, enter = expandVertically(), exit = shrinkVertically()) {
+                Column(modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Fade-in duration", style = MaterialTheme.typography.bodyMedium)
+                        Text(if (alarmDefaults.crescendoDurationMinutes == 0) "Instant" else "${alarmDefaults.crescendoDurationMinutes} min", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    }
+                    Slider(
+                        value = alarmDefaults.crescendoDurationMinutes.toFloat(),
+                        onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(crescendoDurationMinutes = it.toInt())) },
+                        valueRange = 0f..20f,
+                        steps = 19
+                    )
+                }
+            }
+            
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
-            BuddyManagementSection(viewModel)
+            // --- SNOOZE & DISMISSAL ---
+            Text("Snooze & Dismissal", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(vertical = 8.dp))
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Snooze duration", fontWeight = FontWeight.Medium)
+                Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.secondaryContainer) {
+                    Text(
+                        text = if (alarmDefaults.snoozeDurationMinutes == 0) "Off" else "${alarmDefaults.snoozeDurationMinutes} min",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+            Slider(
+                value = alarmDefaults.snoozeDurationMinutes.toFloat(),
+                onValueChange = { 
+                    val newSnooze = it.toInt()
+                    viewModel.updateAlarmDefaults(alarmDefaults.copy(
+                        snoozeDurationMinutes = newSnooze,
+                        isEvasiveSnooze = alarmDefaults.isEvasiveSnooze 
+                    ))
+                },
+                valueRange = 1f..60f,
+                steps = 58
+            )
 
-            IntelligenceHealthView(viewModel, onWipeBrainMemory = { showWipeConfirmationLocal = true })
+            AnimatedVisibility(visible = alarmDefaults.snoozeDurationMinutes > 0, enter = expandVertically(), exit = shrinkVertically()) {
+                Column {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Evasive Snooze", fontWeight = FontWeight.Medium)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                SettingHelpIcon(title = "Evasive Snooze", content = "The Snooze button will randomly jump around the screen each time you try to press it, forcing you to pay attention.")
+                            }
+                        }
+                        Switch(checked = alarmDefaults.isEvasiveSnooze, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isEvasiveSnooze = it)) })
+                    }
+                    
+                    AnimatedVisibility(visible = alarmDefaults.isEvasiveSnooze, enter = expandVertically(), exit = shrinkVertically()) {
+                        Column(modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Starts moving after", style = MaterialTheme.typography.bodyMedium)
+                                Text(if (alarmDefaults.evasiveSnoozesBeforeMoving == 0) "1st snooze" else "${alarmDefaults.evasiveSnoozesBeforeMoving + 1} snoozes", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                            }
+                            Slider(
+                                value = alarmDefaults.evasiveSnoozesBeforeMoving.toFloat(),
+                                onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(evasiveSnoozesBeforeMoving = it.toInt())) },
+                                valueRange = 0f..5f,
+                                steps = 4
+                            )
+                        }
+                    }
+                }
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Math challenge", fontWeight = FontWeight.Medium)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        SettingHelpIcon(title = "Math Challenge", content = "Requires you to solve math problems before you can dismiss the alarm. You can adjust the difficulty and the number of problems.")
+                    }
+                    Text("Solve a problem to dismiss", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(
+                    checked = alarmDefaults.mathDifficulty > 0,
+                    onCheckedChange = {
+                        val newDiff = if (!it) 0 else if (alarmDefaults.mathDifficulty == 0) 1 else alarmDefaults.mathDifficulty
+                        viewModel.updateAlarmDefaults(alarmDefaults.copy(mathDifficulty = newDiff))
+                    }
+                )
+            }
+
+            AnimatedVisibility(visible = alarmDefaults.mathDifficulty > 0 && !alarmDefaults.smileToDismiss, enter = expandVertically(), exit = shrinkVertically()) {
+                Column {
+                    MathDifficultyChips(
+                        difficulty = alarmDefaults.mathDifficulty,
+                        onSelected = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathDifficulty = it)) }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text("Number of problems: ${alarmDefaults.mathProblemCount}", style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Slider(
+                        value = alarmDefaults.mathProblemCount.toFloat(),
+                        onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathProblemCount = it.toInt())) },
+                        valueRange = 1f..10f,
+                        steps = 8
+                    )
+                    
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Gradually Increase Difficulty", fontWeight = FontWeight.Medium)
+                            Text("Starts easy and gets harder up to your selected level", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Switch(
+                            checked = alarmDefaults.mathGraduallyIncreaseDifficulty,
+                            onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathGraduallyIncreaseDifficulty = it)) }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+            
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Face game", fontWeight = FontWeight.Medium)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        SettingHelpIcon(title = "Face Game", content = "Uses the front camera to detect your face and asks you to mimic 3 random facial expressions (like smiling or winking) to prove you're awake.")
+                    }
+                    Text("3 random face challenges to dismiss", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(
+                    checked = alarmDefaults.smileToDismiss,
+                    onCheckedChange = { 
+                        val newMath = if (it && alarmDefaults.smileFallbackMethod == "MATH" && alarmDefaults.mathDifficulty == 0) 1 else alarmDefaults.mathDifficulty
+                        viewModel.updateAlarmDefaults(alarmDefaults.copy(smileToDismiss = it, mathDifficulty = newMath))
+                    }
+                )
+            }
+            
+            AnimatedVisibility(visible = alarmDefaults.smileToDismiss, enter = expandVertically(), exit = shrinkVertically()) {
+                Column(modifier = Modifier.padding(top = 8.dp)) {
+                    Text(
+                        text = "Fallback Method",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "If face detection fails, use this method:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        val fallbackOptions = listOf("NONE", "MATH")
+                        fallbackOptions.forEachIndexed { index, option ->
+                            SegmentedButton(
+                                shape = SegmentedButtonDefaults.itemShape(index = index, count = fallbackOptions.size),
+                                onClick = { viewModel.updateAlarmDefaults(alarmDefaults.copy(smileFallbackMethod = option)) },
+                                selected = alarmDefaults.smileFallbackMethod == option,
+                                label = { Text(if (option == "NONE") "No Fallback" else "Math Challenge", fontSize = 12.sp) }
+                            )
+                        }
+                    }
+                }
+            }
+
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -1137,38 +980,170 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
+
+
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            Text("Wake-Up Briefing", style = MaterialTheme.typography.titleLarge)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier
-                        .clickable { onNavigateToAbout() }
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            stringResource(R.string.settings_about_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            "App version, legal, and credits",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Icon(
-                        Icons.Default.ArrowForward,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                Column {
+                    Text("Auto-detect Location", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Use device location for weather",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                Switch(
+                    checked = isAutoLocation,
+                    onCheckedChange = { checked -> 
+                        if (checked) {
+                            val hasPermission = ContextCompat.checkSelfPermission(
+                                context,
+                                android.Manifest.permission.ACCESS_COARSE_LOCATION
+                            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                            
+                            if (hasPermission) {
+                                viewModel.updateIsAutoLocation(true, context)
+                            } else {
+                                locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                            }
+                        } else {
+                            viewModel.updateIsAutoLocation(false)
+                        }
+                    }
+                )
             }
 
+            OutlinedTextField(
+                value = location,
+                onValueChange = { viewModel.updateLocation(it) },
+                label = { Text(if (isAutoLocation) "Auto-detected city" else "Weather Location (e.g., New York, NY)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                enabled = !isAutoLocation
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("Temperature Unit", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        if (isCelsius) "Celsius (°C)" else "Fahrenheit (°F)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = isCelsius,
+                    onCheckedChange = { viewModel.updateIsCelsius(it) }
+                )
+            }
+
+            val userName by viewModel.userName.collectAsState()
+            OutlinedTextField(
+                value = userName,
+                onValueChange = { viewModel.updateUserName(it) },
+                label = { Text(stringResource(R.string.onboarding_3_label_name)) },
+                placeholder = { Text(stringResource(R.string.onboarding_3_hint_name)) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+
+            Text("AI Content", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Read Aloud (TTS)", fontWeight = FontWeight.Medium)
+                    Text("Speak the briefing out loud", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(checked = alarmDefaults.isTtsEnabled, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isTtsEnabled = it)) })
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Include Weather", style = MaterialTheme.typography.bodyMedium)
+                Switch(checked = alarmDefaults.briefingIncludeWeather, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingIncludeWeather = it)) })
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Include Calendar Events", style = MaterialTheme.typography.bodyMedium)
+                Switch(checked = alarmDefaults.briefingIncludeCalendar, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingIncludeCalendar = it)) })
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Include Daily Fun Fact", style = MaterialTheme.typography.bodyMedium)
+                Switch(checked = alarmDefaults.briefingIncludeFact, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingIncludeFact = it)) })
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            Text("Weekdays & Weekend", style = MaterialTheme.typography.titleLarge)
+
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text("Select your weekend days", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    "Unselected days will be considered weekdays",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                val days = listOf(
+                    7 to "Su", 1 to "Mo", 2 to "Tu", 3 to "We",
+                    4 to "Th", 5 to "Fr", 6 to "Sa"
+                )
+                
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    days.forEach { (isoIndex, label) ->
+                        val isWeekend = alarmDefaults.weekendDays.contains(isoIndex)
+                        Surface(
+                            selected = isWeekend,
+                            onClick = {
+                                val newWeekend = if (isWeekend) alarmDefaults.weekendDays - isoIndex else alarmDefaults.weekendDays + isoIndex
+                                viewModel.updateAlarmDefaults(alarmDefaults.copy(weekendDays = newWeekend))
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isWeekend) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+                            border = if (isWeekend) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                            modifier = Modifier.weight(1f).height(36.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                Text(
+                                    text = label,
+                                    fontSize = 11.sp,
+                                    color = if (isWeekend) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
         }
