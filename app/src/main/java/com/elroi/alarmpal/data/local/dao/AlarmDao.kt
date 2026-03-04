@@ -22,4 +22,7 @@ interface AlarmDao {
 
     @Delete
     suspend fun deleteAlarm(alarm: AlarmEntity)
+
+    @Query("DELETE FROM alarms")
+    suspend fun deleteAllAlarms()
 }

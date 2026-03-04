@@ -28,7 +28,9 @@ class SettingsViewModel @Inject constructor(
     private val settingsManager: SettingsManager,
     private val geminiManager: GeminiManager,
     private val briefingGenerator: com.elroi.alarmpal.domain.generator.BriefingGenerator,
-    private val localLLMManager: com.elroi.alarmpal.domain.manager.LocalLLMManager
+    private val localLLMManager: com.elroi.alarmpal.domain.manager.LocalLLMManager,
+    private val database: com.elroi.alarmpal.data.local.AppDatabase,
+    private val ttsManager: com.elroi.alarmpal.domain.manager.TextToSpeechManager
 ) : ViewModel() {
 
     private val _draftLocation = MutableStateFlow("")
@@ -334,8 +336,12 @@ class SettingsViewModel @Inject constructor(
             _isBriefingGenerating.value = true
             // Save draft settings so the test briefing reflects the current UI state immediately
             performSaveSettings() 
-            briefingGenerator.refreshBriefing()
+            val script = briefingGenerator.refreshBriefing()
             _isBriefingGenerating.value = false
+            
+            if (!script.isNullOrBlank()) {
+                ttsManager.speak(script)
+            }
         }
     }
 
@@ -433,6 +439,22 @@ class SettingsViewModel @Inject constructor(
                 status = "waiting:pending",
                 error = null
             )
+        }
+    }
+
+    fun wipeAllData() {
+        viewModelScope.launch(Dispatchers.IO) {
+            // 1. Clear Databases
+            database.alarmDao().deleteAllAlarms()
+            database.sleepRecordDao().deleteAllRecords()
+            
+            // 2. Clear DataStore
+            settingsManager.clearAll()
+            
+            // 3. Reset local memory (optional but good)
+            _draftLocation.value = "New York"
+            _draftIsCelsius.value = true
+            _draftIsAutoLocation.value = false
         }
     }
 }

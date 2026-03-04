@@ -16,4 +16,7 @@ interface SleepRecordDao {
 
     @Query("SELECT AVG(snoozeCount) FROM sleep_records")
     fun getAverageSnoozeCount(): Flow<Float?>
+
+    @Query("DELETE FROM sleep_records")
+    suspend fun deleteAllRecords()
 }

@@ -90,6 +90,7 @@ data class AlarmDefaults(
     val weekendDays: Set<Int> = setOf(6, 7), // ISO indices: 1=Mon...6=Sat, 7=Sun
     val defaultSoundUri: String? = null,
     val aiPersona: String = "COACH", // Options: COACH, COMEDIAN, ZEN, HYPEMAN, SURPRISE
+    val aiPersonaSurprise: Boolean = false,
     val promptCoach: String = "The Drill Sergeant. You are loud, demanding, and use military terms. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
     val promptComedian: String = "The Sarcastic Best Friend. You are witty, dry, and slightly ironic. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
     val promptZen: String = "The Zen Master. You are calm, poetic, and mindful. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
@@ -140,6 +141,7 @@ class SettingsManager @Inject constructor(
         val PREFERRED_AI_TIER = stringPreferencesKey("preferred_ai_tier") // STANDARD, ADVANCED, CLOUD
         val AI_FALLBACK_ORDER = stringPreferencesKey("ai_fallback_order") // CLOUD_THEN_LOCAL, LOCAL_THEN_CLOUD
         val AI_PERSONA = stringPreferencesKey("ai_persona")
+        val AI_PERSONA_SURPRISE = booleanPreferencesKey("ai_persona_surprise")
         val PROMPT_COACH = stringPreferencesKey("prompt_coach")
         val PROMPT_COMEDIAN = stringPreferencesKey("prompt_comedian")
         val PROMPT_ZEN = stringPreferencesKey("prompt_zen")
@@ -314,6 +316,7 @@ class SettingsManager @Inject constructor(
             weekendDays = preferences[WEEKEND_DAYS]?.map { it.toInt() }?.toSet() ?: setOf(6, 7),
             defaultSoundUri = preferences[DEFAULT_SOUND_URI],
             aiPersona = preferences[AI_PERSONA] ?: "COACH",
+            aiPersonaSurprise = preferences[AI_PERSONA_SURPRISE] ?: false,
             promptCoach = preferences[PROMPT_COACH] ?: "The Drill Sergeant. You are loud, demanding, and use military terms. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
             promptComedian = preferences[PROMPT_COMEDIAN] ?: "The Sarcastic Best Friend. You are witty, dry, and slightly ironic. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
             promptZen = preferences[PROMPT_ZEN] ?: "The Zen Master. You are calm, poetic, and mindful. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
@@ -348,6 +351,7 @@ class SettingsManager @Inject constructor(
             preferences[WEEKEND_DAYS] = defaults.weekendDays.map { it.toString() }.toSet()
             defaults.defaultSoundUri?.let { preferences[DEFAULT_SOUND_URI] = it } ?: preferences.remove(DEFAULT_SOUND_URI)
             preferences[AI_PERSONA] = defaults.aiPersona
+            preferences[AI_PERSONA_SURPRISE] = defaults.aiPersonaSurprise
             preferences[PROMPT_COACH] = defaults.promptCoach
             preferences[PROMPT_COMEDIAN] = defaults.promptComedian
             preferences[PROMPT_ZEN] = defaults.promptZen
@@ -450,5 +454,9 @@ class SettingsManager @Inject constructor(
 
     fun getBuddyNameFromGlobalList(phoneNumber: String): Flow<String?> = globalBuddiesFlow.map { buddies ->
         buddies.find { it.split("|").getOrNull(1) == phoneNumber }?.split("|")?.getOrNull(0)
+    }
+
+    suspend fun clearAll() {
+        context.dataStore.edit { it.clear() }
     }
 }
