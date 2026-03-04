@@ -69,6 +69,7 @@ fun SettingsScreen(
     val isAutoLocation by viewModel.isAutoLocation.collectAsState()
     val alarmDefaults by viewModel.alarmDefaults.collectAsState()
     val hasChanges by viewModel.hasChanges.collectAsState()
+    val expandedSections by viewModel.expandedSections.collectAsState()
     var showDiscardDialog by remember { mutableStateOf(false) }
     var defaultSoundName by remember { mutableStateOf("Default") }
     val context = LocalContext.current
@@ -180,544 +181,537 @@ fun SettingsScreen(
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // --- 1. MORNING EXPERIENCE 🌅 ---
-            Text(
-                text = "Morning Experience 🌅",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(vertical = 12.dp)
-            )
+            ExpandableSection(
+                icon = Icons.Default.WbSunny,
+                title = "Morning Experience 🌅",
+                isExpanded = expandedSections.contains("MORNING"),
+                onToggle = { viewModel.toggleSection("MORNING") }
+            ) {
+                // A. Companion Personality
+                Text(
+                    "Companion Personality",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                val personas = listOf(
+                    PersonaInfo("COACH", "🪖 The Drill Sergeant", "No excuses. Just results. Move it!", Icons.Default.Info, MaterialTheme.colorScheme.error),
+                    PersonaInfo("COMEDIAN", "🤡 The Sarcastic Friend", "Oh, you're awake. Impressive.", Icons.Default.Face, MaterialTheme.colorScheme.secondary),
+                    PersonaInfo("ZEN", "🧘 The Zen Master", "Breathe. The day awaits, mindfully.", Icons.Default.Favorite, MaterialTheme.colorScheme.tertiary),
+                    PersonaInfo("HYPEMAN", "🚀 The Hype-Man", "Let's gooo! You got this!", Icons.Default.Notifications, MaterialTheme.colorScheme.primary),
+                    PersonaInfo("SURPRISE", "🎲 Surprise Me", "A random personality every morning.", Icons.Default.Refresh, MaterialTheme.colorScheme.outline)
+                )
 
-            // A. Companion Personality
-            Text(
-                "Companion Personality",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            val personas = listOf(
-                PersonaInfo("COACH", "🪖 The Drill Sergeant", "No excuses. Just results. Move it!", Icons.Default.Info, MaterialTheme.colorScheme.error),
-                PersonaInfo("COMEDIAN", "🤡 The Sarcastic Friend", "Oh, you're awake. Impressive.", Icons.Default.Face, MaterialTheme.colorScheme.secondary),
-                PersonaInfo("ZEN", "🧘 The Zen Master", "Breathe. The day awaits, mindfully.", Icons.Default.Favorite, MaterialTheme.colorScheme.tertiary),
-                PersonaInfo("HYPEMAN", "🚀 The Hype-Man", "Let's gooo! You got this!", Icons.Default.Notifications, MaterialTheme.colorScheme.primary),
-                PersonaInfo("SURPRISE", "🎲 Surprise Me", "A random personality every morning.", Icons.Default.Refresh, MaterialTheme.colorScheme.outline)
-            )
-
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                personas.filter { it.id != "SURPRISE" }.forEach { persona ->
-                    PersonaCard(
-                        info = persona,
-                        isSelected = alarmDefaults.aiPersona == persona.id && !alarmDefaults.aiPersonaSurprise,
-                        onClick = {
-                            viewModel.updateAlarmDefaults(alarmDefaults.copy(aiPersona = persona.id, aiPersonaSurprise = false))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    personas.filter { it.id != "SURPRISE" }.forEach { persona ->
+                        PersonaCard(
+                            info = persona,
+                            isSelected = alarmDefaults.aiPersona == persona.id && !alarmDefaults.aiPersonaSurprise,
+                            onClick = {
+                                viewModel.updateAlarmDefaults(alarmDefaults.copy(aiPersona = persona.id, aiPersonaSurprise = false))
+                            }
+                        )
+                    }
+                    
+                    // Surprise Mode Toggle (as a card)
+                    Surface(
+                        onClick = { viewModel.updateAlarmDefaults(alarmDefaults.copy(aiPersonaSurprise = !alarmDefaults.aiPersonaSurprise)) },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (alarmDefaults.aiPersonaSurprise) MaterialTheme.colorScheme.outline.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface,
+                        border = if (alarmDefaults.aiPersonaSurprise) BorderStroke(2.dp, MaterialTheme.colorScheme.outline) else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.outline)
+                                }
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("🎲 Surprise Me", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text("A random personality every morning.", style = MaterialTheme.typography.bodySmall)
+                            }
+                            Switch(checked = alarmDefaults.aiPersonaSurprise, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(aiPersonaSurprise = it)) })
                         }
-                    )
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // B. Aura Report Content
+                Text(
+                    "Aura Report Content",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
                 
-                // Surprise Mode Toggle (as a card)
                 Surface(
-                    onClick = { viewModel.updateAlarmDefaults(alarmDefaults.copy(aiPersonaSurprise = !alarmDefaults.aiPersonaSurprise)) },
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text("Read Aloud (TTS)", style = MaterialTheme.typography.bodyLarge)
+                            Switch(checked = alarmDefaults.isTtsEnabled, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isTtsEnabled = it)) })
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text("Weather Report", style = MaterialTheme.typography.bodyLarge)
+                            Switch(checked = alarmDefaults.briefingIncludeWeather, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingIncludeWeather = it)) })
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text("Calendar Events", style = MaterialTheme.typography.bodyLarge)
+                            Switch(checked = alarmDefaults.briefingIncludeCalendar, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingIncludeCalendar = it)) })
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text("Fun Fact", style = MaterialTheme.typography.bodyLarge)
+                            Switch(checked = alarmDefaults.briefingIncludeFact, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingIncludeFact = it)) })
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Button(
+                    onClick = { 
+                        viewModel.saveSettings()
+                        viewModel.launchTestBriefing() 
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Preview Briefing")
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // C. Persona Tuning (Collapsed)
+                Surface(
+                    onClick = { showAdvancedExperience = !showAdvancedExperience },
                     shape = RoundedCornerShape(12.dp),
-                    color = if (alarmDefaults.aiPersonaSurprise) MaterialTheme.colorScheme.outline.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface,
-                    border = if (alarmDefaults.aiPersonaSurprise) BorderStroke(2.dp, MaterialTheme.colorScheme.outline) else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.outline)
-                            }
-                        }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("🎲 Surprise Me", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("A random personality every morning.", style = MaterialTheme.typography.bodySmall)
-                        }
-                        Switch(checked = alarmDefaults.aiPersonaSurprise, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(aiPersonaSurprise = it)) })
+                        Text("Advanced Customization", style = MaterialTheme.typography.titleMedium)
+                        Icon(if (showAdvancedExperience) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null)
                     }
                 }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // B. Aura Report Content
-            Text(
-                "Aura Report Content",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("Read Aloud (TTS)", style = MaterialTheme.typography.bodyLarge)
-                        Switch(checked = alarmDefaults.isTtsEnabled, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isTtsEnabled = it)) })
-                    }
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("Weather Report", style = MaterialTheme.typography.bodyLarge)
-                        Switch(checked = alarmDefaults.briefingIncludeWeather, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingIncludeWeather = it)) })
-                    }
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("Calendar Events", style = MaterialTheme.typography.bodyLarge)
-                        Switch(checked = alarmDefaults.briefingIncludeCalendar, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingIncludeCalendar = it)) })
-                    }
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("Fun Fact", style = MaterialTheme.typography.bodyLarge)
-                        Switch(checked = alarmDefaults.briefingIncludeFact, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingIncludeFact = it)) })
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Button(
-                onClick = { 
-                    viewModel.saveSettings()
-                    viewModel.launchTestBriefing() 
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(Icons.Default.PlayArrow, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Preview Briefing")
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // C. Persona Tuning (Collapsed)
-            Surface(
-                onClick = { showAdvancedExperience = !showAdvancedExperience },
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Advanced Customization", style = MaterialTheme.typography.titleMedium)
-                    Icon(if (showAdvancedExperience) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null)
-                }
-            }
-            
-            AnimatedVisibility(visible = showAdvancedExperience) {
-                Column(modifier = Modifier.padding(top = 8.dp)) {
-                    val userName by viewModel.userName.collectAsState()
-                    OutlinedTextField(
-                        value = userName,
-                        onValueChange = { viewModel.updateUserName(it) },
-                        label = { Text(stringResource(R.string.onboarding_3_label_name)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = { showEditPrompts = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Customize Persona Prompts")
-                    }
-                }
-            }
-
-            if (showEditPrompts) {
-                EditPromptsDialog(
-                    alarmDefaults = alarmDefaults,
-                    onDismiss = { showEditPrompts = false },
-                    onSave = { coach, comedian, zen, hypeman ->
-                        viewModel.updateAlarmDefaults(alarmDefaults.copy(
-                            promptCoach = coach,
-                            promptComedian = comedian,
-                            promptZen = zen,
-                            promptHypeman = hypeman
-                        ))
-                        showEditPrompts = false
-                    }
-                )
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-
-            // --- 2. WAKE-UP ENGINE ⚙️ ---
-            Text(
-                text = "Wake-Up Engine ⚙️",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            // A. Alarm Creation
-            Text("Alarm Creation", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-            val creationStyle by viewModel.alarmCreationStyle.collectAsState()
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-                val styles = listOf("WIZARD", "SIMPLE")
-                styles.forEachIndexed { index, style ->
-                    SegmentedButton(
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = styles.size),
-                        onClick = { viewModel.updateAlarmCreationStyle(style) },
-                        selected = creationStyle == style,
-                        label = { Text(if (style == "WIZARD") "Guided Wizard" else "Simple Setup", fontSize = 12.sp) }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // B. Default Alarm Behavior
-            Text("Default Alarm Behavior", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-            
-            // Audio & Haptics
-            Text("Audio & Haptics", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Alarm Sound", style = MaterialTheme.typography.bodyLarge)
-                Switch(checked = alarmDefaults.isSoundEnabled, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isSoundEnabled = it)) })
-            }
-            AnimatedVisibility(visible = alarmDefaults.isSoundEnabled) {
-                Surface(
-                    onClick = {
-                        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
-                            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
-                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
-                            val existingUri = alarmDefaults.defaultSoundUri?.let { Uri.parse(it) } ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                            putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, existingUri)
-                        }
-                        ringtonePickerLauncher.launch(intent)
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-                ) {
-                    Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Sound Source", fontWeight = FontWeight.Medium)
-                        Text(defaultSoundName, color = MaterialTheme.colorScheme.primary)
-                    }
-                }
-            }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Vibrate", style = MaterialTheme.typography.bodyLarge)
-                Switch(checked = alarmDefaults.isVibrate, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isVibrate = it)) })
-            }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                val isOutputEnabled = alarmDefaults.isSoundEnabled || alarmDefaults.isVibrate
-                val isGentleEnabled = alarmDefaults.isGentleWake && isOutputEnabled
                 
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Gentle Wake", style = MaterialTheme.typography.bodyLarge, color = if (isOutputEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f))
-                    if (!isOutputEnabled) {
-                        Text("Requires Sound or Vibrate", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
-                    }
-                }
-                Switch(
-                    checked = isGentleEnabled,
-                    enabled = isOutputEnabled,
-                    onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isGentleWake = it)) }
-                )
-            }
-            AnimatedVisibility(visible = alarmDefaults.isGentleWake && (alarmDefaults.isSoundEnabled || alarmDefaults.isVibrate)) {
-                Column(modifier = Modifier.padding(bottom = 8.dp)) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Crescendo Duration", style = MaterialTheme.typography.bodySmall)
-                        Text("${alarmDefaults.crescendoDurationMinutes} min", color = MaterialTheme.colorScheme.primary)
-                    }
-                    Slider(
-                        value = alarmDefaults.crescendoDurationMinutes.toFloat(),
-                        onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(crescendoDurationMinutes = it.toInt())) },
-                        valueRange = 0f..20f,
-                        steps = 19
-                    )
-                }
-            }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Smooth Fade-Out", style = MaterialTheme.typography.bodyLarge)
-                Switch(checked = alarmDefaults.isSmoothFadeOut, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isSmoothFadeOut = it)) })
-            }
-
-            // Snooze & Dismissal
-            Text("Snooze & Dismissal", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
-            Column {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Snooze Duration", style = MaterialTheme.typography.bodyLarge)
-                    Text(if (alarmDefaults.snoozeDurationMinutes == 0) "Disabled" else "${alarmDefaults.snoozeDurationMinutes} min", color = if (alarmDefaults.snoozeDurationMinutes == 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
-                }
-                Slider(
-                    value = alarmDefaults.snoozeDurationMinutes.toFloat(),
-                    onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(snoozeDurationMinutes = it.toInt())) },
-                    valueRange = 0f..60f,
-                    steps = 59
-                )
-            }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Evasive Snooze", style = MaterialTheme.typography.bodyLarge)
-                Switch(checked = alarmDefaults.isEvasiveSnooze, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isEvasiveSnooze = it)) })
-            }
-            AnimatedVisibility(visible = alarmDefaults.isEvasiveSnooze) {
-                Column(modifier = Modifier.padding(bottom = 8.dp)) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Movement Threshold", style = MaterialTheme.typography.bodySmall)
-                        Text("${alarmDefaults.evasiveSnoozesBeforeMoving + 1} snoozes", color = MaterialTheme.colorScheme.primary)
-                    }
-                    Slider(
-                        value = alarmDefaults.evasiveSnoozesBeforeMoving.toFloat(),
-                        onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(evasiveSnoozesBeforeMoving = it.toInt())) },
-                        valueRange = 0f..5f,
-                        steps = 4
-                    )
-                }
-            }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Math Challenge", style = MaterialTheme.typography.bodyLarge)
-                Switch(
-                    checked = alarmDefaults.mathDifficulty > 0,
-                    onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathDifficulty = if (it) 1 else 0)) }
-                )
-            }
-            AnimatedVisibility(visible = alarmDefaults.mathDifficulty > 0) {
-                Column {
-                    MathDifficultyChips(
-                        difficulty = alarmDefaults.mathDifficulty,
-                        onSelected = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathDifficulty = it)) }
-                    )
-                    Surface(
-                        onClick = { showAdvancedMath = !showAdvancedMath },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        color = Color.Transparent
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Advanced Math Options", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                            Icon(if (showAdvancedMath) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
-                        }
-                    }
-                    AnimatedVisibility(visible = showAdvancedMath) {
-                        Column {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Problem Count", style = MaterialTheme.typography.bodySmall)
-                                Text("${alarmDefaults.mathProblemCount}", color = MaterialTheme.colorScheme.primary)
-                            }
-                            Slider(
-                                value = alarmDefaults.mathProblemCount.toFloat(),
-                                onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathProblemCount = it.toInt())) },
-                                valueRange = 1f..10f,
-                                steps = 8
-                            )
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text("Gradual Difficulty", style = MaterialTheme.typography.bodySmall)
-                                Switch(checked = alarmDefaults.mathGraduallyIncreaseDifficulty, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathGraduallyIncreaseDifficulty = it)) })
-                            }
-                        }
-                    }
-                }
-            }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Face Game", style = MaterialTheme.typography.bodyLarge)
-                Switch(checked = alarmDefaults.smileToDismiss, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(smileToDismiss = it)) })
-            }
-            AnimatedVisibility(visible = alarmDefaults.smileToDismiss) {
-                Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                    Text("Fallback Method", style = MaterialTheme.typography.bodySmall)
-                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                        val options = listOf("NONE", "MATH")
-                        options.forEachIndexed { index, opt ->
-                            SegmentedButton(
-                                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                                onClick = { viewModel.updateAlarmDefaults(alarmDefaults.copy(smileFallbackMethod = opt)) },
-                                selected = alarmDefaults.smileFallbackMethod == opt,
-                                label = { Text(if (opt == "NONE") "None" else "Math", fontSize = 12.sp) }
-                            )
-                        }
-                    }
-                }
-            }
-
-            // C. Day Groups
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Day Groups", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-            val days = listOf(7 to "Su", 1 to "Mo", 2 to "Tu", 3 to "We", 4 to "Th", 5 to "Fr", 6 to "Sa")
-            
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Select your weekend days", style = MaterialTheme.typography.labelMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    days.forEach { (idx, label) ->
-                        val isWeekend = alarmDefaults.weekendDays.contains(idx)
-                        Surface(
-                            onClick = {
-                                val newWeekend = if (isWeekend) alarmDefaults.weekendDays - idx else alarmDefaults.weekendDays + idx
-                                viewModel.updateAlarmDefaults(alarmDefaults.copy(weekendDays = newWeekend))
-                            },
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (isWeekend) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                            modifier = Modifier.weight(1f).height(36.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(label, fontSize = 11.sp, color = if (isWeekend) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                    }
-                }
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-
-            // --- 3. ACCOUNTABILITY 🤝 ---
-            Text(
-                text = "Accountability 🤝",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            BuddyManagementSection(viewModel)
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-
-            // --- 4. INTELLIGENCE (Cloud First) 💡 ---
-            Text(
-                text = "Intelligence 💡",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            
-            Surface(
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-            ) {
-                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        "LemurLoop uses Gemini for creative briefings. All processing happens in the cloud for maximum intelligence.",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-
-            IntelligenceHealthView(viewModel, onWipeBrainMemory)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // API Key
-            Text("API Credentials", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-            val apiKey by viewModel.geminiApiKey.collectAsState()
-            OutlinedTextField(
-                value = apiKey,
-                onValueChange = { viewModel.updateGeminiApiKey(it) },
-                label = { Text("Gemini API Key") },
-                modifier = Modifier.fillMaxWidth(),
-                visualTransformation = PasswordVisualTransformation(),
-                singleLine = true
-            )
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-
-            // --- 5. HELP & SYSTEM ℹ️ ---
-            Text(
-                text = "Help & System ℹ️",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column {
-                    // About
-                    Row(
-                        modifier = Modifier.clickable { onNavigateToAbout() }.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(24.dp))
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("About LemurLoop", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("Version 1.2.0 • Credits • Legal", style = MaterialTheme.typography.bodySmall)
-                        }
-                        Icon(Icons.Default.ArrowForward, contentDescription = null)
-                    }
-                    
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
-                    // Replay Tutorial
-                    Row(
-                        modifier = Modifier.clickable { onNavigateToOnboarding() }.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(24.dp))
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Replay Tutorial", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("See the setup wizard again", style = MaterialTheme.typography.bodySmall)
-                        }
-                        Icon(Icons.Default.ArrowForward, contentDescription = null)
-                    }
-
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
-                    // Privacy Policy
-                    val privacyPolicyContextInside = androidx.compose.ui.platform.LocalContext.current
-                    Row(
-                        modifier = Modifier.clickable { 
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://elroi.github.io/aNewDawnAlarmClock/privacy-policy/"))
-                            privacyPolicyContextInside.startActivity(intent)
-                        }.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(24.dp))
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Privacy Policy", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("Your data stays on device", style = MaterialTheme.typography.bodySmall)
-                        }
-                        Icon(Icons.Default.ArrowForward, contentDescription = null)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Danger Zone
-            var showDangerZone by remember { mutableStateOf(false) }
-            OutlinedButton(
-                onClick = { showDangerZone = !showDangerZone },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
-            ) {
-                Text(if (showDangerZone) "Hide Danger Zone" else "Show Danger Zone")
-            }
-
-            AnimatedVisibility(visible = showDangerZone) {
-                Card(
-                    modifier = Modifier.padding(top = 8.dp).fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Danger Zone", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
-                        Text("Deleting all data is permanent and cannot be undone.", style = MaterialTheme.typography.bodySmall)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(
-                            onClick = onWipeAllData,
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                AnimatedVisibility(visible = showAdvancedExperience) {
+                    Column(modifier = Modifier.padding(top = 8.dp)) {
+                        val userName by viewModel.userName.collectAsState()
+                        OutlinedTextField(
+                            value = userName,
+                            onValueChange = { viewModel.updateUserName(it) },
+                            label = { Text(stringResource(R.string.onboarding_3_label_name)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = { showEditPrompts = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Wipe All App Data")
+                            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Customize Persona Prompts")
+                        }
+                    }
+                }
+
+                if (showEditPrompts) {
+                    EditPromptsDialog(
+                        alarmDefaults = alarmDefaults,
+                        onDismiss = { showEditPrompts = false },
+                        onSave = { coach, comedian, zen, hypeman ->
+                            viewModel.updateAlarmDefaults(alarmDefaults.copy(
+                                promptCoach = coach,
+                                promptComedian = comedian,
+                                promptZen = zen,
+                                promptHypeman = hypeman
+                            ))
+                            showEditPrompts = false
+                        }
+                    )
+                }
+            }
+
+            ExpandableSection(
+                icon = Icons.Default.Settings,
+                title = "Wake-Up Engine ⚙️",
+                isExpanded = expandedSections.contains("WAKEUP"),
+                onToggle = { viewModel.toggleSection("WAKEUP") }
+            ) {
+                // A. Alarm Creation
+                Text("Alarm Creation", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                val creationStyle by viewModel.alarmCreationStyle.collectAsState()
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                    val styles = listOf("WIZARD", "SIMPLE")
+                    styles.forEachIndexed { index, style ->
+                        SegmentedButton(
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = styles.size),
+                            onClick = { viewModel.updateAlarmCreationStyle(style) },
+                            selected = creationStyle == style,
+                            label = { Text(if (style == "WIZARD") "Guided Wizard" else "Simple Setup", fontSize = 12.sp) }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // B. Default Alarm Behavior
+                Text("Default Alarm Behavior", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                
+                // Audio & Haptics
+                Text("Audio & Haptics", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Alarm Sound", style = MaterialTheme.typography.bodyLarge)
+                    Switch(checked = alarmDefaults.isSoundEnabled, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isSoundEnabled = it)) })
+                }
+                AnimatedVisibility(visible = alarmDefaults.isSoundEnabled) {
+                    Surface(
+                        onClick = {
+                            val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                                putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                                putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                                val existingUri = alarmDefaults.defaultSoundUri?.let { Uri.parse(it) } ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, existingUri)
+                            }
+                            ringtonePickerLauncher.launch(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    ) {
+                        Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Sound Source", fontWeight = FontWeight.Medium)
+                            Text(defaultSoundName, color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Vibrate", style = MaterialTheme.typography.bodyLarge)
+                    Switch(checked = alarmDefaults.isVibrate, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isVibrate = it)) })
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    val isOutputEnabled = alarmDefaults.isSoundEnabled || alarmDefaults.isVibrate
+                    val isGentleEnabled = alarmDefaults.isGentleWake && isOutputEnabled
+                    
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Gentle Wake", style = MaterialTheme.typography.bodyLarge, color = if (isOutputEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f))
+                        if (!isOutputEnabled) {
+                            Text("Requires Sound or Vibrate", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                    Switch(
+                        checked = isGentleEnabled,
+                        enabled = isOutputEnabled,
+                        onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isGentleWake = it)) }
+                    )
+                }
+                AnimatedVisibility(visible = alarmDefaults.isGentleWake && (alarmDefaults.isSoundEnabled || alarmDefaults.isVibrate)) {
+                    Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Crescendo Duration", style = MaterialTheme.typography.bodySmall)
+                            Text("${alarmDefaults.crescendoDurationMinutes} min", color = MaterialTheme.colorScheme.primary)
+                        }
+                        Slider(
+                            value = alarmDefaults.crescendoDurationMinutes.toFloat(),
+                            onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(crescendoDurationMinutes = it.toInt())) },
+                            valueRange = 0f..20f,
+                            steps = 19
+                        )
+                    }
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Smooth Fade-Out", style = MaterialTheme.typography.bodyLarge)
+                    Switch(checked = alarmDefaults.isSmoothFadeOut, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isSmoothFadeOut = it)) })
+                }
+
+                // Snooze & Dismissal
+                Text("Snooze & Dismissal", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
+                Column {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Snooze Duration", style = MaterialTheme.typography.bodyLarge)
+                        Text(if (alarmDefaults.snoozeDurationMinutes == 0) "Disabled" else "${alarmDefaults.snoozeDurationMinutes} min", color = if (alarmDefaults.snoozeDurationMinutes == 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+                    }
+                    Slider(
+                        value = alarmDefaults.snoozeDurationMinutes.toFloat(),
+                        onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(snoozeDurationMinutes = it.toInt())) },
+                        valueRange = 0f..60f,
+                        steps = 59
+                    )
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Evasive Snooze", style = MaterialTheme.typography.bodyLarge)
+                    Switch(checked = alarmDefaults.isEvasiveSnooze, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isEvasiveSnooze = it)) })
+                }
+                AnimatedVisibility(visible = alarmDefaults.isEvasiveSnooze) {
+                    Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Movement Threshold", style = MaterialTheme.typography.bodySmall)
+                            Text("${alarmDefaults.evasiveSnoozesBeforeMoving + 1} snoozes", color = MaterialTheme.colorScheme.primary)
+                        }
+                        Slider(
+                            value = alarmDefaults.evasiveSnoozesBeforeMoving.toFloat(),
+                            onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(evasiveSnoozesBeforeMoving = it.toInt())) },
+                            valueRange = 0f..5f,
+                            steps = 4
+                        )
+                    }
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Math Challenge", style = MaterialTheme.typography.bodyLarge)
+                    Switch(
+                        checked = alarmDefaults.mathDifficulty > 0,
+                        onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathDifficulty = if (it) 1 else 0)) }
+                    )
+                }
+                AnimatedVisibility(visible = alarmDefaults.mathDifficulty > 0) {
+                    Column {
+                        MathDifficultyChips(
+                            difficulty = alarmDefaults.mathDifficulty,
+                            onSelected = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathDifficulty = it)) }
+                        )
+                        Surface(
+                            onClick = { showAdvancedMath = !showAdvancedMath },
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            color = Color.Transparent
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Advanced Math Options", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                                Icon(if (showAdvancedMath) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                        AnimatedVisibility(visible = showAdvancedMath) {
+                            Column {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Problem Count", style = MaterialTheme.typography.bodySmall)
+                                    Text("${alarmDefaults.mathProblemCount}", color = MaterialTheme.colorScheme.primary)
+                                }
+                                Slider(
+                                    value = alarmDefaults.mathProblemCount.toFloat(),
+                                    onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathProblemCount = it.toInt())) },
+                                    valueRange = 1f..10f,
+                                    steps = 8
+                                )
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                    Text("Gradual Difficulty", style = MaterialTheme.typography.bodySmall)
+                                    Switch(checked = alarmDefaults.mathGraduallyIncreaseDifficulty, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathGraduallyIncreaseDifficulty = it)) })
+                                }
+                            }
+                        }
+                    }
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Face Game", style = MaterialTheme.typography.bodyLarge)
+                    Switch(checked = alarmDefaults.smileToDismiss, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(smileToDismiss = it)) })
+                }
+                AnimatedVisibility(visible = alarmDefaults.smileToDismiss) {
+                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                        Text("Fallback Method", style = MaterialTheme.typography.bodySmall)
+                        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                            val options = listOf("NONE", "MATH")
+                            options.forEachIndexed { index, opt ->
+                                SegmentedButton(
+                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                                    onClick = { viewModel.updateAlarmDefaults(alarmDefaults.copy(smileFallbackMethod = opt)) },
+                                    selected = alarmDefaults.smileFallbackMethod == opt,
+                                    label = { Text(if (opt == "NONE") "None" else "Math", fontSize = 12.sp) }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // C. Day Groups
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Day Groups", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                val days = listOf(7 to "Su", 1 to "Mo", 2 to "Tu", 3 to "We", 4 to "Th", 5 to "Fr", 6 to "Sa")
+                
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Select your weekend days", style = MaterialTheme.typography.labelMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        days.forEach { (idx, label) ->
+                            val isWeekend = alarmDefaults.weekendDays.contains(idx)
+                            Surface(
+                                onClick = {
+                                    val newWeekend = if (isWeekend) alarmDefaults.weekendDays - idx else alarmDefaults.weekendDays + idx
+                                    viewModel.updateAlarmDefaults(alarmDefaults.copy(weekendDays = newWeekend))
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isWeekend) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                modifier = Modifier.weight(1f).height(36.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(label, fontSize = 11.sp, color = if (isWeekend) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            ExpandableSection(
+                icon = Icons.Default.Group,
+                title = "Accountability 🤝",
+                isExpanded = expandedSections.contains("ACCOUNTABILITY"),
+                onToggle = { viewModel.toggleSection("ACCOUNTABILITY") }
+            ) {
+                BuddyManagementSection(viewModel)
+            }
+
+            ExpandableSection(
+                icon = Icons.Default.Lightbulb,
+                title = "Intelligence 💡",
+                isExpanded = expandedSections.contains("INTELLIGENCE"),
+                onToggle = { viewModel.toggleSection("INTELLIGENCE") }
+            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                ) {
+                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            "LemurLoop uses Gemini for creative briefings. All processing happens in the cloud for maximum intelligence.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+
+                IntelligenceHealthView(viewModel, onWipeBrainMemory)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // API Key
+                Text("API Credentials", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                val apiKey by viewModel.geminiApiKey.collectAsState()
+                OutlinedTextField(
+                    value = apiKey,
+                    onValueChange = { viewModel.updateGeminiApiKey(it) },
+                    label = { Text("Gemini API Key") },
+                    modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true
+                )
+            }
+
+            ExpandableSection(
+                icon = Icons.Default.Info,
+                title = "Help & System ℹ️",
+                isExpanded = expandedSections.contains("HELP"),
+                onToggle = { viewModel.toggleSection("HELP") }
+            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        // About
+                        Row(
+                            modifier = Modifier.clickable { onNavigateToAbout() }.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(24.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("About LemurLoop", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text("Version 1.2.0 • Credits • Legal", style = MaterialTheme.typography.bodySmall)
+                            }
+                            Icon(Icons.Default.ArrowForward, contentDescription = null)
+                        }
+                        
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                        // Replay Tutorial
+                        Row(
+                            modifier = Modifier.clickable { onNavigateToOnboarding() }.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(24.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Replay Tutorial", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text("See the setup wizard again", style = MaterialTheme.typography.bodySmall)
+                            }
+                            Icon(Icons.Default.ArrowForward, contentDescription = null)
+                        }
+
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                        // Privacy Policy
+                        val privacyPolicyContextInside = androidx.compose.ui.platform.LocalContext.current
+                        Row(
+                            modifier = Modifier.clickable { 
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://elroi.github.io/aNewDawnAlarmClock/privacy-policy/"))
+                                privacyPolicyContextInside.startActivity(intent)
+                            }.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(24.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Privacy Policy", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text("Your data stays on device", style = MaterialTheme.typography.bodySmall)
+                            }
+                            Icon(Icons.Default.ArrowForward, contentDescription = null)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Danger Zone
+                var showDangerZone by remember { mutableStateOf(false) }
+                OutlinedButton(
+                    onClick = { showDangerZone = !showDangerZone },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
+                ) {
+                    Text(if (showDangerZone) "Hide Danger Zone" else "Show Danger Zone")
+                }
+
+                AnimatedVisibility(visible = showDangerZone) {
+                    Card(
+                        modifier = Modifier.padding(top = 8.dp).fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Danger Zone", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                            Text("Deleting all data is permanent and cannot be undone.", style = MaterialTheme.typography.bodySmall)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Button(
+                                onClick = onWipeAllData,
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Wipe All App Data")
+                            }
                         }
                     }
                 }
@@ -1165,6 +1159,78 @@ fun BuddyListItem(
 
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.settings_buddy_btn_remove), tint = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
+}
+@Composable
+fun ExpandableSection(
+    icon: ImageVector,
+    title: String,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isExpanded) 
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) 
+            else 
+                MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onToggle() }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = if (isExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            icon, 
+                            contentDescription = null, 
+                            modifier = Modifier.size(18.dp),
+                            tint = if (isExpanded) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = if (isExpanded) FontWeight.Bold else FontWeight.Normal,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 16.dp)
+                ) {
+                    content()
+                }
             }
         }
     }

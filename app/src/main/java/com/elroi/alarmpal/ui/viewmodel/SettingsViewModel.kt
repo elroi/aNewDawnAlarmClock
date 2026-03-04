@@ -85,6 +85,17 @@ class SettingsViewModel @Inject constructor(
     val briefingError = settingsManager.lastGenErrorFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     val lastBriefingScript = settingsManager.lastBriefingScriptFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    private val _expandedSections = MutableStateFlow<Set<String>>(emptySet())
+    val expandedSections = _expandedSections.asStateFlow()
+
+    fun toggleSection(sectionId: String) {
+        _expandedSections.value = if (_expandedSections.value.contains(sectionId)) {
+            _expandedSections.value - sectionId
+        } else {
+            _expandedSections.value + sectionId
+        }
+    }
+
     val globalBuddies: StateFlow<Set<String>> = settingsManager.globalBuddiesFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
