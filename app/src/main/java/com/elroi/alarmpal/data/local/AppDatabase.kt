@@ -78,7 +78,13 @@ val MIGRATION_16_17 = object : Migration(16, 17) {
     }
 }
 
-@Database(entities = [AlarmEntity::class, com.elroi.alarmpal.data.local.entity.SleepRecordEntity::class], version = 17, exportSchema = false)
+val MIGRATION_17_18 = object : Migration(17, 18) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE alarms ADD COLUMN isSnoozeEnabled INTEGER NOT NULL DEFAULT 1")
+    }
+}
+
+@Database(entities = [AlarmEntity::class, com.elroi.alarmpal.data.local.entity.SleepRecordEntity::class], version = 18, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun alarmDao(): AlarmDao

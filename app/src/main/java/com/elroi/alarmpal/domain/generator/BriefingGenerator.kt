@@ -47,9 +47,6 @@ class BriefingGenerator @Inject constructor(
             BriefingStateManager.updateStatus("Activating LemurLoop brain cells...")
             val generated = generateFullBriefing()
             
-            if (generated != null && generated.isNotBlank() && !generated.startsWith("ERROR:")) {
-                settingsManager.saveBriefingCache(generated, System.currentTimeMillis())
-            }
             generated
         }
         
@@ -63,13 +60,7 @@ class BriefingGenerator @Inject constructor(
 
     suspend fun refreshBriefing(): String? = withContext(Dispatchers.IO) {
         generationLock.withLock {
-            val script = generateFullBriefing()
-            if (script != null && !script.startsWith("ERROR:")) {
-                settingsManager.saveBriefingCache(script, System.currentTimeMillis())
-                script
-            } else {
-                null
-            }
+            generateFullBriefing()
         }
     }
 
@@ -145,6 +136,7 @@ class BriefingGenerator @Inject constructor(
                     weatherStatus = "cached"
                 }
             }
+            BriefingStateManager.updateComponentStatus("weather", weatherStatus)
         }
 
         var calendarText = ""
@@ -161,6 +153,7 @@ class BriefingGenerator @Inject constructor(
                 }
                 "You have ${events.size} events today. Highlights: $eventList."
             } else "No events scheduled for today."
+            BriefingStateManager.updateComponentStatus("calendar", "ok")
         }
 
         var factStatus = "skipped"
@@ -254,6 +247,7 @@ class BriefingGenerator @Inject constructor(
                 if (aiParagraphs.size >= draftParagraphs.size) {
                     aiScript = finalResult
                     aiSuccess = true
+                    BriefingStateManager.updateComponentStatus("ai", "ok")
                     android.util.Log.d("BriefingGenerator", "AI kept all ${aiParagraphs.size} paragraphs ✓")
                 } else {
                     android.util.Log.w("BriefingGenerator", "AI dropped paragraphs (draft=${draftParagraphs.size}, ai=${aiParagraphs.size}). Using local draft.")

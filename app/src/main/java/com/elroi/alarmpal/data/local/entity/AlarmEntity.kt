@@ -48,6 +48,8 @@ data class AlarmEntity(
     val isSoundEnabled: Boolean = true,
     @ColumnInfo(defaultValue = "0")
     val isVibrateOnly: Boolean = false,
+    @ColumnInfo(defaultValue = "1")
+    val isSnoozeEnabled: Boolean = true,
     @ColumnInfo(defaultValue = "0")
     val isSmartWakeupEnabled: Boolean = false,
     @ColumnInfo(defaultValue = "3")
@@ -83,6 +85,7 @@ data class AlarmEntity(
             evasiveSnoozesBeforeMoving = evasiveSnoozesBeforeMoving,
             isSmoothFadeOut = isSmoothFadeOut,
             isSoundEnabled = isSoundEnabled,
+            isSnoozeEnabled = isSnoozeEnabled,
             isSmartWakeupEnabled = isSmartWakeupEnabled,
             wakeupCheckDelayMinutes = wakeupCheckDelayMinutes,
             wakeupCheckTimeoutSeconds = wakeupCheckTimeoutSeconds
@@ -120,6 +123,7 @@ data class AlarmEntity(
                 evasiveSnoozesBeforeMoving = alarm.evasiveSnoozesBeforeMoving,
                 isSmoothFadeOut = alarm.isSmoothFadeOut,
                 isSoundEnabled = alarm.isSoundEnabled,
+                isSnoozeEnabled = alarm.isSnoozeEnabled,
                 isVibrateOnly = false, // Default or irrelevant now
                 isSmartWakeupEnabled = alarm.isSmartWakeupEnabled,
                 wakeupCheckDelayMinutes = alarm.wakeupCheckDelayMinutes,

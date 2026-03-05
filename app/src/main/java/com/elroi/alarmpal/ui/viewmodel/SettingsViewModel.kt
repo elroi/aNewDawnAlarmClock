@@ -22,6 +22,7 @@ import com.elroi.alarmpal.domain.manager.GeminiManager
 import com.elroi.alarmpal.domain.manager.GeminiNanoStatus
 import android.content.ClipboardManager
 import android.content.Context
+import com.elroi.alarmpal.util.BriefingUtils
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
@@ -94,6 +95,22 @@ class SettingsViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Generating...")
 
     val briefingStatus = settingsManager.lastGenStatusFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "waiting:pending")
+    val liveHealth = com.elroi.alarmpal.domain.manager.BriefingStateManager.liveHealth
+    
+    val combinedHealthStatus = combine(briefingStatus, isBriefingGenerating, liveHealth) { persistent, generating, live ->
+        if (generating && live.isNotEmpty()) {
+            val parts = persistent.split("|").associate { 
+                val kv = it.split(":")
+                kv[0] to (kv.getOrNull(1) ?: "unknown")
+            }.toMutableMap()
+            
+            live.forEach { (k, v) -> parts[k] = v }
+            parts.map { "${it.key}:${it.value}" }.joinToString("|")
+        } else {
+            persistent
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "waiting:pending")
+
     val briefingError = settingsManager.lastGenErrorFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     val lastBriefingScript = settingsManager.lastBriefingScriptFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -365,9 +382,24 @@ class SettingsViewModel @Inject constructor(
             
             if (!script.isNullOrBlank()) {
                 _previewBriefingScript.value = script
-                ttsManager.speak(script)
+                val filteredScript = BriefingUtils.filterBriefingForTts(script)
+                ttsManager.speak(filteredScript)
             } else {
                 _message.emit("Briefing generation failed. Please check your API key and AI settings.")
+            }
+        }
+    }
+
+    fun testIntelligenceHealth() {
+        viewModelScope.launch {
+            _isBriefingGenerating.value = true
+            performSaveSettings()
+            
+            val script = briefingGenerator.refreshBriefing()
+            _isBriefingGenerating.value = false
+            
+            if (script.isNullOrBlank()) {
+                _message.emit("Health test failed. Please check your API key and AI settings.")
             }
         }
     }

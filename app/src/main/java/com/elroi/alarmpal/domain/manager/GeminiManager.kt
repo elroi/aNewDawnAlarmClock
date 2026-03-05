@@ -20,12 +20,69 @@ import javax.inject.Singleton
 class GeminiManager @Inject constructor(
     private val settingsManager: SettingsManager
 ) {
+    private suspend fun getWorkingModelConfig(apiKey: String): Pair<String, String>? {
+        // 1. Check cache first
+        val cachedModel = settingsManager.workingGeminiModelFlow.first()
+        val cachedVersion = settingsManager.workingGeminiVersionFlow.first()
+        
+        if (cachedModel != null && cachedVersion != null) {
+            try {
+                val response = generateWithKey(apiKey, "OK", cachedModel, cachedVersion)
+                if (response != null) return cachedModel to cachedVersion
+            } catch (e: Exception) {
+                android.util.Log.w("GeminiManager", "Cached config failed, renegotiating...")
+            }
+        }
+
+        // 2. Prioritized static configs
+        val configs = listOf(
+            "v1beta" to "gemini-2.5-flash",
+            "v1beta" to "gemini-2.5-pro",
+            "v1beta" to "gemini-2.0-flash",
+            "v1" to "gemini-1.5-flash",
+            "v1beta" to "gemini-1.5-flash",
+            "v1" to "gemini-1.5-pro"
+        )
+        
+        for ((version, model) in configs) {
+            try {
+                val response = generateWithKey(apiKey, "OK", model, version)
+                if (response != null) {
+                    settingsManager.saveWorkingGeminiConfig(model, version)
+                    return model to version
+                }
+            } catch (e: Exception) {
+                if (e.message?.contains("quota", ignoreCase = true) == true) throw e
+            }
+        }
+        
+        // 3. Dynamic discovery
+        val discoveredModels = getAvailableModels(apiKey)
+        val textModels = discoveredModels.filter { m ->
+            (m.contains("flash") || m.contains("pro")) &&
+            !m.contains("image") && !m.contains("vision") && !m.contains("embed")
+        }
+        
+        for (model in textModels) {
+            for (version in listOf("v1beta", "v1")) {
+                try {
+                    val response = generateWithKey(apiKey, "OK", model, version)
+                    if (response != null) {
+                        settingsManager.saveWorkingGeminiConfig(model, version)
+                        return model to version
+                    }
+                } catch (e: Exception) {}
+            }
+        }
+        
+        return null
+    }
+
     fun generateContentStreaming(prompt: String): Flow<String> = flow {
         val apiKey = settingsManager.geminiApiKeyFlow.first().trim()
         if (apiKey.isBlank()) return@flow
         
-        val cachedModel = settingsManager.workingGeminiModelFlow.first()
-        val modelName = cachedModel ?: "gemini-1.5-flash"
+        val config = getWorkingModelConfig(apiKey) ?: return@flow
         
         val safetySettings = listOf(
             SafetySetting(HarmCategory.HARASSMENT, BlockThreshold.ONLY_HIGH),
@@ -35,7 +92,7 @@ class GeminiManager @Inject constructor(
         )
 
         val model = GenerativeModel(
-            modelName = modelName,
+            modelName = config.first,
             apiKey = apiKey,
             safetySettings = safetySettings
         )
@@ -48,10 +105,7 @@ class GeminiManager @Inject constructor(
                 emit(fullText)
             }
         } catch (e: Exception) {
-            android.util.Log.e("GeminiManager", "Streaming error with $modelName", e)
-            // If failed and we were using a cached model, maybe the model is deprecated?
-            // Fallback to non-streaming logic for full negotiation if needed, 
-            // but for now we just emit what we have or rethrow.
+            android.util.Log.e("GeminiManager", "Streaming error with ${config.first}", e)
             throw e
         }
     }
@@ -60,80 +114,14 @@ class GeminiManager @Inject constructor(
         val apiKey = settingsManager.geminiApiKeyFlow.first().trim()
         if (apiKey.isBlank()) return null
         
-        // 1. Check if we have a known-working config to save quota
-        val cachedModel = settingsManager.workingGeminiModelFlow.first()
-        val cachedVersion = settingsManager.workingGeminiVersionFlow.first()
-        
-        // Skip cache if it's a deprecated model that no longer works for new API keys
-        val deprecatedModels = listOf("gemini-2.0-flash", "gemini-2.0-flash-001", "gemini-1.5-flash", "gemini-pro")
-        val cacheIsValid = cachedModel != null && cachedVersion != null && cachedModel !in deprecatedModels
-        
-        if (cacheIsValid) {
-            try {
-                val response = generateWithKey(apiKey, prompt, cachedModel!!, cachedVersion!!)
-                if (!response.isNullOrBlank()) return response
-            } catch (e: Exception) {
-                // If cached config fails, it might be outdated/expired/quota hit
-                if (e.message?.contains("quota", ignoreCase = true) == true) {
-                    return "ERROR: Quota Exhausted"
-                }
-                // Otherwise fall through to full negotiation
-            }
+        return try {
+            val config = getWorkingModelConfig(apiKey) ?: return "ERROR: No compatible model found"
+            generateWithKey(apiKey, prompt, config.first, config.second)
+        } catch (e: Exception) {
+            val msg = e.message ?: "Unknown error"
+            if (msg.contains("quota", ignoreCase = true)) "ERROR: Quota Exhausted"
+            else "ERROR: $msg"
         }
-
-        // 2. Multi-stage negotiation (only if no cache or cache failed)
-        val configs = listOf(
-            "v1beta" to "gemini-2.5-flash",
-            "v1beta" to "gemini-2.5-pro",
-            "v1beta" to "gemini-2.5-flash-preview-04-17"
-        )
-        
-        var lastError: String? = null
-        
-        for ((version, model) in configs) {
-            android.util.Log.d("GeminiManager", "Trying $model ($version)...")
-            try {
-                val response = generateWithKey(apiKey, prompt, model, version)
-                if (!response.isNullOrBlank()) {
-                    android.util.Log.d("GeminiManager", "Success with $model")
-                    settingsManager.saveWorkingGeminiConfig(model, version)
-                    return response
-                } else {
-                    android.util.Log.w("GeminiManager", "$model returned blank response")
-                    lastError = "$model returned blank"
-                }
-            } catch (e: Exception) {
-                lastError = e.message
-                android.util.Log.e("GeminiManager", "$model failed: ${e.message}")
-                if (lastError?.contains("quota", ignoreCase = true) == true) break
-            }
-        }
-        
-        // All static configs failed — try dynamic discovery as last resort
-        android.util.Log.d("GeminiManager", "Static models exhausted. Trying dynamic discovery...")
-        val discoveredModels = getAvailableModels(apiKey)
-        val textModels = discoveredModels.filter { m ->
-            (m.contains("flash") || m.contains("pro")) &&
-            !m.contains("image") && !m.contains("vision") && !m.contains("embed")
-        }
-        android.util.Log.d("GeminiManager", "Discovered usable models: $textModels")
-        
-        for (model in textModels) {
-            android.util.Log.d("GeminiManager", "Trying discovered model: $model")
-            try {
-                val response = generateWithKey(apiKey, prompt, model, "v1beta")
-                if (!response.isNullOrBlank()) {
-                    android.util.Log.d("GeminiManager", "Success with discovered model: $model")
-                    settingsManager.saveWorkingGeminiConfig(model, "v1beta")
-                    return response
-                }
-            } catch (e: Exception) {
-                lastError = e.message
-                android.util.Log.e("GeminiManager", "Discovered model $model failed: ${e.message}")
-            }
-        }
-        
-        return "ERROR: ${lastError?.take(100)}"
     }
 
     suspend fun testApiKey(apiKey: String): String? {
@@ -141,37 +129,11 @@ class GeminiManager @Inject constructor(
         if (trimmedKey.isBlank()) return "API Key cannot be empty."
         
         return try {
-            val configs = listOf(
-                "v1beta" to "gemini-2.5-flash",
-                "v1beta" to "gemini-2.5-pro",
-                "v1beta" to "gemini-2.5-flash-preview-04-17"
-            )
-            
-            var latestError: String? = null
-            
-            for ((version, model) in configs) {
-                try {
-                    val response = generateWithKey(trimmedKey, "Say 'OK' if you are working.", model, version)
-                    if (response != null) {
-                        settingsManager.saveWorkingGeminiConfig(model, version)
-                        return null // Success!
-                    }
-                } catch (e: Exception) {
-                    latestError = e.message
-                    if (latestError?.contains("quota", ignoreCase = true) == true) return latestError
-                }
-            }
-            
-            // If we're here, all tries failed. Get available models for debugging.
-            val availableModels = getAvailableModels(trimmedKey)
-            if (availableModels.isNotEmpty()) {
-                "Key found, but models missing on v1/v1beta. Key sees: ${availableModels.take(5).joinToString(", ")}"
-            } else {
-                latestError ?: "Connection failed (404/400) for all discovered models."
-            }
+            val config = getWorkingModelConfig(trimmedKey)
+            if (config != null) null else "No compatible models found for this key."
         } catch (e: Exception) {
-            android.util.Log.e("GeminiManager", "REST Discovery failed", e)
-            e.message ?: "An unknown error occurred during discovery."
+            android.util.Log.e("GeminiManager", "Test failed", e)
+            e.message ?: "An unknown error occurred."
         }
     }
 

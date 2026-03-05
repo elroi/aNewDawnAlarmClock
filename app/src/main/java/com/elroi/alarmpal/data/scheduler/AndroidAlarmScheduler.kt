@@ -48,6 +48,7 @@ class AndroidAlarmScheduler(
             putExtra("ALARM_IS_SMOOTH_FADE_OUT", alarm.isSmoothFadeOut)
             putExtra("ALARM_IS_VIBRATE", alarm.isVibrate)
             putExtra("ALARM_IS_SOUND_ENABLED", alarm.isSoundEnabled)
+            putExtra("ALARM_IS_SNOOZE_ENABLED", alarm.isSnoozeEnabled)
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_IS_SMART_WAKEUP_ENABLED, alarm.isSmartWakeupEnabled)
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_DELAY, alarm.wakeupCheckDelayMinutes)
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_TIMEOUT, alarm.wakeupCheckTimeoutSeconds)

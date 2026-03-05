@@ -58,64 +58,8 @@ fun MainScreen(
         return
     }
 
-    Scaffold(
-        bottomBar = {
-            val navBackStackEntry by navController.currentBackStackEntryAsState()
-            val currentDestination = navBackStackEntry?.destination
-            val isBottomBarVisible = currentDestination?.hierarchy?.any { 
-                it.route == Screen.AlarmList.route || it.route == Screen.SleepTracking.route 
-            } == true
-
-            AnimatedVisibility(
-                visible = isBottomBarVisible,
-                enter = expandVertically(expandFrom = Alignment.Top),
-                exit = shrinkVertically(shrinkTowards = Alignment.Top)
-            ) {
-                Box {
-                    NavigationBar {
-                        NavigationBarItem(
-                            icon = { Icon(Icons.Default.Home, contentDescription = "Alarms") },
-                            label = { Text("Alarms") },
-                            selected = currentDestination?.hierarchy?.any { it.route == Screen.AlarmList.route } == true,
-                            onClick = {
-                            navController.navigate(Screen.AlarmList.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
-                    )
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Default.Settings, contentDescription = "Sleep") },
-                        label = { Text("Sleep") },
-                        selected = currentDestination?.hierarchy?.any { it.route == Screen.SleepTracking.route } == true,
-                        onClick = {
-                            navController.navigate(Screen.SleepTracking.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
-                    )
-                }
-                    // Version badge — bottom-end corner of the nav bar
-                    Text(
-                        text = "v${BuildConfig.VERSION_NAME}",
-                        fontSize = 9.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(end = 6.dp, bottom = 4.dp)
-                    )
-                }
-            }
-        }
-    ) { innerPadding ->
-        androidx.compose.foundation.layout.Box(modifier = Modifier.padding(innerPadding)) {
+    Scaffold { innerPadding ->
+        Box(modifier = Modifier.padding(innerPadding)) {
             LemurLoopNavGraph(
                 navController = navController,
                 startDestination = startDestination

@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -82,6 +83,7 @@ class AlarmActivity : ComponentActivity() {
         val isPreview      = intent.getBooleanExtra("IS_PREVIEW", false)
         val isEvasiveSnooze = intent.getBooleanExtra("ALARM_IS_EVASIVE_SNOOZE", false)
         val evasiveSnoozesBeforeMoving = intent.getIntExtra("ALARM_EVASIVE_SNOOZE_BEFORE_MOVING", 0)
+        val isSnoozeEnabled = intent.getBooleanExtra("ALARM_IS_SNOOZE_ENABLED", true)
         
         // Pre-request CAMERA permission so SmileDismissScreen can use it immediately
         cameraPermissionGranted = ContextCompat.checkSelfPermission(
@@ -193,7 +195,14 @@ class AlarmActivity : ComponentActivity() {
                         }
                     }
                     
+                    val allowSnooze = snoozeDuration > 0 && isSnoozeEnabled && !isPreview
+
                     val isDismissing = showSmileScreen || showMathDialog || successMessage != null || snoozedUntil != null
+                    
+                    BackHandler(enabled = !isDismissing && allowSnooze) {
+                        snoozeAlarm(alarmId, snoozeDuration) 
+                        snoozedUntil = LocalTime.now().plusMinutes(snoozeDuration.toLong())
+                    }
 
                     val initialBrightness = remember { initialSystemBrightness }
 
@@ -302,6 +311,7 @@ class AlarmActivity : ComponentActivity() {
                             isEvasiveSnooze = isEvasiveSnooze,
                             evasiveSnoozesBeforeMoving = evasiveSnoozesBeforeMoving,
                             snoozeLabel = currentSnoozeLabel,
+                            allowSnooze = allowSnooze,
                             onDismiss = onDismissPressed,
                             onSnooze = { 
                                 if (isPreview) {
@@ -541,6 +551,7 @@ fun AlarmFiringScreen(
     isEvasiveSnooze: Boolean,
     evasiveSnoozesBeforeMoving: Int,
     snoozeLabel: String,
+    allowSnooze: Boolean,
     onDismiss: () -> Unit,
     onSnooze: () -> Unit
 ) {
@@ -551,7 +562,6 @@ fun AlarmFiringScreen(
     val buttonWidthDp = 120
     val buttonHeightDp = 60
     
-    val allowSnooze = snoozeDuration > 0
     val isEvasiveActive = isEvasiveSnooze && !isDismissing && snoozeCount > evasiveSnoozesBeforeMoving && allowSnooze
     
     val density = androidx.compose.ui.platform.LocalDensity.current

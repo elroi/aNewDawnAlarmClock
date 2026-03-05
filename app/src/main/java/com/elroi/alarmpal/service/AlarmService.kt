@@ -1,5 +1,7 @@
 package com.elroi.alarmpal.service
 
+import com.elroi.alarmpal.util.BriefingUtils
+
 import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
@@ -71,6 +73,7 @@ class AlarmService : Service() {
     private var currentIsSmoothFadeOut: Boolean = true
     private var currentIsVibrate: Boolean = true
     private var currentIsSoundEnabled: Boolean = true
+    private var currentIsSnoozeEnabled: Boolean = true
     private var currentIsSmartWakeupEnabled: Boolean = false
     private var currentWakeupCheckDelayMinutes: Int = 3
     private var currentWakeupCheckTimeoutSeconds: Int = 60
@@ -133,6 +136,7 @@ class AlarmService : Service() {
         val soundUriStr = intent.getStringExtra(EXTRA_SOUND_URI)
         val isVibrate = intent.getBooleanExtra(EXTRA_IS_VIBRATE, true)
         val isSoundEnabled = intent.getBooleanExtra(EXTRA_IS_SOUND_ENABLED, true)
+        val isSnoozeEnabled = intent.getBooleanExtra(EXTRA_IS_SNOOZE_ENABLED, true)
         val isSmartWakeupEnabled = intent.getBooleanExtra(EXTRA_IS_SMART_WAKEUP_ENABLED, false)
         val wakeupCheckDelay = intent.getIntExtra(EXTRA_WAKEUP_CHECK_DELAY, 3)
         val wakeupCheckTimeout = intent.getIntExtra(EXTRA_WAKEUP_CHECK_TIMEOUT, 60)
@@ -154,6 +158,7 @@ class AlarmService : Service() {
         currentIsSmoothFadeOut = isSmoothFadeOut
         currentIsVibrate = isVibrate
         currentIsSoundEnabled = isSoundEnabled
+        currentIsSnoozeEnabled = isSnoozeEnabled
         currentIsSmartWakeupEnabled = isSmartWakeupEnabled
         currentWakeupCheckDelayMinutes = wakeupCheckDelay
         currentWakeupCheckTimeoutSeconds = wakeupCheckTimeout
@@ -173,6 +178,7 @@ class AlarmService : Service() {
             putExtra(EXTRA_IS_SMOOTH_FADE_OUT, isSmoothFadeOut)
             putExtra(EXTRA_IS_VIBRATE, isVibrate)
             putExtra(EXTRA_IS_SOUND_ENABLED, isSoundEnabled)
+            putExtra(EXTRA_IS_SNOOZE_ENABLED, isSnoozeEnabled)
             putExtra(EXTRA_IS_SMART_WAKEUP_ENABLED, isSmartWakeupEnabled)
             putExtra(EXTRA_WAKEUP_CHECK_DELAY, wakeupCheckDelay)
             putExtra(EXTRA_WAKEUP_CHECK_TIMEOUT, wakeupCheckTimeout)
@@ -344,7 +350,8 @@ class AlarmService : Service() {
                             audioManager.setStreamVolume(android.media.AudioManager.STREAM_MUSIC, targetVolume, 0)
                         }
                         serviceScope.launch {
-                            ttsManager.speak(briefing)
+                            val filteredBriefing = BriefingUtils.filterBriefingForTts(briefing)
+                            ttsManager.speak(filteredBriefing)
                         }
                     }
                 }
@@ -380,6 +387,7 @@ class AlarmService : Service() {
             putExtra(EXTRA_IS_SMOOTH_FADE_OUT, currentIsSmoothFadeOut)
             putExtra(EXTRA_IS_VIBRATE, currentIsVibrate)
             putExtra(EXTRA_IS_SOUND_ENABLED, currentIsSoundEnabled)
+            putExtra(EXTRA_IS_SNOOZE_ENABLED, currentIsSnoozeEnabled)
             putExtra(EXTRA_IS_SMART_WAKEUP_ENABLED, true)
             putExtra(EXTRA_WAKEUP_CHECK_DELAY, currentWakeupCheckDelayMinutes)
             putExtra(EXTRA_WAKEUP_CHECK_TIMEOUT, currentWakeupCheckTimeoutSeconds)
@@ -446,6 +454,7 @@ class AlarmService : Service() {
                 putExtra(EXTRA_IS_SMOOTH_FADE_OUT, currentIsSmoothFadeOut)
                 putExtra(EXTRA_IS_VIBRATE, currentIsVibrate)
                 putExtra(EXTRA_IS_SOUND_ENABLED, currentIsSoundEnabled)
+                putExtra(EXTRA_IS_SNOOZE_ENABLED, currentIsSnoozeEnabled)
             }
             val pi = PendingIntent.getBroadcast(
                 this,
@@ -501,7 +510,10 @@ class AlarmService : Service() {
             .setUsage(AudioAttributes.USAGE_ALARM)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
-        ringtone?.play()
+        
+        if (currentIsSoundEnabled) {
+            ringtone?.play()
+        }
 
         if (isGentleWake && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             startVolumeCrescendo(crescendoMinutes)
@@ -565,6 +577,8 @@ class AlarmService : Service() {
             }
             return
         }
+
+        if (!currentIsVibrate) return
 
         // Gentle Wake: Intensity ramping
         vibrationJob = serviceScope.launch {
@@ -639,6 +653,7 @@ class AlarmService : Service() {
         const val EXTRA_IS_SMOOTH_FADE_OUT = "ALARM_IS_SMOOTH_FADE_OUT"
         const val EXTRA_IS_VIBRATE = "ALARM_IS_VIBRATE"
         const val EXTRA_IS_SOUND_ENABLED = "ALARM_IS_SOUND_ENABLED"
+        const val EXTRA_IS_SNOOZE_ENABLED = "ALARM_IS_SNOOZE_ENABLED"
         const val EXTRA_IS_SMART_WAKEUP_ENABLED = "ALARM_IS_SMART_WAKEUP_ENABLED"
         const val EXTRA_WAKEUP_CHECK_DELAY = "ALARM_WAKEUP_CHECK_DELAY"
         const val EXTRA_WAKEUP_CHECK_TIMEOUT = "ALARM_WAKEUP_CHECK_TIMEOUT"

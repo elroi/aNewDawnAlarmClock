@@ -33,6 +33,10 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.material3.TimePickerState
 import androidx.compose.runtime.*
 import com.elroi.alarmpal.ui.components.BuddySelectionDialog
 import com.elroi.alarmpal.ui.components.SettingHelpIcon
@@ -74,46 +78,47 @@ fun AlarmDetailScreen(
     viewModel: AlarmViewModel = hiltViewModel()
 ) {
     val defaultSettings by viewModel.defaultAlarmSettings.collectAsState()
-    var time           by remember { mutableStateOf(LocalTime.now()) }
-    var label          by remember { mutableStateOf("") }
-    var isGentleWake   by remember { mutableStateOf(defaultSettings.isGentleWake) }
-    var buddyPhone     by remember { mutableStateOf("") }
-    var buddyName      by remember { mutableStateOf("") }
-    var buddyUserName  by remember { mutableStateOf("") }
-    var buddyMessage   by remember { mutableStateOf("") }
-    var buddyEnabled   by remember { mutableStateOf(false) }
-    var buddyAlertDelay by remember { mutableStateOf(5) }
-    var daysOfWeek     by remember { mutableStateOf(emptyList<Int>()) }
-    var mathDifficulty by remember { mutableStateOf(defaultSettings.mathDifficulty) }
+    var time           by remember { mutableStateOf<LocalTime>(LocalTime.now()) }
+    var label          by remember { mutableStateOf<String>("") }
+    var isGentleWake   by remember { mutableStateOf<Boolean>(defaultSettings.isGentleWake) }
+    var buddyPhone     by remember { mutableStateOf<String>("") }
+    var buddyName      by remember { mutableStateOf<String>("") }
+    var buddyUserName  by remember { mutableStateOf<String>("") }
+    var buddyMessage   by remember { mutableStateOf<String>("") }
+    var buddyEnabled   by remember { mutableStateOf<Boolean>(false) }
+    var buddyAlertDelay by remember { mutableStateOf<Int>(5) }
+    var daysOfWeek     by remember { mutableStateOf<List<Int>>(emptyList<Int>()) }
+    var mathDifficulty by remember { mutableStateOf<Int>(defaultSettings.mathDifficulty) }
     var mathProblemCount by remember { mutableIntStateOf(defaultSettings.mathProblemCount) }
-    var mathGraduallyIncreaseDifficulty by remember { mutableStateOf(defaultSettings.mathGraduallyIncreaseDifficulty) }
-    var mathEnabled    by remember { mutableStateOf(defaultSettings.mathDifficulty > 0) }
-    var smileToDismiss by remember { mutableStateOf(false) }
-    var smileFallbackMethod by remember { mutableStateOf(defaultSettings.smileFallbackMethod) }
-    var snoozeDuration by remember { mutableStateOf(defaultSettings.snoozeDurationMinutes) }
+    var mathGraduallyIncreaseDifficulty by remember { mutableStateOf<Boolean>(defaultSettings.mathGraduallyIncreaseDifficulty) }
+    var mathEnabled    by remember { mutableStateOf<Boolean>(defaultSettings.mathDifficulty > 0) }
+    var smileToDismiss by remember { mutableStateOf<Boolean>(false) }
+    var smileFallbackMethod by remember { mutableStateOf<String>(defaultSettings.smileFallbackMethod) }
+    var snoozeDuration by remember { mutableStateOf<Int>(defaultSettings.snoozeDurationMinutes) }
+    var isSnoozeEnabled by remember { mutableStateOf<Boolean>(defaultSettings.isSnoozeEnabled) }
     var crescendoDuration by remember { mutableIntStateOf(defaultSettings.crescendoDurationMinutes) } // minutes, 0=instant
-    var isBriefingEnabled by remember { mutableStateOf(defaultSettings.isBriefingEnabled) }
-    var isTtsEnabled   by remember { mutableStateOf(defaultSettings.isTtsEnabled) }
-    var isEvasiveSnooze by remember { mutableStateOf(defaultSettings.isEvasiveSnooze) }
+    var isBriefingEnabled by remember { mutableStateOf<Boolean>(defaultSettings.isBriefingEnabled) }
+    var isTtsEnabled   by remember { mutableStateOf<Boolean>(defaultSettings.isTtsEnabled) }
+    var isEvasiveSnooze by remember { mutableStateOf<Boolean>(defaultSettings.isEvasiveSnooze) }
     var evasiveSnoozesBeforeMoving by remember { mutableIntStateOf(defaultSettings.evasiveSnoozesBeforeMoving) }
-    var isSmoothFadeOut by remember { mutableStateOf(defaultSettings.isSmoothFadeOut) }
-    var isVibrate      by remember { mutableStateOf(defaultSettings.isVibrate) }
-    var isSoundEnabled by remember { mutableStateOf(defaultSettings.isSoundEnabled) }
+    var isSmoothFadeOut by remember { mutableStateOf<Boolean>(defaultSettings.isSmoothFadeOut) }
+    var isVibrate      by remember { mutableStateOf<Boolean>(defaultSettings.isVibrate) }
+    var isSoundEnabled by remember { mutableStateOf<Boolean>(defaultSettings.isSoundEnabled) }
     var soundUri       by remember { mutableStateOf<String?>(null) }
-    var soundName      by remember { mutableStateOf("Default") }
-    var isSmartWakeupEnabled by remember { mutableStateOf(false) }
+    var soundName      by remember { mutableStateOf<String>("Default") }
+    var isSmartWakeupEnabled by remember { mutableStateOf<Boolean>(false) }
     var wakeupCheckDelayMinutes by remember { mutableIntStateOf(3) }
     var wakeupCheckTimeoutSeconds by remember { mutableIntStateOf(60) }
     val weekendDays    = defaultSettings.weekendDays
     var currentAlarm   by remember { mutableStateOf<Alarm?>(null) }
     var initialState by remember { mutableStateOf<AlarmStateSnapshot?>(null) }
-    var showDiscardDialog by remember { mutableStateOf(false) }
+    var showDiscardDialog by remember { mutableStateOf<Boolean>(false) }
 
     val hasChanges = remember(
         initialState, time, label, isGentleWake, buddyPhone, buddyName,
         buddyUserName, buddyMessage, buddyEnabled, buddyAlertDelay,
         daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
-        snoozeDuration, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
+        snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
         evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
         wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds
     ) {
@@ -121,7 +126,7 @@ fun AlarmDetailScreen(
             time, label, isGentleWake, buddyPhone, buddyName,
             buddyUserName, buddyMessage, buddyEnabled, buddyAlertDelay,
             daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
-            snoozeDuration, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
+            snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
             evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
             wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds
         )
@@ -254,6 +259,7 @@ fun AlarmDetailScreen(
                     mathGraduallyIncreaseDifficulty = it.mathGraduallyIncreaseDifficulty
                     mathEnabled    = it.mathDifficulty > 0 && !(it.smileToDismiss && it.smileFallbackMethod == "NONE")
                     snoozeDuration = it.snoozeDurationMinutes
+                    isSnoozeEnabled = it.isSnoozeEnabled
                     crescendoDuration = it.crescendoDurationMinutes
                     isBriefingEnabled = it.isBriefingEnabled
                     isTtsEnabled   = it.isTtsEnabled
@@ -272,7 +278,7 @@ fun AlarmDetailScreen(
                             time, label, isGentleWake, buddyPhone, buddyName,
                             buddyUserName, buddyMessage, buddyEnabled, buddyAlertDelay,
                             daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
-                            snoozeDuration, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
+                            snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
                             evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
                             wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds
                         )
@@ -288,6 +294,7 @@ fun AlarmDetailScreen(
             mathEnabled = mathDifficulty > 0
             smileFallbackMethod = defaultSettings.smileFallbackMethod
             snoozeDuration = defaultSettings.snoozeDurationMinutes
+            isSnoozeEnabled = defaultSettings.isSnoozeEnabled
             crescendoDuration = defaultSettings.crescendoDurationMinutes
             isBriefingEnabled = defaultSettings.isBriefingEnabled
             isTtsEnabled = defaultSettings.isTtsEnabled
@@ -303,7 +310,7 @@ fun AlarmDetailScreen(
                     time, label, isGentleWake, buddyPhone, buddyName,
                     buddyUserName, buddyMessage, buddyEnabled, buddyAlertDelay,
                     daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
-                    snoozeDuration, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
+                    snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
                     evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
                     wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds
                 )
@@ -402,6 +409,7 @@ fun AlarmDetailScreen(
                             smileToDismiss = smileToDismiss,
                             smileFallbackMethod = smileFallbackMethod,
                             snoozeDurationMinutes = snoozeDuration,
+                            isSnoozeEnabled = isSnoozeEnabled,
                             crescendoDurationMinutes = crescendoDuration,
                             isTtsEnabled = isTtsEnabled,
                             isEvasiveSnooze = isEvasiveSnooze,
@@ -618,29 +626,42 @@ fun AlarmDetailScreen(
                 Divider()
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Snooze duration", fontWeight = FontWeight.Medium)
-                    Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.secondaryContainer) {
-                        Text(
-                            text     = if (snoozeDuration == 0) "Off" else "$snoozeDuration min",
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                            style    = MaterialTheme.typography.labelLarge,
-                            color    = MaterialTheme.colorScheme.onSecondaryContainer
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Snooze", fontWeight = FontWeight.Medium)
+                        Text(if (isSnoozeEnabled) "Allowed to rest more" else "No snooze today", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(checked = isSnoozeEnabled, onCheckedChange = { isSnoozeEnabled = it })
+                }
+
+                AnimatedVisibility(visible = isSnoozeEnabled, enter = expandVertically(), exit = shrinkVertically()) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Snooze duration", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                text     = "$snoozeDuration min",
+                                style    = MaterialTheme.typography.labelLarge,
+                                color    = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Slider(
+                            value = snoozeDuration.toFloat(),
+                            onValueChange = { 
+                                snoozeDuration = it.toInt()
+                            },
+                            valueRange = 1f..60f,
+                            steps = 58
                         )
                     }
                 }
-                Slider(
-                    value = snoozeDuration.toFloat(),
-                    onValueChange = { 
-                        snoozeDuration = it.toInt()
-                    },
-                    valueRange = 1f..60f,
-                    steps = 58
-                )
                 
-                AnimatedVisibility(visible = snoozeDuration > 0, enter = expandVertically(), exit = shrinkVertically()) {
+                AnimatedVisibility(visible = isSnoozeEnabled, enter = expandVertically(), exit = shrinkVertically()) {
                     Column {
                         Spacer(modifier = Modifier.height(12.dp))
                         Row(
@@ -1470,6 +1491,7 @@ private data class AlarmStateSnapshot(
     val smileToDismiss: Boolean,
     val smileFallbackMethod: String,
     val snoozeDuration: Int,
+    val isSnoozeEnabled: Boolean,
     val crescendoDuration: Int,
     val isBriefingEnabled: Boolean,
     val isTtsEnabled: Boolean,

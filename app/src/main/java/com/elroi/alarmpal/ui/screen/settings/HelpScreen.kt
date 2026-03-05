@@ -38,27 +38,37 @@ fun HelpScreen(navController: NavController) {
         ) {
             HelpSection(
                 title = "Wake-Up Briefing Generation",
-                content = "The LemurLoop intelligence generates your custom wake-up briefing specifically tailored to you. To ensure your briefing is ready to read immediately when you successfully dismiss the alarm, the invisible generation process actually starts in the background the exact moment your alarm begins to ring. By the time you finish your math or face challenges, your briefing is already pre-computed and awaiting your attention!"
+                content = "The LemurLoop intelligence starts generating your custom briefing the moment your alarm rings. It gathers weather data, your calendar events, and a fun fact, then uses advanced AI to rewrite it in your selected persona's voice. By the time you dismiss the alarm, your briefing is ready! Note: Cloud AI requires a stable internet connection."
             )
             
             HelpSection(
                 title = "Evasive Snooze",
-                content = "If you find yourself mindlessly hitting snooze, this feature is for you. Evasive Snooze makes the snooze button jump to random spots on the screen each time you try to press it, forcing your brain to wake up just a little bit more to track it."
+                content = "For those who snooze in their sleep! Enable this to make the snooze button jump to a different random location on the screen every time you try to tap it. This forces you to focus your eyes and track the button, making it much harder to accidentally fall back asleep."
             )
             
             HelpSection(
                 title = "Gentle Wake (Crescendo)",
-                content = "Instead of jarring you awake at maximum volume, Gentle Wake starts your alarm completely silently and slowly increases the volume over your specified duration. This provides a much more natural and less stressful waking experience."
+                content = "A peaceful way to start your day. Instead of a sudden loud noise, Gentle Wake starts your chosen alarm sound at 0% volume and gradually increases it to maximum over several minutes. You can customize the ramp-up duration in the advanced settings."
             )
             
             HelpSection(
-                title = "Face Game Dismissal",
-                content = "This dismissal method uses your phone's front camera and requires you to mimic 3 random facial expressions (like smiling, winking, or blinking). Moving your facial muscles is proven to increase blood flow to the brain, helping you wake up faster!"
+                title = "Smooth Fade-Out",
+                content = "When you dismiss or snooze your alarm, the sound won't just 'snap' off. LemurLoop gently fades the volume down over one second, providing a smoother transition from your alarm to your briefing or extra sleep."
+            )
+            
+            HelpSection(
+                title = "Math & Face Challenges",
+                content = "Prove you're awake! Math challenges require solving problems of your chosen difficulty. Face challenges use your front camera to ensure you're making specific expressions. Moving your facial muscles and performing mental arithmetic are scientifically proven to help wake up your brain."
             )
             
             HelpSection(
                 title = "Smart Wake-Up (Accountability)",
-                content = "Ever dismiss an alarm and immediately fall back asleep? Smart Wake-Up checks on you a few minutes after you dismiss your alarm. If you don't respond to the prompt in time, it assumes you fell asleep and can even automatically text an accountability buddy to call and wake you up."
+                content = "The ultimate safety net. A few minutes after you dismiss your alarm, LemurLoop will send you a 'Pulse Check'. If you don't respond within 60 seconds, it assumes you fell back asleep. It will then automatically trigger a loud secondary alarm or even text an alert to your chosen Accountability Buddy."
+            )
+
+            HelpSection(
+                title = "Accountability Buddy",
+                content = "Add a trusted friend as your buddy. If you fail to respond to a Smart Wake-Up check, your buddy will receive a text message (standard SMS rates apply) letting them know you're stuck in bed and need a real-life wake-up call!"
             )
         }
     }

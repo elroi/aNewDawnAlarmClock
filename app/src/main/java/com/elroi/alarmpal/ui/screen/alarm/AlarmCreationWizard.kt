@@ -18,6 +18,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.material3.TimePickerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,39 +79,40 @@ fun AlarmCreationWizard(
     val totalPages = 5
 
     // Initial state setup
-    var selectedTime by remember { mutableStateOf(LocalTime.now().withSecond(0).withNano(0)) }
-    var selectedDays by remember { mutableStateOf(listOf<Int>()) }
-    var alarmLabel by remember { mutableStateOf("") }
+    var selectedTime by remember { mutableStateOf<LocalTime>(LocalTime.now().withSecond(0).withNano(0)) }
+    var selectedDays by remember { mutableStateOf<List<Int>>(listOf<Int>()) }
+    var alarmLabel by remember { mutableStateOf<String>("") }
     
-    var selectedPersona by remember { mutableStateOf(defaultSettings.aiPersona) }
-    var isBriefingEnabled by remember { mutableStateOf(defaultSettings.isBriefingEnabled) }
-    var isTtsEnabled by remember { mutableStateOf(defaultSettings.isTtsEnabled) }
-    var isSoundEnabled by remember { mutableStateOf(defaultSettings.isSoundEnabled) }
-    var isVibrate by remember { mutableStateOf(defaultSettings.isVibrate) }
-    var isGentleWake by remember { mutableStateOf(defaultSettings.isGentleWake) }
+    var selectedPersona by remember { mutableStateOf<String>(defaultSettings.aiPersona) }
+    var isBriefingEnabled by remember { mutableStateOf<Boolean>(defaultSettings.isBriefingEnabled) }
+    var isTtsEnabled by remember { mutableStateOf<Boolean>(defaultSettings.isTtsEnabled) }
+    var isSoundEnabled by remember { mutableStateOf<Boolean>(defaultSettings.isSoundEnabled) }
+    var isVibrate by remember { mutableStateOf<Boolean>(defaultSettings.isVibrate) }
+    var isGentleWake by remember { mutableStateOf<Boolean>(defaultSettings.isGentleWake) }
     var crescendoDurationMinutes by remember { mutableIntStateOf(defaultSettings.crescendoDurationMinutes) }
+    var isSnoozeEnabled by remember { mutableStateOf<Boolean>(defaultSettings.isSnoozeEnabled) }
     var snoozeDurationMinutes by remember { mutableIntStateOf(defaultSettings.snoozeDurationMinutes) }
-    var isSmoothFadeOut by remember { mutableStateOf(defaultSettings.isSmoothFadeOut) }
-    var isEvasiveSnooze by remember { mutableStateOf(defaultSettings.isEvasiveSnooze) }
+    var isSmoothFadeOut by remember { mutableStateOf<Boolean>(defaultSettings.isSmoothFadeOut) }
+    var isEvasiveSnooze by remember { mutableStateOf<Boolean>(defaultSettings.isEvasiveSnooze) }
     var evasiveSnoozesBeforeMoving by remember { mutableIntStateOf(defaultSettings.evasiveSnoozesBeforeMoving) }
 
     var selectedMathDifficulty by remember { mutableIntStateOf(defaultSettings.mathDifficulty) }
     var mathProblemCount by remember { mutableIntStateOf(defaultSettings.mathProblemCount) }
-    var mathGraduallyIncreaseDifficulty by remember { mutableStateOf(defaultSettings.mathGraduallyIncreaseDifficulty) }
-    var smileToDismiss by remember { mutableStateOf(defaultSettings.smileToDismiss) }
-    var smileFallbackMethod by remember { mutableStateOf(defaultSettings.smileFallbackMethod) }
-    var isSmartWakeupEnabled by remember { mutableStateOf(defaultSettings.isSmartWakeupEnabled) }
+    var mathGraduallyIncreaseDifficulty by remember { mutableStateOf<Boolean>(defaultSettings.mathGraduallyIncreaseDifficulty) }
+    var smileToDismiss by remember { mutableStateOf<Boolean>(defaultSettings.smileToDismiss) }
+    var smileFallbackMethod by remember { mutableStateOf<String>(defaultSettings.smileFallbackMethod) }
+    var isSmartWakeupEnabled by remember { mutableStateOf<Boolean>(defaultSettings.isSmartWakeupEnabled) }
     var wakeupCheckDelayMinutes by remember { mutableIntStateOf(defaultSettings.wakeupCheckDelayMinutes) }
     var wakeupCheckTimeoutSeconds by remember { mutableIntStateOf(defaultSettings.wakeupCheckTimeoutSeconds) }
     
-    var buddyPhone by remember { mutableStateOf("") }
-    var buddyName by remember { mutableStateOf("") }
-    var buddyUserName by remember { mutableStateOf(defaultSettings.briefingUserName) }
-    var buddyMessage by remember { mutableStateOf("") }
+    var buddyPhone by remember { mutableStateOf<String>("") }
+    var buddyName by remember { mutableStateOf<String>("") }
+    var buddyUserName by remember { mutableStateOf<String>(defaultSettings.briefingUserName) }
+    var buddyMessage by remember { mutableStateOf<String>("") }
     var buddyAlertAfterMinutes by remember { mutableIntStateOf(5) }
     
-    var showBuddyDialog by remember { mutableStateOf(false) }
-    var showCloudAiSetupDialog by remember { mutableStateOf(false) }
+    var showBuddyDialog by remember { mutableStateOf<Boolean>(false) }
+    var showCloudAiSetupDialog by remember { mutableStateOf<Boolean>(false) }
     val globalBuddies by viewModel.globalBuddies.collectAsState()
     val confirmedNumbers by viewModel.confirmedBuddyNumbers.collectAsState()
     val pendingCodes by viewModel.pendingBuddyCodes.collectAsState()
@@ -163,6 +168,7 @@ fun AlarmCreationWizard(
                 isVibrate = isVibrate,
                 isGentleWake = isGentleWake,
                 crescendoDurationMinutes = crescendoDurationMinutes,
+                isSnoozeEnabled = isSnoozeEnabled,
                 snoozeDurationMinutes = snoozeDurationMinutes,
                 isSmoothFadeOut = isSmoothFadeOut,
                 isEvasiveSnooze = isEvasiveSnooze,
@@ -282,6 +288,7 @@ fun AlarmCreationWizard(
                             isTtsEnabled, { isTtsEnabled = it },
                             isSoundEnabled, { isSoundEnabled = it },
                             isVibrate, { isVibrate = it },
+                            isSnoozeEnabled, { isSnoozeEnabled = it },
                             isGentleWake, { isGentleWake = it },
                             crescendoDurationMinutes, { crescendoDurationMinutes = it },
                             snoozeDurationMinutes, { snoozeDurationMinutes = it },
@@ -326,7 +333,7 @@ fun AlarmCreationWizard(
                             personas.find { it.id == selectedPersona } ?: personas[0],
                             selectedMathDifficulty, smileToDismiss, buddyName,
                             isGentleWake, buddyMessage, buddyAlertAfterMinutes, crescendoDurationMinutes,
-                            snoozeDurationMinutes, isSmoothFadeOut, isEvasiveSnooze, isSmartWakeupEnabled
+                            isSnoozeEnabled, snoozeDurationMinutes, isSmoothFadeOut, isEvasiveSnooze, isSmartWakeupEnabled
                         )
                     }
                     
@@ -464,6 +471,8 @@ fun WakeUpStyleStep(
     onSoundEnabledChange: (Boolean) -> Unit,
     isVibrate: Boolean,
     onVibrateChange: (Boolean) -> Unit,
+    isSnoozeEnabled: Boolean,
+    onSnoozeEnabledChange: (Boolean) -> Unit,
     isGentleWake: Boolean,
     onGentleWakeChange: (Boolean) -> Unit,
     crescendoDurationMinutes: Int,
@@ -551,6 +560,15 @@ fun WakeUpStyleStep(
                     checked = isVibrate,
                     onCheckedChange = onVibrateChange,
                     icon = "📳"
+                )
+                
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                
+                FeatureToggle(
+                    title = "Snooze",
+                    checked = isSnoozeEnabled,
+                    onCheckedChange = onSnoozeEnabledChange,
+                    icon = "💤"
                 )
             }
         }
@@ -678,25 +696,27 @@ fun WakeUpStyleStep(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            Column(modifier = Modifier.padding(horizontal = 4.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(
-                        text = stringResource(R.string.wizard_2_snooze_duration),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = if (snoozeDurationMinutes == 0) stringResource(R.string.wizard_2_snooze_off) else "${snoozeDurationMinutes}m",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
+            if (isSnoozeEnabled) {
+                Column(modifier = Modifier.padding(horizontal = 4.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(
+                            text = stringResource(R.string.wizard_2_snooze_duration),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "${snoozeDurationMinutes}m",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Slider(
+                        value = snoozeDurationMinutes.toFloat(),
+                        onValueChange = { onSnoozeDurationChange(it.toInt()) },
+                        valueRange = 1f..60f,
+                        steps = 58
                     )
                 }
-                Slider(
-                    value = snoozeDurationMinutes.toFloat(),
-                    onValueChange = { onSnoozeDurationChange(it.toInt()) },
-                    valueRange = 0f..60f,
-                    steps = 59
-                )
             }
             
             if (snoozeDurationMinutes > 0) {
@@ -800,6 +820,7 @@ fun FinalSummaryStep(
     buddyMessage: String,
     buddyAlertAfterMinutes: Int,
     crescendoDurationMinutes: Int,
+    isSnoozeEnabled: Boolean,
     snoozeDurationMinutes: Int,
     isSmoothFadeOut: Boolean,
     isEvasiveSnooze: Boolean,
@@ -854,7 +875,7 @@ fun FinalSummaryStep(
                 SummaryRow("Persona", "${persona.emoji} ${persona.title}")
                 if (isGentleWake) SummaryRow("Volume", "🌅 Gentle Wake (${crescendoDurationMinutes}m)")
                 if (isSmoothFadeOut) SummaryRow("Fade-Out", "🔉 Smooth")
-                SummaryRow("Snooze", if (snoozeDurationMinutes == 0) "Off" else "${snoozeDurationMinutes}m${if(isEvasiveSnooze) " 🏃" else ""}")
+                SummaryRow("Snooze", if (!isSnoozeEnabled) "Off" else "${snoozeDurationMinutes}m${if(isEvasiveSnooze) " 🏃" else ""}")
                 if (smileToDismiss) SummaryRow("Challenge", "😊 Smile to Dismiss")
                 if (mathDifficulty > 0) SummaryRow("Challenge", "🧮 Math (${if(mathDifficulty==1) "Easy" else if(mathDifficulty==2) "Med" else "Hard"})")
                 if (isSmartWakeupEnabled) SummaryRow("Smart Check", "🚨 Enabled")

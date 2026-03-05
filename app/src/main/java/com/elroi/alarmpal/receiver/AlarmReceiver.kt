@@ -46,6 +46,7 @@ class AlarmReceiver : BroadcastReceiver() {
             putExtra("ALARM_IS_SMOOTH_FADE_OUT", intent.getBooleanExtra("ALARM_IS_SMOOTH_FADE_OUT", true))
             putExtra("ALARM_IS_VIBRATE", intent.getBooleanExtra("ALARM_IS_VIBRATE", true))
             putExtra("ALARM_IS_SOUND_ENABLED", intent.getBooleanExtra("ALARM_IS_SOUND_ENABLED", true))
+            putExtra("ALARM_IS_SNOOZE_ENABLED", intent.getBooleanExtra("ALARM_IS_SNOOZE_ENABLED", true))
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_IS_SMART_WAKEUP_ENABLED, intent.getBooleanExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_IS_SMART_WAKEUP_ENABLED, false))
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_DELAY, intent.getIntExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_DELAY, 3))
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_TIMEOUT, intent.getIntExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_TIMEOUT, 60))

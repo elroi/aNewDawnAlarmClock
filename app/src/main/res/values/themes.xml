@@ -3,9 +3,9 @@
     <style name="Theme.LemurLoop" parent="android:Theme.Material.Light.NoActionBar" />
     <style name="Theme.LemurLoop.Starting" parent="Theme.SplashScreen">
         <!-- Background color of the splash screen -->
-        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="windowSplashScreenBackground">@android:color/white</item>
         <!-- The icon to display -->
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
         <!-- Theme to use after the splash screen is complete -->
         <item name="postSplashScreenTheme">@style/Theme.LemurLoop</item>
     </style>

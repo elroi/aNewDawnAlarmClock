@@ -30,6 +30,7 @@ data class Alarm(
     val evasiveSnoozesBeforeMoving: Int = 0,
     val isSmoothFadeOut: Boolean = true,
     val isSoundEnabled: Boolean = true,
+    val isSnoozeEnabled: Boolean = true,
     val isSmartWakeupEnabled: Boolean = false,
     val wakeupCheckDelayMinutes: Int = 3,
     val wakeupCheckTimeoutSeconds: Int = 60

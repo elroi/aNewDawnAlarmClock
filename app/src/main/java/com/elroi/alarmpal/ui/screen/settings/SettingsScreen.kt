@@ -611,17 +611,32 @@ fun SettingsScreen(
                 isExpanded = expandedSections.contains("INTELLIGENCE"),
                 onToggle = { viewModel.toggleSection("INTELLIGENCE") }
             ) {
+                val isCloudAiEnabled by viewModel.isCloudAiEnabled.collectAsState()
+                
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
                 ) {
-                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            "LemurLoop uses Gemini for creative briefings. All processing happens in the cloud for maximum intelligence.",
-                            style = MaterialTheme.typography.bodySmall
+                    Row(
+                        modifier = Modifier.padding(12.dp), 
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Cloud AI Enhancement", 
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "Uses Gemini for personalized briefings. Requires API key.",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Switch(
+                            checked = isCloudAiEnabled,
+                            onCheckedChange = { viewModel.updateIsCloudAiEnabled(it) }
                         )
                     }
                 }
@@ -633,14 +648,62 @@ fun SettingsScreen(
                 // API Key
                 Text("API Credentials", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                 val apiKey by viewModel.geminiApiKey.collectAsState()
-                OutlinedTextField(
-                    value = apiKey,
-                    onValueChange = { viewModel.updateGeminiApiKey(it) },
-                    label = { Text("Gemini API Key") },
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = PasswordVisualTransformation(),
-                    singleLine = true
-                )
+                val isKeyValidating by viewModel.isKeyValidating.collectAsState()
+                val keyValidationResult by viewModel.keyValidationResult.collectAsState()
+                val keyValidationError by viewModel.keyValidationError.collectAsState()
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = apiKey,
+                        onValueChange = { viewModel.updateGeminiApiKey(it) },
+                        label = { Text("Gemini API Key") },
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        trailingIcon = {
+                            when {
+                                isKeyValidating -> CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                                keyValidationResult == true -> Icon(Icons.Default.CheckCircle, "Valid", tint = MaterialTheme.colorScheme.primary)
+                                keyValidationResult == false -> Icon(Icons.Default.Warning, "Invalid", tint = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = { viewModel.validateApiKey() },
+                            enabled = apiKey.isNotBlank() && !isKeyValidating
+                        ) {
+                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Test API Key")
+                        }
+                        
+                        TextButton(
+                            onClick = { 
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://aistudio.google.com/app/apikey"))
+                                context.startActivity(intent)
+                            }
+                        ) {
+                            Icon(Icons.Default.ExitToApp, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Get Key")
+                        }
+                    }
+
+                    keyValidationError?.let { error ->
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                    }
+                }
             }
 
             ExpandableSection(
@@ -817,17 +880,31 @@ fun PersonaCard(
 
 @Composable
 fun IntelligenceHealthView(viewModel: SettingsViewModel, onWipeBrainMemory: () -> Unit) {
-    val status by viewModel.briefingStatus.collectAsState()
+    val status by viewModel.combinedHealthStatus.collectAsState()
     val error by viewModel.briefingError.collectAsState()
-    val lastScript by viewModel.lastBriefingScript.collectAsState()
+    val generatingProgress by viewModel.generatingProgress.collectAsState()
     val isGenerating by viewModel.isBriefingGenerating.collectAsState()
+    val lastScript by viewModel.lastBriefingScript.collectAsState()
     var showFullError by remember { mutableStateOf(false) }
     var showFullScript by remember { mutableStateOf(false) }
     
+    val statusParts = status.split("|").associate { 
+        val kv = it.split(":")
+        kv[0] to (kv.getOrNull(1) ?: "unknown")
+    }
+    
+    val aiState = statusParts["ai"] ?: "pending"
+    val containerColor = when(aiState) {
+        "ok" -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        "draft" -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+        else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-        shape = RoundedCornerShape(16.dp)
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        shape = RoundedCornerShape(16.dp),
+        border = if (aiState == "draft") BorderStroke(1.dp, MaterialTheme.colorScheme.error) else null
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(
@@ -841,15 +918,10 @@ fun IntelligenceHealthView(viewModel: SettingsViewModel, onWipeBrainMemory: () -
                 }
             }
             
-            val statusParts = status.split("|").associate { 
-                val kv = it.split(":")
-                kv[0] to (kv.getOrNull(1) ?: "unknown")
-            }
-
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 HealthIndicator("Weather", statusParts["weather"] ?: "pending", Modifier.weight(1f))
                 HealthIndicator("Calendar", statusParts["calendar"] ?: "pending", Modifier.weight(1f))
-                HealthIndicator("AI Brain", statusParts["ai"] ?: "pending", Modifier.weight(1f))
+                HealthIndicator("AI Brain", aiState, Modifier.weight(1f))
             }
 
             error?.takeIf { it.isNotBlank() }?.let { e ->
@@ -926,15 +998,23 @@ fun IntelligenceHealthView(viewModel: SettingsViewModel, onWipeBrainMemory: () -
             Button(
                 onClick = { 
                     viewModel.saveSettings()
-                    viewModel.launchTestBriefing() 
+                    viewModel.testIntelligenceHealth() 
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isGenerating,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(Icons.Default.PlayArrow, contentDescription = null)
+                if (isGenerating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Icon(Icons.Default.Refresh, contentDescription = null)
+                }
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Generate Test Briefing")
+                Text(if (isGenerating) generatingProgress else "Test Intelligence Health")
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))

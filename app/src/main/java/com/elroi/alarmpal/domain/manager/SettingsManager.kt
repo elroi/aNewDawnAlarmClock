@@ -87,6 +87,7 @@ data class AlarmDefaults(
     val isEvasiveSnooze: Boolean = false,
     val evasiveSnoozesBeforeMoving: Int = 0,
     val isSmoothFadeOut: Boolean = true,
+    val isSnoozeEnabled: Boolean = true,
     val weekendDays: Set<Int> = setOf(6, 7), // ISO indices: 1=Mon...6=Sat, 7=Sun
     val defaultSoundUri: String? = null,
     val aiPersona: String = "COACH", // Options: COACH, COMEDIAN, ZEN, HYPEMAN, SURPRISE
@@ -129,6 +130,7 @@ class SettingsManager @Inject constructor(
         val DEFAULT_IS_EVASIVE_SNOOZE = booleanPreferencesKey("default_is_evasive_snooze")
         val DEFAULT_EVASIVE_SNOOZES_BEFORE = intPreferencesKey("default_evasive_snoozes_before")
         val DEFAULT_IS_SMOOTH_FADE_OUT = booleanPreferencesKey("default_is_smooth_fade_out")
+        val DEFAULT_IS_SNOOZE_ENABLED = booleanPreferencesKey("default_is_snooze_enabled")
         val WEEKEND_DAYS = stringSetPreferencesKey("weekend_days")
         val DEFAULT_SOUND_URI = stringPreferencesKey("default_sound_uri")
         val DEFAULT_IS_VIBRATE = booleanPreferencesKey("default_is_vibrate")
@@ -313,6 +315,7 @@ class SettingsManager @Inject constructor(
             isEvasiveSnooze = preferences[DEFAULT_IS_EVASIVE_SNOOZE] ?: false,
             evasiveSnoozesBeforeMoving = preferences[DEFAULT_EVASIVE_SNOOZES_BEFORE] ?: 0,
             isSmoothFadeOut = preferences[DEFAULT_IS_SMOOTH_FADE_OUT] ?: true,
+            isSnoozeEnabled = preferences[DEFAULT_IS_SNOOZE_ENABLED] ?: true,
             weekendDays = preferences[WEEKEND_DAYS]?.map { it.toInt() }?.toSet() ?: setOf(6, 7),
             defaultSoundUri = preferences[DEFAULT_SOUND_URI],
             aiPersona = preferences[AI_PERSONA] ?: "COACH",
@@ -348,6 +351,7 @@ class SettingsManager @Inject constructor(
             preferences[DEFAULT_IS_EVASIVE_SNOOZE] = defaults.isEvasiveSnooze
             preferences[DEFAULT_EVASIVE_SNOOZES_BEFORE] = defaults.evasiveSnoozesBeforeMoving
             preferences[DEFAULT_IS_SMOOTH_FADE_OUT] = defaults.isSmoothFadeOut
+            preferences[DEFAULT_IS_SNOOZE_ENABLED] = defaults.isSnoozeEnabled
             preferences[WEEKEND_DAYS] = defaults.weekendDays.map { it.toString() }.toSet()
             defaults.defaultSoundUri?.let { preferences[DEFAULT_SOUND_URI] = it } ?: preferences.remove(DEFAULT_SOUND_URI)
             preferences[AI_PERSONA] = defaults.aiPersona
