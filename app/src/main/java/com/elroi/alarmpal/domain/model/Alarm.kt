@@ -33,5 +33,6 @@ data class Alarm(
     val isSnoozeEnabled: Boolean = true,
     val isSmartWakeupEnabled: Boolean = false,
     val wakeupCheckDelayMinutes: Int = 3,
-    val wakeupCheckTimeoutSeconds: Int = 60
+    val wakeupCheckTimeoutSeconds: Int = 60,
+    val aiPersona: String? = null
 )

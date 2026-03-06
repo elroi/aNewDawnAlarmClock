@@ -26,4 +26,5 @@ sealed class Screen(val route: String) {
     }
     object AlarmWizard : Screen("alarm_wizard")
     object About : Screen("about")
+    object BriefingLog : Screen("briefing_log")
 }

@@ -25,6 +25,8 @@ import android.content.Context
 import com.elroi.alarmpal.util.BriefingUtils
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import com.elroi.alarmpal.domain.manager.BriefingLogger
+import com.elroi.alarmpal.domain.manager.BriefingLogEntry
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -33,7 +35,8 @@ class SettingsViewModel @Inject constructor(
     private val briefingGenerator: com.elroi.alarmpal.domain.generator.BriefingGenerator,
     private val localLLMManager: com.elroi.alarmpal.domain.manager.LocalLLMManager,
     private val database: com.elroi.alarmpal.data.local.AppDatabase,
-    private val ttsManager: com.elroi.alarmpal.domain.manager.TextToSpeechManager
+    private val ttsManager: com.elroi.alarmpal.domain.manager.TextToSpeechManager,
+    private val briefingLogger: BriefingLogger
 ) : ViewModel() {
 
     private val _draftLocation = MutableStateFlow("")
@@ -53,6 +56,9 @@ class SettingsViewModel @Inject constructor(
 
     private val _draftIsCloudAiEnabled = MutableStateFlow(false)
     val isCloudAiEnabled = _draftIsCloudAiEnabled.asStateFlow()
+
+    private val _draftIsLocalAiEnabled = MutableStateFlow(false)
+    val isLocalAiEnabled = _draftIsLocalAiEnabled.asStateFlow()
 
     private val _draftPreferredAiTier = MutableStateFlow("STANDARD")
     val preferredAiTier = _draftPreferredAiTier.asStateFlow()
@@ -116,6 +122,13 @@ class SettingsViewModel @Inject constructor(
 
     private val _expandedSections = MutableStateFlow<Set<String>>(emptySet())
     val expandedSections = _expandedSections.asStateFlow()
+
+    val briefingLogs = briefingLogger.logsFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun clearBriefingLogs() {
+        viewModelScope.launch { briefingLogger.clearLogs() }
+    }
 
     fun toggleSection(sectionId: String) {
         _expandedSections.value = if (_expandedSections.value.contains(sectionId)) {
@@ -233,6 +246,11 @@ class SettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            settingsManager.isLocalAiEnabledFlow.collectLatest { valValue ->
+                _draftIsLocalAiEnabled.value = valValue
+            }
+        }
+        viewModelScope.launch {
             settingsManager.preferredAiTierFlow.collectLatest { valValue ->
                 val prevOriginal = _originalPreferredAiTier.value
                 _originalPreferredAiTier.value = valValue
@@ -313,10 +331,16 @@ class SettingsViewModel @Inject constructor(
     fun updateIsCloudAiEnabled(isEnabled: Boolean) {
         _draftIsCloudAiEnabled.value = isEnabled
         // Persist immediately — this is a live toggle, not a form field.
-        // BriefingGenerator reads from DataStore directly; it must see this immediately.
         viewModelScope.launch {
             settingsManager.saveIsCloudAiEnabled(isEnabled)
             _originalIsCloudAiEnabled.value = isEnabled
+        }
+    }
+
+    fun updateIsLocalAiEnabled(isEnabled: Boolean) {
+        _draftIsLocalAiEnabled.value = isEnabled
+        viewModelScope.launch {
+            settingsManager.saveIsLocalAiEnabled(isEnabled)
         }
     }
 

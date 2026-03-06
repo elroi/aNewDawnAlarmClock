@@ -17,7 +17,8 @@ class BriefingWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         android.util.Log.d("BriefingWorker", "Briefing pre-generation started...")
-        val result = briefingGenerator.refreshBriefing()
+        val alarmId = inputData.getString("ALARM_ID")
+        val result = briefingGenerator.refreshBriefing(alarmId)
         return if (result != null) {
             Result.success()
         } else {

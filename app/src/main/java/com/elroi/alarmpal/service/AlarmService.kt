@@ -240,7 +240,7 @@ class AlarmService : Service() {
             com.elroi.alarmpal.domain.manager.BriefingStateManager.startGenerating()
             ttsManager.initializeIfNeeded()
             precomputedBriefing = serviceScope.async {
-                briefingGenerator.generateBriefing()
+                briefingGenerator.generateBriefing(currentAlarmId)
             }
             
             // Listen for TTS speech completion
@@ -332,7 +332,7 @@ class AlarmService : Service() {
             // Start the briefing retrieval and UI update IMMEDIATELY, don't wait for ringtone fade-out
             ttsJob = serviceScope.launch {
                 Log.d("TTS_DEBUG", "Awaiting pre-computed briefing...")
-                val briefing = precomputedBriefing?.await() ?: briefingGenerator.generateBriefing()
+                val briefing = precomputedBriefing?.await() ?: briefingGenerator.generateBriefing(currentAlarmId)
                 Log.d("TTS_DEBUG", "Briefing ready: $briefing")
                 
                 com.elroi.alarmpal.domain.manager.BriefingStateManager.onBriefingReady(briefing)

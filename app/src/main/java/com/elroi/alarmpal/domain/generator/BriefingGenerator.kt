@@ -8,6 +8,7 @@ import com.elroi.alarmpal.domain.manager.BriefingStateManager
 import com.elroi.alarmpal.domain.manager.CalendarManager
 import com.elroi.alarmpal.domain.manager.GeminiManager
 import com.elroi.alarmpal.domain.manager.LocalLLMManager
+import com.elroi.alarmpal.domain.manager.BriefingLogger
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -29,11 +30,13 @@ class BriefingGenerator @Inject constructor(
     private val settingsManager: SettingsManager,
     private val geminiManager: GeminiManager,
     private val scriptBuilder: BriefingScriptBuilder,
-    private val localLLMManager: LocalLLMManager
+    private val localLLMManager: LocalLLMManager,
+    private val alarmRepository: com.elroi.alarmpal.domain.repository.AlarmRepository,
+    private val briefingLogger: BriefingLogger
 ) {
     private val generationLock = Mutex()
 
-    suspend fun generateBriefing(): String = withContext(Dispatchers.IO) {
+    suspend fun generateBriefing(alarmId: String? = null): String = withContext(Dispatchers.IO) {
         val cached = getCachedBriefing()
         if (cached != null) {
             android.util.Log.d("BriefingGenerator", "Using cached briefing script.")
@@ -45,7 +48,7 @@ class BriefingGenerator @Inject constructor(
             if (postLockCached != null) return@withLock postLockCached
             
             BriefingStateManager.updateStatus("Activating LemurLoop brain cells...")
-            val generated = generateFullBriefing()
+            val generated = generateFullBriefing(alarmId)
             
             generated
         }
@@ -58,9 +61,9 @@ class BriefingGenerator @Inject constructor(
         "Rise and shine! Your day is waiting for you."
     }
 
-    suspend fun refreshBriefing(): String? = withContext(Dispatchers.IO) {
+    suspend fun refreshBriefing(alarmId: String? = null): String? = withContext(Dispatchers.IO) {
         generationLock.withLock {
-            generateFullBriefing()
+            generateFullBriefing(alarmId)
         }
     }
 
@@ -74,12 +77,13 @@ class BriefingGenerator @Inject constructor(
         return if (isFresh) script else null
     }
 
-    private suspend fun generateFullBriefing(): String? {
+    private suspend fun generateFullBriefing(alarmId: String?): String? {
         val isAutoLocation = settingsManager.isAutoLocationFlow.first()
         var location = settingsManager.locationFlow.first().ifBlank { "New York" }
         val isCelsius = settingsManager.isCelsiusFlow.first()
         
         val settings = settingsManager.alarmDefaultsFlow.first()
+        val alarmOverride = alarmId?.let { alarmRepository.getAlarmById(it) }?.aiPersona
 
         if (isAutoLocation) {
             try {
@@ -184,7 +188,7 @@ class BriefingGenerator @Inject constructor(
         val isCloudEnabled = settingsManager.isCloudAiEnabledFlow.first()
         val preferredTier = settingsManager.preferredAiTierFlow.first()
         val fallbackOrder = settingsManager.aiFallbackOrderFlow.first()
-        val persona = settings.aiPersona
+        val persona = alarmOverride ?: settings.aiPersona
         
         var aiScript: String? = null
         var aiSuccess = false
@@ -200,13 +204,16 @@ class BriefingGenerator @Inject constructor(
         android.util.Log.d("BriefingGenerator", "Generated Draft:\n$localDraft")
         android.util.Log.d("BriefingGenerator", "Generated Enhancement Prompt (cloud):\n$cloudPrompt")
         
-        // NOTE: LocalLLM (Advanced/Gemma 2B) is deliberately excluded from briefing enhancement.
-        // It crashes with a native SIGABRT during output generation that cannot be caught in Kotlin.
-        // The BriefingScriptBuilder already produces persona-aware local drafts.
-        // AI enhancement is only applied when Cloud (Gemini) is available.
-        android.util.Log.d("BriefingGenerator", "isCloudEnabled=$isCloudEnabled apiKey=${settingsManager.geminiApiKeyFlow.first().take(8)}...")
-        val attempts = if (isCloudEnabled) listOf("CLOUD") else emptyList()
+        val attempts = mutableListOf<String>()
+        if (fallbackOrder == "LOCAL_THEN_CLOUD") {
+            if (preferredTier == "ADVANCED") attempts.add("ADVANCED")
+            if (isCloudEnabled) attempts.add("CLOUD")
+        } else {
+            if (isCloudEnabled) attempts.add("CLOUD")
+            if (preferredTier == "ADVANCED") attempts.add("ADVANCED")
+        }
 
+        var actualEngineUsed = "DRAFT_ONLY"
         for (tier in attempts) {
             if (aiSuccess) break
             
@@ -239,14 +246,18 @@ class BriefingGenerator @Inject constructor(
             }
             
             if (finalResult != null && !finalResult.startsWith("ERROR") && finalResult.isNotBlank()) {
+                // Strip "Sure, here is..." / "Here's the rewritten..." / "Certainly..." style preamble
+                // from Local LLM which often adds an unwanted introductory sentence before the actual content.
+                val cleanedResult = if (tier == "ADVANCED") stripLocalAIPreamble(finalResult) else finalResult
                 val draftParagraphs = localDraft.trim().split("\n\n").filter { it.isNotBlank() }
-                val aiParagraphs = finalResult.trim().split("\n\n").filter { it.isNotBlank() }
+                val aiParagraphs = cleanedResult.trim().split("\n\n").filter { it.isNotBlank() }
                 
                 // If the AI dropped paragraphs, accept what it wrote for existing ones but
                 // fall back to the draft for the entire script so data is never lost.
                 if (aiParagraphs.size >= draftParagraphs.size) {
-                    aiScript = finalResult
+                    aiScript = cleanedResult
                     aiSuccess = true
+                    actualEngineUsed = tier
                     BriefingStateManager.updateComponentStatus("ai", "ok")
                     android.util.Log.d("BriefingGenerator", "AI kept all ${aiParagraphs.size} paragraphs ✓")
                 } else {
@@ -284,6 +295,14 @@ class BriefingGenerator @Inject constructor(
             }
         )
         
+        briefingLogger.logBriefing(
+            engineUsed = actualEngineUsed,
+            isFallbackTriggered = attempts.indexOf(actualEngineUsed).let { it > 0 },
+            result = if (aiSuccess) "SUCCESS" else "FALLBACK_DRAFT",
+            details = "Alarm: ${alarmId ?: "Test/Preview"} | Persona: $persona | Fallback Pref: $fallbackOrder",
+            briefingScript = finalScript
+        )
+        
         return finalScript.trim()
     }
 
@@ -294,6 +313,40 @@ class BriefingGenerator @Inject constructor(
             "HYPEMAN" -> settings.promptHypeman
             else -> settings.promptCoach
         }
+    }
+
+    /**
+     * Strips common LLM preamble lines from local model output.
+     * Gemma 2B often starts with "Sure, here is...", "Certainly!", "Here's the...", etc.
+     * We detect leading lines that look like meta-commentary and drop them.
+     */
+    private fun stripLocalAIPreamble(text: String): String {
+        val preamblePatterns = listOf(
+            Regex("^sure[,!.].*", RegexOption.IGNORE_CASE),
+            Regex("^certainly[,!.].*", RegexOption.IGNORE_CASE),
+            Regex("^here(?:'s| is| are).*", RegexOption.IGNORE_CASE),
+            Regex("^of course[,!.].*", RegexOption.IGNORE_CASE),
+            Regex("^absolutely[,!.].*", RegexOption.IGNORE_CASE),
+            Regex("^i'?(?:ve)? rewritten.*", RegexOption.IGNORE_CASE),
+            Regex("^below is.*", RegexOption.IGNORE_CASE),
+        )
+        
+        val lines = text.trimStart().lines()
+        var startIndex = 0
+        for (i in lines.indices) {
+            val line = lines[i].trim()
+            if (line.isEmpty()) {
+                // Skip leading blank lines
+                startIndex = i + 1
+                continue
+            }
+            if (preamblePatterns.any { it.matches(line) }) {
+                startIndex = i + 1
+            } else {
+                break
+            }
+        }
+        return lines.drop(startIndex).joinToString("\n").trimStart()
     }
 
     private fun getPersonaTemperament(persona: String): com.elroi.alarmpal.domain.manager.PersonaTemperament {

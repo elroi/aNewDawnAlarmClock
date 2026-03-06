@@ -140,6 +140,7 @@ class SettingsManager @Inject constructor(
         val DEFAULT_WAKEUP_CHECK_TIMEOUT = intPreferencesKey("default_wakeup_check_timeout")
         val GEMINI_API_KEY = stringPreferencesKey("gemini_api_key")
         val IS_CLOUD_AI_ENABLED = booleanPreferencesKey("is_cloud_ai_enabled")
+        val IS_LOCAL_AI_ENABLED = booleanPreferencesKey("is_local_ai_enabled")
         val PREFERRED_AI_TIER = stringPreferencesKey("preferred_ai_tier") // STANDARD, ADVANCED, CLOUD
         val AI_FALLBACK_ORDER = stringPreferencesKey("ai_fallback_order") // CLOUD_THEN_LOCAL, LOCAL_THEN_CLOUD
         val AI_PERSONA = stringPreferencesKey("ai_persona")
@@ -179,6 +180,10 @@ class SettingsManager @Inject constructor(
 
     val isCloudAiEnabledFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[IS_CLOUD_AI_ENABLED] ?: false
+    }
+
+    val isLocalAiEnabledFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[IS_LOCAL_AI_ENABLED] ?: false // Default Local AI off (opt-in)
     }
 
     val preferredAiTierFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -225,6 +230,12 @@ class SettingsManager @Inject constructor(
     suspend fun saveIsCloudAiEnabled(isEnabled: Boolean) {
         context.dataStore.edit { settings ->
             settings[IS_CLOUD_AI_ENABLED] = isEnabled
+        }
+    }
+
+    suspend fun saveIsLocalAiEnabled(isEnabled: Boolean) {
+        context.dataStore.edit { settings ->
+            settings[IS_LOCAL_AI_ENABLED] = isEnabled
         }
     }
 

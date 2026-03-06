@@ -32,8 +32,12 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.*
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.*
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.TimePickerState
@@ -109,6 +113,7 @@ fun AlarmDetailScreen(
     var isSmartWakeupEnabled by remember { mutableStateOf<Boolean>(false) }
     var wakeupCheckDelayMinutes by remember { mutableIntStateOf(3) }
     var wakeupCheckTimeoutSeconds by remember { mutableIntStateOf(60) }
+    var aiPersona by remember { mutableStateOf<String?>(null) }
     val weekendDays    = defaultSettings.weekendDays
     var currentAlarm   by remember { mutableStateOf<Alarm?>(null) }
     var initialState by remember { mutableStateOf<AlarmStateSnapshot?>(null) }
@@ -120,7 +125,7 @@ fun AlarmDetailScreen(
         daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
         snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
         evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
-        wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds
+        wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds, aiPersona
     ) {
         val current = AlarmStateSnapshot(
             time, label, isGentleWake, buddyPhone, buddyName,
@@ -128,7 +133,7 @@ fun AlarmDetailScreen(
             daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
             snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
             evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
-            wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds
+            wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds, aiPersona
         )
         initialState != null && current != initialState
     }
@@ -272,6 +277,7 @@ fun AlarmDetailScreen(
                     wakeupCheckDelayMinutes = it.wakeupCheckDelayMinutes
                     wakeupCheckTimeoutSeconds = it.wakeupCheckTimeoutSeconds
                     soundUri       = it.soundUri
+                    aiPersona      = it.aiPersona
                     
                     if (initialState == null) {
                         initialState = AlarmStateSnapshot(
@@ -280,7 +286,7 @@ fun AlarmDetailScreen(
                             daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
                             snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
                             evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
-                            wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds
+                            wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds, aiPersona
                         )
                     }
                 }
@@ -304,6 +310,7 @@ fun AlarmDetailScreen(
             isVibrate = defaultSettings.isVibrate
             isSoundEnabled = defaultSettings.isSoundEnabled
             soundUri = defaultSettings.defaultSoundUri
+            aiPersona = null
             
             if (initialState == null) {
                 initialState = AlarmStateSnapshot(
@@ -312,7 +319,7 @@ fun AlarmDetailScreen(
                     daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
                     snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
                     evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
-                    wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds
+                    wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds, aiPersona
                 )
             }
         }
@@ -917,6 +924,45 @@ fun AlarmDetailScreen(
                         Switch(checked = isTtsEnabled, onCheckedChange = { isTtsEnabled = it })
                     }
                 }
+                
+                AnimatedVisibility(visible = isBriefingEnabled, enter = expandVertically(), exit = shrinkVertically()) {
+                    var expanded by remember { mutableStateOf(false) }
+                    val options = listOf("Global Default" to null, "🤡 The Sarcastic Friend" to "COMEDIAN", "🧘 The Zen Master" to "ZEN", "🚀 The Hype-Man" to "HYPEMAN", "🪖 The Drill Sergeant" to "COACH", "🎲 Surprise Me" to "SURPRISE")
+                    val selectedText = options.find { it.second == aiPersona }?.first ?: "Global Default"
+                    
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                        Text("AI Persona", fontWeight = FontWeight.Medium)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        ExposedDropdownMenuBox(
+                            expanded = expanded,
+                            onExpandedChange = { expanded = !expanded },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            OutlinedTextField(
+                                value = selectedText,
+                                onValueChange = {},
+                                readOnly = true,
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                options.forEach { (label, value) ->
+                                    DropdownMenuItem(
+                                        text = { Text(label) },
+                                        onClick = {
+                                            aiPersona = value
+                                            expanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
 
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -982,7 +1028,8 @@ fun AlarmDetailScreen(
                         isSoundEnabled        = isSoundEnabled,
                         isSmartWakeupEnabled  = isSmartWakeupEnabled,
                         wakeupCheckDelayMinutes = wakeupCheckDelayMinutes,
-                        wakeupCheckTimeoutSeconds = wakeupCheckTimeoutSeconds
+                        wakeupCheckTimeoutSeconds = wakeupCheckTimeoutSeconds,
+                        aiPersona             = aiPersona
                     ) ?: Alarm(
                         time                  = time,
                         label                 = label,
@@ -1006,7 +1053,8 @@ fun AlarmDetailScreen(
                         isSoundEnabled        = isSoundEnabled,
                         isSmartWakeupEnabled  = isSmartWakeupEnabled,
                         wakeupCheckDelayMinutes = wakeupCheckDelayMinutes,
-                        wakeupCheckTimeoutSeconds = wakeupCheckTimeoutSeconds
+                        wakeupCheckTimeoutSeconds = wakeupCheckTimeoutSeconds,
+                        aiPersona             = aiPersona
                     )
                     viewModel.addAlarm(newAlarm)
                     onNavigateUp()
@@ -1503,5 +1551,6 @@ private data class AlarmStateSnapshot(
     val soundUri: String?,
     val isSmartWakeupEnabled: Boolean,
     val wakeupCheckDelayMinutes: Int,
-    val wakeupCheckTimeoutSeconds: Int
+    val wakeupCheckTimeoutSeconds: Int,
+    val aiPersona: String?
 )

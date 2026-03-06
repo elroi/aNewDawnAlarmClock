@@ -80,6 +80,7 @@ class AndroidAlarmScheduler(
             
             val workRequest = OneTimeWorkRequestBuilder<BriefingWorker>()
                 .setInitialDelay(Duration.ofMillis(delayMillis))
+                .setInputData(androidx.work.workDataOf("ALARM_ID" to alarm.id))
                 .build()
                 
             workManager.enqueueUniqueWork(
@@ -92,7 +93,7 @@ class AndroidAlarmScheduler(
             if (delayMillis == 0L) {
                 android.util.Log.d("AndroidAlarmScheduler", "Alarm is imminent. Triggering immediate briefing generation...")
                 scope.launch {
-                    briefingGenerator.refreshBriefing()
+                    briefingGenerator.refreshBriefing(alarm.id)
                 }
             }
         }

@@ -62,6 +62,7 @@ fun SettingsScreen(
     onNavigateToHelp: () -> Unit = {},
     onNavigateToOnboarding: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
+    onNavigateToBriefingLogs: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val location by viewModel.location.collectAsState()
@@ -358,6 +359,15 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Customize Persona Prompts")
                         }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = { onNavigateToBriefingLogs() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.List, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("View Briefing Logs")
+                        }
                     }
                 }
 
@@ -612,99 +622,335 @@ fun SettingsScreen(
                 onToggle = { viewModel.toggleSection("INTELLIGENCE") }
             ) {
                 val isCloudAiEnabled by viewModel.isCloudAiEnabled.collectAsState()
-                
+                val isLocalAiEnabled by viewModel.isLocalAiEnabled.collectAsState()
+                val isAdvancedSupported by viewModel.isAdvancedAiSupported.collectAsState()
+                val preferredTier by viewModel.preferredAiTier.collectAsState()
+
+                // ── TIER 1: Basic Briefing (always active) ──────────────────
                 Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
-                        modifier = Modifier.padding(12.dp), 
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
+                        Text("📋", style = MaterialTheme.typography.titleMedium)
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "Cloud AI Enhancement", 
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                "Standard Briefing",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                "Uses Gemini for personalized briefings. Requires API key.",
-                                style = MaterialTheme.typography.bodySmall
+                                "Always on. Works offline, no setup required.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
                         }
-                        Switch(
-                            checked = isCloudAiEnabled,
-                            onCheckedChange = { viewModel.updateIsCloudAiEnabled(it) }
-                        )
+                        Surface(
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = RoundedCornerShape(20.dp)
+                        ) {
+                            Text(
+                                "Active",
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
 
-                IntelligenceHealthView(viewModel, onWipeBrainMemory)
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // API Key
-                Text("API Credentials", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                val apiKey by viewModel.geminiApiKey.collectAsState()
-                val isKeyValidating by viewModel.isKeyValidating.collectAsState()
-                val keyValidationResult by viewModel.keyValidationResult.collectAsState()
-                val keyValidationError by viewModel.keyValidationError.collectAsState()
-
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = apiKey,
-                        onValueChange = { viewModel.updateGeminiApiKey(it) },
-                        label = { Text("Gemini API Key") },
-                        modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = PasswordVisualTransformation(),
-                        singleLine = true,
-                        trailingIcon = {
-                            when {
-                                isKeyValidating -> CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                                keyValidationResult == true -> Icon(Icons.Default.CheckCircle, "Valid", tint = MaterialTheme.colorScheme.primary)
-                                keyValidationResult == false -> Icon(Icons.Default.Warning, "Invalid", tint = MaterialTheme.colorScheme.error)
-                            }
-                        }
+                // Separator: Optional AI enhancements
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    HorizontalDivider(modifier = Modifier.weight(1f), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+                    Text(
+                        "Optional AI enhancements",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
                     )
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextButton(
-                            onClick = { viewModel.validateApiKey() },
-                            enabled = apiKey.isNotBlank() && !isKeyValidating
+                    HorizontalDivider(modifier = Modifier.weight(1f), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+                }
+
+                // ── TIER 2: Cloud AI Enhancement (PROMOTED) ─────────────────
+                Surface(
+                    color = if (isCloudAiEnabled)
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    else
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Test API Key")
-                        }
-                        
-                        TextButton(
-                            onClick = { 
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://aistudio.google.com/app/apikey"))
-                                context.startActivity(intent)
+                            Text("☁️", style = MaterialTheme.typography.titleMedium)
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Cloud AI Enhancement",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isCloudAiEnabled) MaterialTheme.colorScheme.primary
+                                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                    maxLines = 1
+                                )
+                                Text(
+                                    if (!isCloudAiEnabled) "✨ Recommended  ·  Gemini-powered, best quality."
+                                    else "Gemini-powered briefings. Best quality, requires API key.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (!isCloudAiEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
                             }
-                        ) {
-                            Icon(Icons.Default.ExitToApp, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Get Key")
+                            Switch(
+                                checked = isCloudAiEnabled,
+                                onCheckedChange = { viewModel.updateIsCloudAiEnabled(it) }
+                            )
+                        }
+
+                        // API Credentials (shown when Cloud AI is enabled)
+                        AnimatedVisibility(visible = isCloudAiEnabled) {
+                            Column(modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 12.dp)) {
+                                HorizontalDivider(modifier = Modifier.padding(bottom = 10.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+                                val apiKey by viewModel.geminiApiKey.collectAsState()
+                                val isKeyValidating by viewModel.isKeyValidating.collectAsState()
+                                val keyValidationResult by viewModel.keyValidationResult.collectAsState()
+                                val keyValidationError by viewModel.keyValidationError.collectAsState()
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    OutlinedTextField(
+                                        value = apiKey,
+                                        onValueChange = { viewModel.updateGeminiApiKey(it) },
+                                        label = { Text("Gemini API Key") },
+                                        modifier = Modifier.weight(1f),
+                                        visualTransformation = PasswordVisualTransformation(),
+                                        singleLine = true,
+                                        trailingIcon = {
+                                            when {
+                                                isKeyValidating -> CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                                                keyValidationResult == true -> Icon(Icons.Default.CheckCircle, "Valid", tint = MaterialTheme.colorScheme.primary)
+                                                keyValidationResult == false -> Icon(Icons.Default.Warning, "Invalid", tint = MaterialTheme.colorScheme.error)
+                                            }
+                                        }
+                                    )
+                                    Button(
+                                        onClick = { viewModel.validateApiKey() },
+                                        enabled = apiKey.isNotBlank() && !isKeyValidating,
+                                        modifier = Modifier.height(56.dp)
+                                    ) { Text("Test") }
+                                }
+
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                    TextButton(onClick = {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://aistudio.google.com/app/apikey"))
+                                        context.startActivity(intent)
+                                    }) {
+                                        Icon(Icons.Default.ExitToApp, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Get free API key")
+                                    }
+                                }
+
+                                keyValidationError?.let { error ->
+                                    Text(text = error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 4.dp))
+                                }
+                            }
                         }
                     }
+                }
 
-                    keyValidationError?.let { error ->
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // ── TIER 3: Local AI Enhancement ────────────────────────────
+                Surface(
+                    color = if (isLocalAiEnabled)
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                    else
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text("🦙", style = MaterialTheme.typography.titleMedium)
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Local AI Enhancement",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isLocalAiEnabled) MaterialTheme.colorScheme.onSurface
+                                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
+                                Text(
+                                    "On-device Gemma 2B. Private, no account needed.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
+                            }
+                            Switch(
+                                checked = isLocalAiEnabled,
+                                onCheckedChange = { viewModel.updateIsLocalAiEnabled(it) }
+                            )
+                        }
+
+                        // Local AI sub-settings (shown when enabled)
+                        AnimatedVisibility(visible = isLocalAiEnabled) {
+                            Column(modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 12.dp)) {
+                                HorizontalDivider(modifier = Modifier.padding(bottom = 10.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+                                if (isAdvancedSupported == GeminiNanoStatus.SUPPORTED) {
+                                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                                        val tiers = listOf("STANDARD", "ADVANCED")
+                                        tiers.forEachIndexed { index, tier ->
+                                            SegmentedButton(
+                                                shape = SegmentedButtonDefaults.itemShape(index = index, count = tiers.size),
+                                                onClick = { viewModel.updatePreferredAiTier(tier) },
+                                                selected = preferredTier == tier,
+                                                label = { Text(if (tier == "STANDARD") "Standard" else "Advanced (Gemma 2B)") }
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        if (preferredTier == "ADVANCED")
+                                            "Real on-device LLM for creative, persona-styled briefings."
+                                        else
+                                            "Fast rule-based persona voices. No model download needed.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                                        modifier = Modifier.padding(top = 6.dp)
+                                    )
+                                } else if (isAdvancedSupported == GeminiNanoStatus.CHECKING) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                                        Text("Checking device capabilities...", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                                    }
+                                }
+
+                                var showNanoHelpDialog by remember { mutableStateOf(false) }
+
+                                if (isAdvancedSupported == GeminiNanoStatus.DOWNLOAD_REQUIRED) {
+                                    Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(14.dp).padding(top = 2.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f))
+                                        Text(
+                                            "Gemma 2B requires a ~1.5GB download. Using Standard until downloaded.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+                                        )
+                                    }
+                                    if (showNanoHelpDialog) {
+                                        AlertDialog(
+                                            onDismissRequest = { showNanoHelpDialog = false },
+                                            title = { Text("On-Device AI (Gemma 2B)") },
+                                            text = {
+                                                Column {
+                                                    Text("LemurLoop uses Google's Gemma 2B model for local, privacy-first AI generation.")
+                                                    Spacer(modifier = Modifier.height(8.dp))
+                                                    Text("The model (~1.5GB) must be downloaded separately over Wi-Fi.")
+                                                }
+                                            },
+                                            confirmButton = { TextButton(onClick = { showNanoHelpDialog = false }) { Text("Got it") } }
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        OutlinedButton(onClick = { showNanoHelpDialog = true }, modifier = Modifier.weight(1f)) {
+                                            Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Learn More")
+                                        }
+                                        Button(onClick = { viewModel.triggerLocalModelDownload() }, modifier = Modifier.weight(1f)) {
+                                            Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Download")
+                                        }
+                                    }
+                                }
+                                if (isAdvancedSupported == GeminiNanoStatus.DOWNLOADING) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                                        Text("Downloading Gemma 2B model...", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                                    }
+                                }
+                                if (isAdvancedSupported == GeminiNanoStatus.NOT_SUPPORTED) {
+                                    var showNSDialog by remember { mutableStateOf(false) }
+                                    Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(14.dp).padding(top = 2.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f))
+                                        Column {
+                                            Text("Gemma 2B is not supported on this device. Standard mode only.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
+                                            Text("Tap to learn more.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary,
+                                                textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
+                                                modifier = Modifier.clickable { showNSDialog = true }.padding(top = 2.dp))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ── Fallback Order (only when both are enabled) ──────────────
+                AnimatedVisibility(visible = isLocalAiEnabled && isCloudAiEnabled) {
+                    Column(modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)) {
                         Text(
-                            text = error,
-                            color = MaterialTheme.colorScheme.error,
+                            "When both are enabled — which goes first?",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        )
+                        val fallbackOrder by viewModel.aiFallbackOrder.collectAsState()
+                        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                            val orders = listOf("CLOUD_THEN_LOCAL", "LOCAL_THEN_CLOUD")
+                            orders.forEachIndexed { index, order ->
+                                SegmentedButton(
+                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = orders.size),
+                                    onClick = { viewModel.updateAiFallbackOrder(order) },
+                                    selected = fallbackOrder == order,
+                                    label = { Text(if (order == "CLOUD_THEN_LOCAL") "☁️ Cloud First" else "🦙 Local First") }
+                                )
+                            }
+                        }
+                        Text(
+                            if (fallbackOrder == "CLOUD_THEN_LOCAL")
+                                "Cloud runs first, Local kicks in if offline or unavailable."
+                            else
+                                "Local runs first for privacy, Cloud used as fallback.",
                             style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(horizontal = 4.dp)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // ── Intelligence Health ──────────────────────────────────────
+                IntelligenceHealthView(viewModel, onWipeBrainMemory)
+                Spacer(modifier = Modifier.height(8.dp))
             }
+
 
             ExpandableSection(
                 icon = Icons.Default.Info,
@@ -885,6 +1131,12 @@ fun IntelligenceHealthView(viewModel: SettingsViewModel, onWipeBrainMemory: () -
     val generatingProgress by viewModel.generatingProgress.collectAsState()
     val isGenerating by viewModel.isBriefingGenerating.collectAsState()
     val lastScript by viewModel.lastBriefingScript.collectAsState()
+    
+    val isCloudAiEnabled by viewModel.isCloudAiEnabled.collectAsState()
+    val isLocalAiEnabled by viewModel.isLocalAiEnabled.collectAsState()
+    val keyValidationResult by viewModel.keyValidationResult.collectAsState()
+    val canTestHealth = isCloudAiEnabled || isLocalAiEnabled // Requires at least one AI enabled
+    
     var showFullError by remember { mutableStateOf(false) }
     var showFullScript by remember { mutableStateOf(false) }
     
@@ -995,13 +1247,21 @@ fun IntelligenceHealthView(viewModel: SettingsViewModel, onWipeBrainMemory: () -
                 }
             }
 
+            if (!canTestHealth) {
+                Text(
+                    "Enable Cloud AI or Local AI above to test your intelligence health.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
             Button(
                 onClick = { 
                     viewModel.saveSettings()
                     viewModel.testIntelligenceHealth() 
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isGenerating,
+                enabled = !isGenerating && canTestHealth,
                 shape = RoundedCornerShape(12.dp)
             ) {
                 if (isGenerating) {

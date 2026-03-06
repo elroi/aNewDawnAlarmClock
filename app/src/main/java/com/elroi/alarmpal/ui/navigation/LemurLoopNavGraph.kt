@@ -94,7 +94,8 @@ fun LemurLoopNavGraph(
                 onNavigateUp = { navController.navigateUp() },
                 onNavigateToHelp = { navController.navigate(Screen.Help.route) },
                 onNavigateToOnboarding = { navController.navigate(Screen.Onboarding.createRoute(isReplay = true)) },
-                onNavigateToAbout = { navController.navigate(Screen.About.route) }
+                onNavigateToAbout = { navController.navigate(Screen.About.route) },
+                onNavigateToBriefingLogs = { navController.navigate(Screen.BriefingLog.route) }
             )
         }
 
@@ -105,6 +106,14 @@ fun LemurLoopNavGraph(
         composable(Screen.About.route) {
             com.elroi.alarmpal.ui.screen.settings.AboutScreen(
                 onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+        composable(Screen.BriefingLog.route) {
+            val viewModel: com.elroi.alarmpal.ui.viewmodel.SettingsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+            com.elroi.alarmpal.ui.screen.settings.BriefingLogScreen(
+                viewModel = viewModel,
+                onBack = { navController.navigateUp() }
             )
         }
     }
