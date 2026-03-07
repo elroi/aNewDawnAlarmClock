@@ -116,9 +116,8 @@ class AlarmUtilsTest {
     }
 
     @Test
-    fun `formatTimeUntil shows now when in the past`() {
+    fun `formatTimeUntil shows One-time when target is null`() {
         val now = LocalDateTime.of(2026, 3, 7, 10, 0, 0)
-        val target = LocalDateTime.of(2026, 3, 7, 9, 0, 0)
-        assertEquals("now", AlarmUtils.formatTimeUntil(target, now))
+        assertEquals("One-time", AlarmUtils.formatTimeUntil(null, now))
     }
 }

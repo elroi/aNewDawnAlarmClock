@@ -349,8 +349,12 @@ fun AlarmItem(
                     val nextOccurrence = remember(alarm, currentTime) { 
                         AlarmUtils.calculateNextOccurrence(alarm, currentTime) 
                     }
+                    val isOneTimePast = remember(alarm, currentTime) {
+                        alarm.daysOfWeek.isEmpty() && 
+                        currentTime.toLocalTime().isAfter(alarm.time)
+                    }
                     Text(
-                        text = AlarmUtils.formatTimeUntil(nextOccurrence, currentTime),
+                        text = if (isOneTimePast) "One-time" else AlarmUtils.formatTimeUntil(nextOccurrence, currentTime),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium

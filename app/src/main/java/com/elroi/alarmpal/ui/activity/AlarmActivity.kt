@@ -206,48 +206,66 @@ class AlarmActivity : ComponentActivity() {
 
                     val initialBrightness = remember { initialSystemBrightness }
 
-                    // --- ADAPTIVE BRIGHTNESS LOGIC ---
-                    LaunchedEffect(isGentleWake, crescendoMins, isDismissing, showBriefingScreen, lux) {
-                        val activity = this@AlarmActivity
-                        
-                        // If we are showing the briefing, ensure a minimum readable brightness regardless of crescendo
-                        if (showBriefingScreen) {
-                            val targetBrightness = if (lux > 50f) 1.0f else maxOf(0.6f, (lux / 50f))
-                            activity.window?.attributes = activity.window.attributes?.apply { 
-                                screenBrightness = targetBrightness 
+                    // --- ADAPTIVE BRIGHTNESS logic (Refined with smoothing) ---
+                    val targetBrightness by remember(isGentleWake, crescendoMins, isDismissing, showBriefingScreen, lux) {
+                        derivedStateOf {
+                            when {
+                                // 1. If we are showing the briefing, ensure a minimum readable brightness
+                                showBriefingScreen -> {
+                                    if (lux > 50f) 1.0f else maxOf(0.6f, (lux / 50f))
+                                }
+                                // 2. If we are in the middle of a challenge/dismissal, don't change brightness mid-stream
+                                isDismissing -> -1f // Keep current
+                                // 3. Gentle Wake crescendo
+                                isGentleWake && crescendoMins > 0 -> {
+                                    // Note: we handle the time-based ramp inside the LaunchedEffect below by updating a local state
+                                    // but we can also do a simpler version here if we track 'crescendoProgress'
+                                    -2f // Special marker for crescendo loop
+                                }
+                                // 4. Default firing state (High brightness, adapted to room)
+                                else -> {
+                                    if (lux > 50f) 1.0f else maxOf(0.8f, initialBrightness)
+                                }
                             }
-                            return@LaunchedEffect
                         }
+                    }
 
-                        if (isDismissing) return@LaunchedEffect
-                        
-                        if (isGentleWake && crescendoMins > 0) {
+                    // Smooth the fluctuations from the light sensor
+                    // We use a relatively slow animation (1500ms) to ensure it's not "pulsating"
+                    var manualBrightness by remember { mutableFloatStateOf(-1f) }
+                    val animatedBrightness by androidx.compose.animation.core.animateFloatAsState(
+                        targetValue = if (targetBrightness == -2f) manualBrightness else targetBrightness,
+                        animationSpec = androidx.compose.animation.core.tween(durationMillis = 1500),
+                        label = "brightnessAnimation"
+                    )
+
+                    // Actual window update effect
+                    LaunchedEffect(animatedBrightness) {
+                        if (animatedBrightness > 0f) {
+                            val activity = this@AlarmActivity
+                            activity.window?.attributes = activity.window.attributes?.apply {
+                                screenBrightness = animatedBrightness
+                            }
+                        }
+                    }
+
+                    // Handle the crescendo loop separately to update 'manualBrightness'
+                    LaunchedEffect(isGentleWake, crescendoMins, isDismissing, showBriefingScreen) {
+                        if (isGentleWake && crescendoMins > 0 && !isDismissing && !showBriefingScreen) {
                             val durationMs = crescendoMins * 60_000L
                             val startTime = System.currentTimeMillis()
                             while (true) {
                                 val elapsed = System.currentTimeMillis() - startTime
-                                
-                                // Calculate base crescendo brightness
                                 val fraction = if (elapsed >= durationMs) 1.0f else elapsed.toFloat() / durationMs.toFloat()
-                                
-                                // Start from current system brightness if it's already higher than the floor
                                 val startFloor = if (initialBrightness > 0) initialBrightness else 0.01f
-                                val crescendoBrightness = startFloor + ((1.0f - startFloor) * fraction)
+                                val crescendoBase = startFloor + ((1.0f - startFloor) * fraction)
                                 
-                                // Adapt based on ambient light: bright room = max, dim room = adapt but follow crescendo
-                                val ambientBrightness = if (lux > 50f) 1.0f else maxOf(crescendoBrightness, (lux / 100f))
-                                
-                                activity.window?.attributes = activity.window.attributes?.apply { 
-                                    screenBrightness = ambientBrightness 
-                                }
+                                // Factor in lux even during crescendo (don't go too dim in bright room)
+                                manualBrightness = if (lux > 50f) 1.0f else maxOf(crescendoBase, (lux / 100f))
                                 
                                 if (elapsed >= durationMs) break
                                 kotlinx.coroutines.delay(1000)
                             }
-                        } else {
-                            // Not gentle wake: High brightness, adapted to room or starting from current
-                            val targetBrightness = if (lux > 50f) 1.0f else maxOf(0.8f, initialBrightness)
-                            activity.window.attributes = activity.window.attributes?.apply { screenBrightness = targetBrightness }
                         }
                     }
                     

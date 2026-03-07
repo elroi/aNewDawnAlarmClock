@@ -52,6 +52,7 @@ class AndroidAlarmScheduler(
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_IS_SMART_WAKEUP_ENABLED, alarm.isSmartWakeupEnabled)
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_DELAY, alarm.wakeupCheckDelayMinutes)
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_TIMEOUT, alarm.wakeupCheckTimeoutSeconds)
+            putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_DAYS_OF_WEEK, alarm.daysOfWeek.joinToString(","))
         }
         
         // Calculate next alarm time using utility
@@ -65,11 +66,10 @@ class AndroidAlarmScheduler(
         )
 
         // For an alarm clock app, setAlarmClock is the ONLY way to guarantee the device
-        // wakes up from deep Doze mode at the exact minute. setExactAndAllowWhileIdle
-        // can still be delayed by the OS for battery optimization in extreme doze.
+        // wakes up from deep Doze mode at the exact minute. 
         val alarmClockInfo = AlarmManager.AlarmClockInfo(
             alarmTime.atZone(ZoneId.systemDefault()).toEpochSecond() * 1000,
-            pendingIntent // Could ideally be a deep link to the app, but reusing pendingIntent is fine
+            pendingIntent 
         )
         alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
         

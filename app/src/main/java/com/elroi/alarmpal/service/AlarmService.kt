@@ -58,6 +58,7 @@ class AlarmService : Service() {
 
     // Retained for use in snooze action
     private var currentAlarmId: String? = null
+    private var currentIsRepeating: Boolean = false
     private var currentAlarmLabel: String = "Alarm"
     private var currentSnoozeDuration: Int = 5
     private var currentMathDifficulty: Int = 0
@@ -143,6 +144,7 @@ class AlarmService : Service() {
 
         // Stash for later use in snooze/dismiss helpers
         currentAlarmId = alarmId
+        currentIsRepeating = intent.getStringExtra(EXTRA_DAYS_OF_WEEK)?.isNotEmpty() ?: false
         currentAlarmLabel = alarmLabel
         currentSnoozeDuration = snoozeDuration
         currentMathDifficulty = mathDifficulty
@@ -325,6 +327,13 @@ class AlarmService : Service() {
 
     private fun handleDismiss() {
         Log.d("TTS_DEBUG", "handleDismiss called")
+        
+        if (!currentIsRepeating && currentAlarmId != null) {
+            serviceScope.launch {
+                repository.updateAlarmToggle(currentAlarmId!!, false)
+            }
+        }
+
         accountabilityJob?.cancel()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopVibration()
@@ -360,6 +369,7 @@ class AlarmService : Service() {
         } else {
             Log.d("TTS_DEBUG", "Briefing disabled, stopping service")
             com.elroi.alarmpal.domain.manager.BriefingStateManager.onBriefingReady(null) // Empty null means auto-close UI immediately
+            
             stopRingtone(useFadeOut = currentIsSmoothFadeOut) { 
                 if (currentIsSmartWakeupEnabled) {
                     scheduleWakeupCheck()
@@ -426,6 +436,12 @@ class AlarmService : Service() {
             scheduleWakeupCheck()
         }
         
+        if (!currentIsRepeating && currentAlarmId != null) {
+            serviceScope.launch {
+                repository.updateAlarmToggle(currentAlarmId!!, false)
+            }
+        }
+
         stopSelf()
     }
 
@@ -674,6 +690,7 @@ class AlarmService : Service() {
         const val EXTRA_IS_SMART_WAKEUP_ENABLED = "ALARM_IS_SMART_WAKEUP_ENABLED"
         const val EXTRA_WAKEUP_CHECK_DELAY = "ALARM_WAKEUP_CHECK_DELAY"
         const val EXTRA_WAKEUP_CHECK_TIMEOUT = "ALARM_WAKEUP_CHECK_TIMEOUT"
+        const val EXTRA_DAYS_OF_WEEK = "ALARM_DAYS_OF_WEEK"
 
         private const val CHANNEL_ID_VIBRATE = "alarm_ringing_channel_vibrate"
         private const val CHANNEL_ID_SILENT = "alarm_ringing_channel_silent"

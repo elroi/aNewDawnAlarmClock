@@ -46,7 +46,8 @@ object AlarmUtils {
         }
     }
 
-    fun formatTimeUntil(target: LocalDateTime, now: LocalDateTime = LocalDateTime.now()): String {
+    fun formatTimeUntil(target: LocalDateTime?, now: LocalDateTime = LocalDateTime.now()): String {
+        if (target == null) return "One-time"
         val duration = Duration.between(now, target)
         val totalMinutes = duration.toMinutes()
         
