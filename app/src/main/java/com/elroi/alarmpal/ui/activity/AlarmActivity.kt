@@ -258,19 +258,32 @@ class AlarmActivity : ComponentActivity() {
 
                     // Smooth the fluctuations from the light sensor
                     // We use a relatively slow animation (1500ms) to ensure it's not "pulsating"
+                    val animationTarget = remember(targetBrightness, initialBrightness) {
+                        if (targetBrightness == -2f) -2f // Placeholder for crescendo
+                        else if (targetBrightness == -1f) (if (initialBrightness > 0) initialBrightness else 0.5f)
+                        else targetBrightness
+                    }
+
                     var manualBrightness by remember { mutableFloatStateOf(-1f) }
                     val animatedBrightness by androidx.compose.animation.core.animateFloatAsState(
-                        targetValue = if (targetBrightness == -2f) manualBrightness else targetBrightness,
+                        targetValue = if (animationTarget == -2f) manualBrightness else animationTarget,
                         animationSpec = androidx.compose.animation.core.tween(durationMillis = 1500),
                         label = "brightnessAnimation"
                     )
 
                     // Actual window update effect
-                    LaunchedEffect(animatedBrightness) {
-                        if (animatedBrightness > 0f) {
+                    LaunchedEffect(animatedBrightness, targetBrightness) {
+                        // When targeting system default (-1f), we apply it as soon as the animation is close
+                        val toApply = if (targetBrightness == -1f && Math.abs(animatedBrightness - animationTarget) < 0.05f) {
+                            -1f 
+                        } else {
+                            animatedBrightness
+                        }
+
+                        if (toApply > 0f || toApply == -1f) {
                             val activity = this@AlarmActivity
                             activity.window?.attributes = activity.window.attributes?.apply {
-                                screenBrightness = animatedBrightness
+                                screenBrightness = toApply
                             }
                         }
                     }
