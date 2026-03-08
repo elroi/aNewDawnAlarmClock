@@ -90,9 +90,28 @@ val MIGRATION_18_19 = object : Migration(18, 19) {
     }
 }
 
-@Database(entities = [AlarmEntity::class, com.elroi.alarmpal.data.local.entity.SleepRecordEntity::class], version = 19, exportSchema = false)
+val MIGRATION_19_20 = object : Migration(19, 20) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS `diagnostic_logs` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+                `timestamp` INTEGER NOT NULL, 
+                `tag` TEXT NOT NULL, 
+                `message` TEXT NOT NULL, 
+                `level` TEXT NOT NULL
+            )
+        """.trimIndent())
+    }
+}
+
+@Database(entities = [
+    AlarmEntity::class, 
+    com.elroi.alarmpal.data.local.entity.SleepRecordEntity::class,
+    com.elroi.alarmpal.data.local.entity.DiagnosticLogEntity::class
+], version = 20, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun alarmDao(): AlarmDao
     abstract fun sleepRecordDao(): com.elroi.alarmpal.data.local.dao.SleepRecordDao
+    abstract fun diagnosticLogDao(): com.elroi.alarmpal.data.local.dao.DiagnosticLogDao
 }

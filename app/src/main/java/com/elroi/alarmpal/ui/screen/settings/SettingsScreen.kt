@@ -62,6 +62,7 @@ fun SettingsScreen(
     onNavigateToHelp: () -> Unit = {},
     onNavigateToOnboarding: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
+    onNavigateToLogs: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val location by viewModel.location.collectAsState()
@@ -779,6 +780,22 @@ fun SettingsScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Privacy Policy", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                                 Text("Your data stays on device", style = MaterialTheme.typography.bodySmall)
+                            }
+                            Icon(Icons.Default.ArrowForward, contentDescription = null)
+                        }
+
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                        // Diagnostic Logs
+                        Row(
+                            modifier = Modifier.clickable { onNavigateToLogs() }.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.List, contentDescription = null, modifier = Modifier.size(24.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Diagnostic Logs", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text("View system events and debug info", style = MaterialTheme.typography.bodySmall)
                             }
                             Icon(Icons.Default.ArrowForward, contentDescription = null)
                         }

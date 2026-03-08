@@ -34,5 +34,7 @@ data class Alarm(
     val isSmartWakeupEnabled: Boolean = false,
     val wakeupCheckDelayMinutes: Int = 3,
     val wakeupCheckTimeoutSeconds: Int = 60,
-    val briefingTimeoutSeconds: Int = 30
+    val briefingTimeoutSeconds: Int = 30,
+    val vibrationPattern: String = "BASIC", // BASIC, PULSE, HEARTBEAT, STACCATO
+    val vibrationCrescendoStartGapSeconds: Int = 30
 )

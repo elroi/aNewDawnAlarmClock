@@ -37,7 +37,8 @@ object AppModule {
                 com.elroi.alarmpal.data.local.MIGRATION_15_16,
                 com.elroi.alarmpal.data.local.MIGRATION_16_17,
                 com.elroi.alarmpal.data.local.MIGRATION_17_18,
-                com.elroi.alarmpal.data.local.MIGRATION_18_19
+                com.elroi.alarmpal.data.local.MIGRATION_18_19,
+                com.elroi.alarmpal.data.local.MIGRATION_19_20
             )
             .build()
     }
@@ -46,6 +47,12 @@ object AppModule {
     @Singleton
     fun provideAlarmDao(db: AppDatabase): AlarmDao {
         return db.alarmDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDiagnosticLogDao(db: AppDatabase): com.elroi.alarmpal.data.local.dao.DiagnosticLogDao {
+        return db.diagnosticLogDao()
     }
 
     @Provides

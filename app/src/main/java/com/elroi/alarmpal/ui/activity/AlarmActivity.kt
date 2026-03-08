@@ -50,6 +50,9 @@ class AlarmActivity : ComponentActivity() {
     @javax.inject.Inject
     lateinit var lightSensorManager: com.elroi.alarmpal.domain.manager.LightSensorManager
 
+    @javax.inject.Inject
+    lateinit var diagnosticLogger: com.elroi.alarmpal.domain.manager.DiagnosticLogger
+
     // Tracks whether CAMERA permission was granted after requesting it
     private var cameraPermissionGranted = false
     private val requestCameraPermission = registerForActivityResult(
@@ -60,17 +63,40 @@ class AlarmActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        diagnosticLogger.debug("AlarmActivity", "lifecycle: onCreate")
         turnScreenOnAndKeyguardOff()
         handleIntent(intent)
     }
 
     override fun onStart() {
         super.onStart()
+        diagnosticLogger.debug("AlarmActivity", "lifecycle: onStart")
         turnScreenOnAndKeyguardOff()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        diagnosticLogger.debug("AlarmActivity", "lifecycle: onResume")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        diagnosticLogger.debug("AlarmActivity", "lifecycle: onPause")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        diagnosticLogger.debug("AlarmActivity", "lifecycle: onStop")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        diagnosticLogger.debug("AlarmActivity", "lifecycle: onDestroy")
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        diagnosticLogger.debug("AlarmActivity", "lifecycle: onNewIntent")
         setIntent(intent)
         turnScreenOnAndKeyguardOff()
         handleIntent(intent)
@@ -79,10 +105,11 @@ class AlarmActivity : ComponentActivity() {
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         // Called when user presses Home or Recents to leave the activity
-        android.util.Log.d("AlarmActivity", "User left the alarm screen - focus lost")
+        diagnosticLogger.warn("AlarmActivity", "User left the alarm screen - focus lost")
     }
 
     private fun handleIntent(intent: Intent) {
+        diagnosticLogger.debug("AlarmActivity", "handleIntent: action=${intent.action}, flags=${intent.flags}")
         val alarmId = intent.getStringExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_ALARM_ID)
         val alarmLabel = intent.getStringExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_ALARM_LABEL)
         val mathDifficulty = intent.getIntExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_MATH_DIFFICULTY, 0)

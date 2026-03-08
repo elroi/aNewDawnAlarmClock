@@ -183,4 +183,13 @@
     <string name="alarm_detail_buddy_btn_resend">Resend</string>
     <string name="wizard_4_user_name">Your Name</string>
     <string name="wizard_4_user_name_hint">Used in the SMS alert</string>
+    <!-- Vibration Advanced Settings -->
+    <string name="vibration_advanced_title">Vibration Advanced Settings</string>
+    <string name="vibration_pattern_label">Rhythm Pattern</string>
+    <string name="vibration_pattern_basic">Basic Pulse</string>
+    <string name="vibration_pattern_pulse">Rapid Pulse</string>
+    <string name="vibration_pattern_heartbeat">Heartbeat</string>
+    <string name="vibration_pattern_staccato">Staccato Bursts</string>
+    <string name="vibration_initial_gap_label">Initial Gap (Pause)</string>
+    <string name="vibration_initial_gap_unit">%1$d sec</string>
 </resources>

@@ -110,6 +110,8 @@ fun AlarmDetailScreen(
     var wakeupCheckDelayMinutes by remember { mutableIntStateOf(3) }
     var wakeupCheckTimeoutSeconds by remember { mutableIntStateOf(60) }
     var briefingTimeoutSeconds by remember { mutableIntStateOf(defaultSettings.briefingTimeoutSeconds) }
+    var vibrationPattern by remember { mutableStateOf(defaultSettings.vibrationPattern) }
+    var vibrationCrescendoStartGapSeconds by remember { mutableIntStateOf(defaultSettings.vibrationCrescendoStartGapSeconds) }
     val weekendDays    = defaultSettings.weekendDays
     var currentAlarm   by remember { mutableStateOf<Alarm?>(null) }
     var initialState by remember { mutableStateOf<AlarmStateSnapshot?>(null) }
@@ -129,7 +131,8 @@ fun AlarmDetailScreen(
             daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
             snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
             evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
-            wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds, briefingTimeoutSeconds
+            wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds, briefingTimeoutSeconds,
+            vibrationPattern, vibrationCrescendoStartGapSeconds
         )
         initialState != null && current != initialState
     }
@@ -283,7 +286,8 @@ fun AlarmDetailScreen(
                             daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
                             snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
                             evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
-                            wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds, briefingTimeoutSeconds
+                            wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds, briefingTimeoutSeconds,
+                            vibrationPattern, vibrationCrescendoStartGapSeconds
                         )
                     }
                 }
@@ -315,7 +319,8 @@ fun AlarmDetailScreen(
                     daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
                     snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
                     evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
-                    wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds, briefingTimeoutSeconds
+                    wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds, briefingTimeoutSeconds,
+                    vibrationPattern, vibrationCrescendoStartGapSeconds
                 )
             }
         }
@@ -426,6 +431,8 @@ fun AlarmDetailScreen(
                             wakeupCheckDelayMinutes = wakeupCheckDelayMinutes,
                             wakeupCheckTimeoutSeconds = wakeupCheckTimeoutSeconds,
                             briefingTimeoutSeconds = briefingTimeoutSeconds,
+                            vibrationPattern = vibrationPattern,
+                            vibrationCrescendoStartGapSeconds = vibrationCrescendoStartGapSeconds,
                             isEnabled = true
                         )
                         viewModel.addAlarm(updatedAlarm)
@@ -609,6 +616,46 @@ fun AlarmDetailScreen(
                                     valueRange = 0f..20f,
                                     steps = 19
                                 )
+
+                                AnimatedVisibility(visible = isVibrate) {
+                                    Column {
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text(
+                                            stringResource(R.string.vibration_advanced_title),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(stringResource(R.string.vibration_pattern_label), style = MaterialTheme.typography.bodyMedium)
+                                        VibrationPatternChips(
+                                            pattern = vibrationPattern,
+                                            onSelected = { vibrationPattern = it }
+                                        )
+
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(stringResource(R.string.vibration_initial_gap_label), style = MaterialTheme.typography.bodyMedium)
+                                            Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.secondaryContainer) {
+                                                Text(
+                                                    stringResource(R.string.vibration_initial_gap_unit, vibrationCrescendoStartGapSeconds),
+                                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                                    style = MaterialTheme.typography.labelLarge,
+                                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                                )
+                                            }
+                                        }
+                                        Slider(
+                                            value = vibrationCrescendoStartGapSeconds.toFloat(),
+                                            onValueChange = { vibrationCrescendoStartGapSeconds = it.toInt() },
+                                            valueRange = 1f..60f,
+                                            steps = 59
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -1487,6 +1534,71 @@ fun AccountabilityBuddyContent(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Vibration pattern chips
+// ─────────────────────────────────────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VibrationPatternChips(pattern: String, onSelected: (String) -> Unit) {
+    val options = listOf(
+        "BASIC" to stringResource(R.string.vibration_pattern_basic),
+        "PULSE" to stringResource(R.string.vibration_pattern_pulse),
+        "HEARTBEAT" to stringResource(R.string.vibration_pattern_heartbeat),
+        "STACCATO" to stringResource(R.string.vibration_pattern_staccato)
+    )
+    Column(modifier = Modifier.fillMaxWidth().padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            options.take(2).forEach { (p, label) ->
+                Surface(
+                    selected = pattern == p,
+                    onClick = { onSelected(p) },
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (pattern == p) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+                    border = if (pattern == p) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier.weight(1f).height(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (pattern == p) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            options.drop(2).forEach { (p, label) ->
+                Surface(
+                    selected = pattern == p,
+                    onClick = { onSelected(p) },
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (pattern == p) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+                    border = if (pattern == p) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier.weight(1f).height(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (pattern == p) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Legacy DaySelector kept for backward compatibility (not used in new screen)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1527,5 +1639,7 @@ private data class AlarmStateSnapshot(
     val isSmartWakeupEnabled: Boolean,
     val wakeupCheckDelayMinutes: Int,
     val wakeupCheckTimeoutSeconds: Int,
-    val briefingTimeoutSeconds: Int
+    val briefingTimeoutSeconds: Int,
+    val vibrationPattern: String,
+    val vibrationCrescendoStartGapSeconds: Int
 )

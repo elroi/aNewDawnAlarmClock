@@ -46,6 +46,9 @@ class AlarmService : Service() {
     @Inject
     lateinit var accountabilityManager: com.elroi.alarmpal.domain.manager.AccountabilityManager
 
+    @Inject
+    lateinit var diagnosticLogger: com.elroi.alarmpal.domain.manager.DiagnosticLogger
+
     private var ringtone: Ringtone? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var volumeAnimator: android.animation.ValueAnimator? = null
@@ -81,6 +84,8 @@ class AlarmService : Service() {
     private var currentWakeupCheckDelayMinutes: Int = 3
     private var currentWakeupCheckTimeoutSeconds: Int = 60
     private var currentBriefingTimeoutSeconds: Int = 30
+    private var currentVibrationPattern: String = "BASIC"
+    private var currentVibrationStartGapSeconds: Int = 30
     
     // TTS audio state tracking
     private var originalMediaVolume: Int = 0
@@ -145,6 +150,8 @@ class AlarmService : Service() {
         val wakeupCheckDelay = intent.getIntExtra(EXTRA_WAKEUP_CHECK_DELAY, 3)
         val wakeupCheckTimeout = intent.getIntExtra(EXTRA_WAKEUP_CHECK_TIMEOUT, 60)
         val briefingTimeout = intent.getIntExtra(EXTRA_BRIEFING_TIMEOUT, 30)
+        val vibrationPattern = intent.getStringExtra(EXTRA_VIBRATION_PATTERN) ?: "BASIC"
+        val vibrationStartGap = intent.getIntExtra(EXTRA_VIBRATION_START_GAP, 30)
         val daysOfWeekStr = intent.getStringExtra(EXTRA_DAYS_OF_WEEK)
 
         // Stash for later use in snooze/dismiss helpers
@@ -172,6 +179,8 @@ class AlarmService : Service() {
         currentWakeupCheckDelayMinutes = wakeupCheckDelay
         currentWakeupCheckTimeoutSeconds = wakeupCheckTimeout
         currentBriefingTimeoutSeconds = briefingTimeout
+        currentVibrationPattern = vibrationPattern
+        currentVibrationStartGapSeconds = vibrationStartGap
 
         val activityIntent = Intent(this, com.elroi.alarmpal.ui.activity.AlarmActivity::class.java).apply {
             putExtra(EXTRA_ALARM_ID, alarmId)
@@ -195,6 +204,8 @@ class AlarmService : Service() {
             putExtra(EXTRA_BRIEFING_ENABLED, briefingEnabled)
             putExtra(EXTRA_TTS_ENABLED, ttsEnabled)
             putExtra(EXTRA_BRIEFING_TIMEOUT, briefingTimeout)
+            putExtra(EXTRA_VIBRATION_PATTERN, vibrationPattern)
+            putExtra(EXTRA_VIBRATION_START_GAP, vibrationStartGap)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or 
                      Intent.FLAG_ACTIVITY_CLEAR_TOP or 
                      Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -203,9 +214,10 @@ class AlarmService : Service() {
         // We catch any potential exception just in case the permission was revoked,
         // relying on the FullScreenIntent notification as a fallback.
         try {
+            diagnosticLogger.debug("AlarmService", "Launching AlarmActivity with flags: ${activityIntent.flags}")
             startActivity(activityIntent)
         } catch (e: Exception) {
-            android.util.Log.e("AlarmService", "Failed to start AlarmActivity from background", e)
+            diagnosticLogger.error("AlarmService", "Failed to start AlarmActivity from background: ${e.message}")
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(
@@ -233,7 +245,9 @@ class AlarmService : Service() {
             if (isVibrate) {
                 startVibration(
                     isGentleWake = alarm?.isGentleWake ?: false,
-                    crescendoMinutes = alarm?.crescendoDurationMinutes ?: 1
+                    crescendoMinutes = alarm?.crescendoDurationMinutes ?: 1,
+                    pattern = alarm?.vibrationPattern ?: "BASIC",
+                    startGapSeconds = alarm?.vibrationCrescendoStartGapSeconds ?: 30
                 )
             }
 
@@ -430,6 +444,8 @@ class AlarmService : Service() {
             putExtra(EXTRA_IS_SMART_WAKEUP_ENABLED, true)
             putExtra(EXTRA_WAKEUP_CHECK_DELAY, currentWakeupCheckDelayMinutes)
             putExtra(EXTRA_WAKEUP_CHECK_TIMEOUT, currentWakeupCheckTimeoutSeconds)
+            putExtra(EXTRA_VIBRATION_PATTERN, currentVibrationPattern)
+            putExtra(EXTRA_VIBRATION_START_GAP, currentVibrationStartGapSeconds)
         }
         
         val pi = PendingIntent.getBroadcast(
@@ -512,6 +528,8 @@ class AlarmService : Service() {
                 putExtra(EXTRA_WAKEUP_CHECK_DELAY, currentWakeupCheckDelayMinutes)
                 putExtra(EXTRA_WAKEUP_CHECK_TIMEOUT, currentWakeupCheckTimeoutSeconds)
                 putExtra(EXTRA_BRIEFING_ENABLED, currentBriefingEnabled)
+                putExtra(EXTRA_VIBRATION_PATTERN, currentVibrationPattern)
+                putExtra(EXTRA_VIBRATION_START_GAP, currentVibrationStartGapSeconds)
             }
             val pi = PendingIntent.getBroadcast(
                 this,
@@ -620,7 +638,12 @@ class AlarmService : Service() {
         onComplete()
     }
 
-    private fun startVibration(isGentleWake: Boolean = false, crescendoMinutes: Int = 1) {
+    private fun startVibration(
+        isGentleWake: Boolean = false, 
+        crescendoMinutes: Int = 1,
+        pattern: String = "BASIC",
+        startGapSeconds: Int = 30
+    ) {
         val vibratorService = getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
         vibrator = vibratorService
         
@@ -637,9 +660,10 @@ class AlarmService : Service() {
 
         if (!currentIsVibrate) return
 
-        // Gentle Wake: Intensity ramping
+        // Gentle Wake: Intensity ramping + Pulse manipulation
         vibrationJob = serviceScope.launch {
-            val durationMs = crescendoMinutes * 60_000L
+            // 0 minutes = jump straight to full pattern immediately
+            val durationMs = if (crescendoMinutes <= 0) 1L else crescendoMinutes * 60_000L
             val startTime = System.currentTimeMillis()
             
             while (true) {
@@ -651,14 +675,40 @@ class AlarmService : Service() {
                 }
                 
                 val progress = elapsed.toFloat() / durationMs.toFloat()
-                // Ramp intensity from 20% to 100%
+                
+                // Interpolate variables:
+                // Amplitude: 50 -> 255
                 val amplitude = (50 + (205 * progress)).toInt().coerceIn(0, 255)
+                // Pulse duration: 100ms -> 800ms
+                val pulseLen = (100 + (700 * progress)).toLong()
+                // Pause duration: startGap -> 400ms
+                val pauseLen = (startGapSeconds * 1000L - ((startGapSeconds * 1000L - 400L) * progress)).toLong().coerceAtLeast(100L)
                 
-                // On supported devices, we cycle a short pulse with increasing amplitude
-                val effect = android.os.VibrationEffect.createOneShot(500, amplitude)
-                vibrator?.vibrate(effect)
+                Log.d("AlarmService", "Vibration ramping: amp=$amplitude, pLen=$pulseLen, gap=$pauseLen, pattern=$pattern")
+
+                when (pattern) {
+                    "PULSE" -> {
+                        vibrator?.vibrate(android.os.VibrationEffect.createOneShot(pulseLen / 2, amplitude))
+                        delay((pulseLen / 4).coerceAtLeast(50L))
+                        vibrator?.vibrate(android.os.VibrationEffect.createOneShot(pulseLen / 2, amplitude))
+                    }
+                    "HEARTBEAT" -> {
+                        vibrator?.vibrate(android.os.VibrationEffect.createOneShot(pulseLen / 3, (amplitude * 0.7f).toInt().coerceIn(0, 255)))
+                        delay(150L)
+                        vibrator?.vibrate(android.os.VibrationEffect.createOneShot(pulseLen / 2, amplitude))
+                    }
+                    "STACCATO" -> {
+                        repeat(3) {
+                            vibrator?.vibrate(android.os.VibrationEffect.createOneShot(80, amplitude))
+                            delay(120L)
+                        }
+                    }
+                    else -> { // BASIC
+                        vibrator?.vibrate(android.os.VibrationEffect.createOneShot(pulseLen, amplitude))
+                    }
+                }
                 
-                delay(1000L) // Pulse once every second
+                delay(pauseLen)
             }
         }
     }
@@ -726,6 +776,8 @@ class AlarmService : Service() {
         const val EXTRA_WAKEUP_CHECK_TIMEOUT = "ALARM_WAKEUP_CHECK_TIMEOUT"
         const val EXTRA_DAYS_OF_WEEK = "ALARM_DAYS_OF_WEEK"
         const val EXTRA_BRIEFING_TIMEOUT = "ALARM_BRIEFING_TIMEOUT"
+        const val EXTRA_VIBRATION_PATTERN = "ALARM_VIBRATION_PATTERN"
+        const val EXTRA_VIBRATION_START_GAP = "ALARM_VIBRATION_START_GAP"
 
         private const val CHANNEL_ID_VIBRATE = "alarm_ringing_channel_vibrate"
         private const val CHANNEL_ID_SILENT = "alarm_ringing_channel_silent"

@@ -99,7 +99,9 @@ data class AlarmDefaults(
     val isSmartWakeupEnabled: Boolean = false,
     val wakeupCheckDelayMinutes: Int = 3,
     val wakeupCheckTimeoutSeconds: Int = 60,
-    val briefingTimeoutSeconds: Int = 30
+    val briefingTimeoutSeconds: Int = 30,
+    val vibrationPattern: String = "BASIC",
+    val vibrationCrescendoStartGapSeconds: Int = 30
 )
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_settings")
@@ -165,6 +167,8 @@ class SettingsManager @Inject constructor(
         val WORKING_GEMINI_VERSION = stringPreferencesKey("working_gemini_version")
         val ALARM_CREATION_STYLE = stringPreferencesKey("alarm_creation_style") // "SIMPLE", "WIZARD"
         val DEFAULT_BRIEFING_TIMEOUT = intPreferencesKey("default_briefing_timeout")
+        val DEFAULT_VIBRATION_PATTERN = stringPreferencesKey("default_vibration_pattern")
+        val DEFAULT_VIBRATION_START_GAP = intPreferencesKey("default_vibration_start_gap")
     }
 
     val locationFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -329,7 +333,9 @@ class SettingsManager @Inject constructor(
             isSmartWakeupEnabled = preferences[DEFAULT_IS_SMART_WAKEUP] ?: false,
             wakeupCheckDelayMinutes = preferences[DEFAULT_WAKEUP_CHECK_DELAY] ?: 3,
             wakeupCheckTimeoutSeconds = preferences[DEFAULT_WAKEUP_CHECK_TIMEOUT] ?: 60,
-            briefingTimeoutSeconds = preferences[DEFAULT_BRIEFING_TIMEOUT] ?: 30
+            briefingTimeoutSeconds = preferences[DEFAULT_BRIEFING_TIMEOUT] ?: 30,
+            vibrationPattern = preferences[DEFAULT_VIBRATION_PATTERN] ?: "BASIC",
+            vibrationCrescendoStartGapSeconds = preferences[DEFAULT_VIBRATION_START_GAP] ?: 30
         )
     }
 
@@ -367,6 +373,8 @@ class SettingsManager @Inject constructor(
             preferences[DEFAULT_WAKEUP_CHECK_DELAY] = defaults.wakeupCheckDelayMinutes
             preferences[DEFAULT_WAKEUP_CHECK_TIMEOUT] = defaults.wakeupCheckTimeoutSeconds
             preferences[DEFAULT_BRIEFING_TIMEOUT] = defaults.briefingTimeoutSeconds
+            preferences[DEFAULT_VIBRATION_PATTERN] = defaults.vibrationPattern
+            preferences[DEFAULT_VIBRATION_START_GAP] = defaults.vibrationCrescendoStartGapSeconds
         }
     }
 

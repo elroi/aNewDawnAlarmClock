@@ -52,6 +52,8 @@ class AlarmReceiver : BroadcastReceiver() {
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_DELAY, intent.getIntExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_DELAY, 3))
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_TIMEOUT, intent.getIntExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_TIMEOUT, 60))
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_BRIEFING_TIMEOUT, intent.getIntExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_BRIEFING_TIMEOUT, 30))
+            putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_VIBRATION_PATTERN, intent.getStringExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_VIBRATION_PATTERN))
+            putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_VIBRATION_START_GAP, intent.getIntExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_VIBRATION_START_GAP, 30))
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_DAYS_OF_WEEK, intent.getStringExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_DAYS_OF_WEEK))
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_SMILE_FALLBACK_METHOD, intent.getStringExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_SMILE_FALLBACK_METHOD))
         }
