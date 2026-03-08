@@ -98,7 +98,8 @@ data class AlarmDefaults(
     val promptHypeman: String = "The Hype-Man. You are extremely energetic, use caps, and over-the-top excited. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
     val isSmartWakeupEnabled: Boolean = false,
     val wakeupCheckDelayMinutes: Int = 3,
-    val wakeupCheckTimeoutSeconds: Int = 60
+    val wakeupCheckTimeoutSeconds: Int = 60,
+    val briefingTimeoutSeconds: Int = 30
 )
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_settings")
@@ -163,6 +164,7 @@ class SettingsManager @Inject constructor(
         val WORKING_GEMINI_MODEL = stringPreferencesKey("working_gemini_model")
         val WORKING_GEMINI_VERSION = stringPreferencesKey("working_gemini_version")
         val ALARM_CREATION_STYLE = stringPreferencesKey("alarm_creation_style") // "SIMPLE", "WIZARD"
+        val DEFAULT_BRIEFING_TIMEOUT = intPreferencesKey("default_briefing_timeout")
     }
 
     val locationFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -326,7 +328,8 @@ class SettingsManager @Inject constructor(
             promptHypeman = preferences[PROMPT_HYPEMAN] ?: "The Hype-Man. You are extremely energetic, use caps, and over-the-top excited. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
             isSmartWakeupEnabled = preferences[DEFAULT_IS_SMART_WAKEUP] ?: false,
             wakeupCheckDelayMinutes = preferences[DEFAULT_WAKEUP_CHECK_DELAY] ?: 3,
-            wakeupCheckTimeoutSeconds = preferences[DEFAULT_WAKEUP_CHECK_TIMEOUT] ?: 60
+            wakeupCheckTimeoutSeconds = preferences[DEFAULT_WAKEUP_CHECK_TIMEOUT] ?: 60,
+            briefingTimeoutSeconds = preferences[DEFAULT_BRIEFING_TIMEOUT] ?: 30
         )
     }
 
@@ -363,6 +366,7 @@ class SettingsManager @Inject constructor(
             preferences[DEFAULT_IS_SMART_WAKEUP] = defaults.isSmartWakeupEnabled
             preferences[DEFAULT_WAKEUP_CHECK_DELAY] = defaults.wakeupCheckDelayMinutes
             preferences[DEFAULT_WAKEUP_CHECK_TIMEOUT] = defaults.wakeupCheckTimeoutSeconds
+            preferences[DEFAULT_BRIEFING_TIMEOUT] = defaults.briefingTimeoutSeconds
         }
     }
 

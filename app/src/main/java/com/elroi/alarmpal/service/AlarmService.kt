@@ -80,6 +80,7 @@ class AlarmService : Service() {
     private var currentIsSmartWakeupEnabled: Boolean = false
     private var currentWakeupCheckDelayMinutes: Int = 3
     private var currentWakeupCheckTimeoutSeconds: Int = 60
+    private var currentBriefingTimeoutSeconds: Int = 30
     
     // TTS audio state tracking
     private var originalMediaVolume: Int = 0
@@ -143,7 +144,7 @@ class AlarmService : Service() {
         val isSmartWakeupEnabled = intent.getBooleanExtra(EXTRA_IS_SMART_WAKEUP_ENABLED, false)
         val wakeupCheckDelay = intent.getIntExtra(EXTRA_WAKEUP_CHECK_DELAY, 3)
         val wakeupCheckTimeout = intent.getIntExtra(EXTRA_WAKEUP_CHECK_TIMEOUT, 60)
-        val soundUriStr = intent.getStringExtra(EXTRA_SOUND_URI)
+        val briefingTimeout = intent.getIntExtra(EXTRA_BRIEFING_TIMEOUT, 30)
         val daysOfWeekStr = intent.getStringExtra(EXTRA_DAYS_OF_WEEK)
 
         // Stash for later use in snooze/dismiss helpers
@@ -170,6 +171,7 @@ class AlarmService : Service() {
         currentIsSmartWakeupEnabled = isSmartWakeupEnabled
         currentWakeupCheckDelayMinutes = wakeupCheckDelay
         currentWakeupCheckTimeoutSeconds = wakeupCheckTimeout
+        currentBriefingTimeoutSeconds = briefingTimeout
 
         val activityIntent = Intent(this, com.elroi.alarmpal.ui.activity.AlarmActivity::class.java).apply {
             putExtra(EXTRA_ALARM_ID, alarmId)
@@ -191,6 +193,8 @@ class AlarmService : Service() {
             putExtra(EXTRA_WAKEUP_CHECK_DELAY, wakeupCheckDelay)
             putExtra(EXTRA_WAKEUP_CHECK_TIMEOUT, wakeupCheckTimeout)
             putExtra(EXTRA_BRIEFING_ENABLED, briefingEnabled)
+            putExtra(EXTRA_TTS_ENABLED, ttsEnabled)
+            putExtra(EXTRA_BRIEFING_TIMEOUT, briefingTimeout)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or 
                      Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or 
                      Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -375,6 +379,14 @@ class AlarmService : Service() {
                         serviceScope.launch {
                             val filteredBriefing = BriefingUtils.filterBriefingForTts(briefing)
                             ttsManager.speak(filteredBriefing)
+                        }
+                    } else if (currentBriefingEnabled) {
+                        // If briefing is enabled but TTS is off (or sound is off), 
+                        // mark completed after the configured reading timeout
+                        serviceScope.launch {
+                            Log.d("TTS_DEBUG", "TTS disabled, waiting ${currentBriefingTimeoutSeconds}s for reading...")
+                            delay(currentBriefingTimeoutSeconds * 1000L)
+                            com.elroi.alarmpal.domain.manager.BriefingStateManager.markCompleted()
                         }
                     }
                 }
@@ -713,6 +725,7 @@ class AlarmService : Service() {
         const val EXTRA_WAKEUP_CHECK_DELAY = "ALARM_WAKEUP_CHECK_DELAY"
         const val EXTRA_WAKEUP_CHECK_TIMEOUT = "ALARM_WAKEUP_CHECK_TIMEOUT"
         const val EXTRA_DAYS_OF_WEEK = "ALARM_DAYS_OF_WEEK"
+        const val EXTRA_BRIEFING_TIMEOUT = "ALARM_BRIEFING_TIMEOUT"
 
         private const val CHANNEL_ID_VIBRATE = "alarm_ringing_channel_vibrate"
         private const val CHANNEL_ID_SILENT = "alarm_ringing_channel_silent"

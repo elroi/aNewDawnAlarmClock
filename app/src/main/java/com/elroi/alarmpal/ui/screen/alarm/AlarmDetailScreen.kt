@@ -109,6 +109,7 @@ fun AlarmDetailScreen(
     var isSmartWakeupEnabled by remember { mutableStateOf<Boolean>(false) }
     var wakeupCheckDelayMinutes by remember { mutableIntStateOf(3) }
     var wakeupCheckTimeoutSeconds by remember { mutableIntStateOf(60) }
+    var briefingTimeoutSeconds by remember { mutableIntStateOf(defaultSettings.briefingTimeoutSeconds) }
     val weekendDays    = defaultSettings.weekendDays
     var currentAlarm   by remember { mutableStateOf<Alarm?>(null) }
     var initialState by remember { mutableStateOf<AlarmStateSnapshot?>(null) }
@@ -120,7 +121,7 @@ fun AlarmDetailScreen(
         daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
         snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
         evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
-        wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds
+        wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds, briefingTimeoutSeconds
     ) {
         val current = AlarmStateSnapshot(
             time, label, isGentleWake, buddyPhone, buddyName,
@@ -128,7 +129,7 @@ fun AlarmDetailScreen(
             daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
             snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
             evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
-            wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds
+            wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds, briefingTimeoutSeconds
         )
         initialState != null && current != initialState
     }
@@ -272,6 +273,7 @@ fun AlarmDetailScreen(
                     isSmartWakeupEnabled = it.isSmartWakeupEnabled
                     wakeupCheckDelayMinutes = it.wakeupCheckDelayMinutes
                     wakeupCheckTimeoutSeconds = it.wakeupCheckTimeoutSeconds
+                    briefingTimeoutSeconds = it.briefingTimeoutSeconds
                     soundUri       = it.soundUri
                     
                     if (initialState == null) {
@@ -281,7 +283,7 @@ fun AlarmDetailScreen(
                             daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
                             snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
                             evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
-                            wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds
+                            wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds, briefingTimeoutSeconds
                         )
                     }
                 }
@@ -313,7 +315,7 @@ fun AlarmDetailScreen(
                     daysOfWeek, mathDifficulty, mathProblemCount, mathGraduallyIncreaseDifficulty, mathEnabled, smileToDismiss, smileFallbackMethod,
                     snoozeDuration, isSnoozeEnabled, crescendoDuration, isBriefingEnabled, isTtsEnabled, isEvasiveSnooze,
                     evasiveSnoozesBeforeMoving, isSmoothFadeOut, isVibrate, isSoundEnabled, soundUri, isSmartWakeupEnabled,
-                    wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds
+                    wakeupCheckDelayMinutes, wakeupCheckTimeoutSeconds, briefingTimeoutSeconds
                 )
             }
         }
@@ -423,6 +425,7 @@ fun AlarmDetailScreen(
                             isSmartWakeupEnabled = isSmartWakeupEnabled,
                             wakeupCheckDelayMinutes = wakeupCheckDelayMinutes,
                             wakeupCheckTimeoutSeconds = wakeupCheckTimeoutSeconds,
+                            briefingTimeoutSeconds = briefingTimeoutSeconds,
                             isEnabled = true
                         )
                         viewModel.addAlarm(updatedAlarm)
@@ -922,6 +925,19 @@ fun AlarmDetailScreen(
                             }
                             Switch(checked = isTtsEnabled, onCheckedChange = { isTtsEnabled = it })
                         }
+                        
+                        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Briefing Timeout", style = MaterialTheme.typography.bodySmall)
+                                Text("${briefingTimeoutSeconds}s", color = MaterialTheme.colorScheme.primary)
+                            }
+                            Slider(
+                                value = briefingTimeoutSeconds.toFloat(),
+                                onValueChange = { briefingTimeoutSeconds = it.toInt() },
+                                valueRange = 10f..120f,
+                                steps = 11
+                            )
+                        }
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     }
                 }
@@ -988,7 +1004,8 @@ fun AlarmDetailScreen(
                         isSoundEnabled        = isSoundEnabled,
                         isSmartWakeupEnabled  = isSmartWakeupEnabled,
                         wakeupCheckDelayMinutes = wakeupCheckDelayMinutes,
-                        wakeupCheckTimeoutSeconds = wakeupCheckTimeoutSeconds
+                        wakeupCheckTimeoutSeconds = wakeupCheckTimeoutSeconds,
+                        briefingTimeoutSeconds = briefingTimeoutSeconds
                     ) ?: Alarm(
                         time                  = time,
                         label                 = label,
@@ -1509,5 +1526,6 @@ private data class AlarmStateSnapshot(
     val soundUri: String?,
     val isSmartWakeupEnabled: Boolean,
     val wakeupCheckDelayMinutes: Int,
-    val wakeupCheckTimeoutSeconds: Int
+    val wakeupCheckTimeoutSeconds: Int,
+    val briefingTimeoutSeconds: Int
 )

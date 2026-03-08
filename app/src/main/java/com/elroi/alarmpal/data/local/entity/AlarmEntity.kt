@@ -58,7 +58,9 @@ data class AlarmEntity(
     @ColumnInfo(defaultValue = "3")
     val wakeupCheckDelayMinutes: Int = 3,
     @ColumnInfo(defaultValue = "60")
-    val wakeupCheckTimeoutSeconds: Int = 60
+    val wakeupCheckTimeoutSeconds: Int = 60,
+    @ColumnInfo(defaultValue = "30")
+    val briefingTimeoutSeconds: Int = 30
 ) {
     fun toDomain(): Alarm {
         return Alarm(
@@ -91,7 +93,8 @@ data class AlarmEntity(
             isSnoozeEnabled = isSnoozeEnabled,
             isSmartWakeupEnabled = isSmartWakeupEnabled,
             wakeupCheckDelayMinutes = wakeupCheckDelayMinutes,
-            wakeupCheckTimeoutSeconds = wakeupCheckTimeoutSeconds
+            wakeupCheckTimeoutSeconds = wakeupCheckTimeoutSeconds,
+            briefingTimeoutSeconds = briefingTimeoutSeconds
             // isVibrateOnly is ignored in domain
         )
     }
@@ -130,7 +133,8 @@ data class AlarmEntity(
                 isVibrateOnly = false, // Default or irrelevant now
                 isSmartWakeupEnabled = alarm.isSmartWakeupEnabled,
                 wakeupCheckDelayMinutes = alarm.wakeupCheckDelayMinutes,
-                wakeupCheckTimeoutSeconds = alarm.wakeupCheckTimeoutSeconds
+                wakeupCheckTimeoutSeconds = alarm.wakeupCheckTimeoutSeconds,
+                briefingTimeoutSeconds = alarm.briefingTimeoutSeconds
             )
         }
     }

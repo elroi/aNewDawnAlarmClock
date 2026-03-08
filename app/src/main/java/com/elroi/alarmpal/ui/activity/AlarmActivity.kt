@@ -97,6 +97,8 @@ class AlarmActivity : ComponentActivity() {
         val evasiveSnoozesBeforeMoving = intent.getIntExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING, 0)
         val isSnoozeEnabled = intent.getBooleanExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_IS_SNOOZE_ENABLED, true)
         val isBriefingEnabled = intent.getBooleanExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_BRIEFING_ENABLED, true)
+        val isTtsEnabled = intent.getBooleanExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_TTS_ENABLED, true)
+        val briefingTimeout = intent.getIntExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_BRIEFING_TIMEOUT, 30)
         
         // Pre-request CAMERA permission so SmileDismissScreen can use it immediately
         cameraPermissionGranted = ContextCompat.checkSelfPermission(
@@ -157,11 +159,15 @@ class AlarmActivity : ComponentActivity() {
                                 finish()
                             }
                         } else if (briefingState is com.elroi.alarmpal.domain.manager.BriefingState.Completed && !isBriefingPaused) {
-                            // TTS has finished speaking
+                            // TTS has finished speaking or timeout reached
                             // Wait 2 seconds before closing
                             kotlinx.coroutines.delay(2000L)
+                            startService(Intent(this@AlarmActivity, com.elroi.alarmpal.service.AlarmService::class.java).apply {
+                                action = com.elroi.alarmpal.service.AlarmService.ACTION_STOP_TTS
+                            })
                             finish()
-                        } else if (briefingState is com.elroi.alarmpal.domain.manager.BriefingState.Idle && wasBriefingReady && !isBriefingPaused) {
+                        }
+ else if (briefingState is com.elroi.alarmpal.domain.manager.BriefingState.Idle && wasBriefingReady && !isBriefingPaused) {
                             // The associated service was stopped abruptly 
                             finish()
                         }
@@ -329,7 +335,9 @@ class AlarmActivity : ComponentActivity() {
                             generatingMessage = generatingMessage,
                             hasStarted = hasBriefingStarted,
                             isCompleted = briefingState is com.elroi.alarmpal.domain.manager.BriefingState.Completed,
+                            isTtsEnabled = isTtsEnabled,
                             isPaused = isBriefingPaused,
+                            timeoutSeconds = briefingTimeout,
                             onPauseChange = { isBriefingPaused = it },
                             onStopTts = {
                                 startService(Intent(this@AlarmActivity, com.elroi.alarmpal.service.AlarmService::class.java).apply {
@@ -852,16 +860,27 @@ fun BriefingScreen(
     generatingMessage: String? = null,
     hasStarted: Boolean,
     isCompleted: Boolean,
+    isTtsEnabled: Boolean,
     isPaused: Boolean,
+    timeoutSeconds: Int,
     onPauseChange: (Boolean) -> Unit,
     onStopTts: () -> Unit
 ) {
     var closingSeconds by remember { mutableIntStateOf(-1) }
 
-    LaunchedEffect(isCompleted, isPaused) {
+    LaunchedEffect(isCompleted, isPaused, hasStarted, isTtsEnabled) {
         if (isCompleted && !isPaused) {
             closingSeconds = 2
             while (closingSeconds > 0) {
+                kotlinx.coroutines.delay(1000L)
+                if (!isPaused) {
+                    closingSeconds--
+                }
+            }
+        } else if (hasStarted && !isTtsEnabled && !isCompleted && !isPaused) {
+            // Show the full countdown if TTS is disabled
+            closingSeconds = timeoutSeconds
+            while (closingSeconds > 0 && !isCompleted) {
                 kotlinx.coroutines.delay(1000L)
                 if (!isPaused) {
                     closingSeconds--
@@ -999,7 +1018,8 @@ fun BriefingScreen(
                             val statusText = when {
                                 isPaused -> "Paused"
                                 closingSeconds >= 0 -> "Closing in ${closingSeconds}s"
-                                else -> "Reading aloud..."
+                                isTtsEnabled -> "Reading aloud..."
+                                else -> "Reading..."
                             }
                             
                             Text(

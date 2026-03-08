@@ -280,6 +280,19 @@ fun SettingsScreen(
                             Text("Read Aloud (TTS)", style = MaterialTheme.typography.bodyLarge)
                             Switch(checked = alarmDefaults.isTtsEnabled, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isTtsEnabled = it)) })
                         }
+                        
+                        Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Briefing Timeout", style = MaterialTheme.typography.bodySmall)
+                                Text("${alarmDefaults.briefingTimeoutSeconds}s", color = MaterialTheme.colorScheme.primary)
+                            }
+                            Slider(
+                                value = alarmDefaults.briefingTimeoutSeconds.toFloat(),
+                                onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingTimeoutSeconds = it.toInt())) },
+                                valueRange = 10f..120f,
+                                steps = 11 // (120-10)/10 = 11 steps for 10s increments
+                            )
+                        }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Text("Weather Report", style = MaterialTheme.typography.bodyLarge)
                             Switch(checked = alarmDefaults.briefingIncludeWeather, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingIncludeWeather = it)) })

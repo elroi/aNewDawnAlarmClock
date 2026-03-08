@@ -52,6 +52,7 @@ class AndroidAlarmScheduler(
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_IS_SMART_WAKEUP_ENABLED, alarm.isSmartWakeupEnabled)
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_DELAY, alarm.wakeupCheckDelayMinutes)
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_WAKEUP_CHECK_TIMEOUT, alarm.wakeupCheckTimeoutSeconds)
+            putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_BRIEFING_TIMEOUT, alarm.briefingTimeoutSeconds)
             putExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_DAYS_OF_WEEK, alarm.daysOfWeek.joinToString(","))
         }
         
