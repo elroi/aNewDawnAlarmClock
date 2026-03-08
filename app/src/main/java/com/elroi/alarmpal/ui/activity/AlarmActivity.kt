@@ -64,11 +64,22 @@ class AlarmActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
+    override fun onStart() {
+        super.onStart()
+        turnScreenOnAndKeyguardOff()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         turnScreenOnAndKeyguardOff()
         handleIntent(intent)
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        // Called when user presses Home or Recents to leave the activity
+        android.util.Log.d("AlarmActivity", "User left the alarm screen - focus lost")
     }
 
     private fun handleIntent(intent: Intent) {
@@ -111,6 +122,7 @@ class AlarmActivity : ComponentActivity() {
                     var showSmileScreen by remember { mutableStateOf(false) }
                     var successMessage by remember { mutableStateOf<String?>(null) }
                     var snoozedUntil by remember { mutableStateOf<LocalTime?>(null) }
+                    var isSmileFlashlightActive by remember { mutableStateOf(false) }
                     
                     val briefingState by com.elroi.alarmpal.domain.manager.BriefingStateManager.briefingState.collectAsState()
                     var showBriefingScreen by remember { mutableStateOf(false) }
@@ -208,23 +220,29 @@ class AlarmActivity : ComponentActivity() {
 
                     val initialBrightness = remember { initialSystemBrightness }
 
+                    val isChallengeActive = showSmileScreen || showMathDialog || successMessage != null
+
                     // --- ADAPTIVE BRIGHTNESS logic (Refined with smoothing) ---
-                    val targetBrightness by remember(isGentleWake, crescendoMins, isDismissing, showBriefingScreen, lux) {
+                    val targetBrightness by remember(isGentleWake, crescendoMins, isChallengeActive, snoozedUntil, showBriefingScreen, lux, isSmileFlashlightActive) {
                         derivedStateOf {
                             when {
+                                // 0. Smile flashlight takes priority
+                                isSmileFlashlightActive -> 1.0f
                                 // 1. If we are showing the briefing, ensure a minimum readable brightness
                                 showBriefingScreen -> {
                                     if (lux > 50f) 1.0f else maxOf(0.6f, (lux / 50f))
                                 }
-                                // 2. If we are in the middle of a challenge/dismissal, don't change brightness mid-stream
-                                isDismissing -> -1f // Keep current
-                                // 3. Gentle Wake crescendo
+                                // 2. If we are in the middle of a challenge, keep it bright
+                                isChallengeActive -> {
+                                    if (lux > 50f) 1.0f else 0.8f
+                                }
+                                // 3. Snoozed state (revert to system default)
+                                snoozedUntil != null -> -1f
+                                // 4. Gentle Wake crescendo
                                 isGentleWake && crescendoMins > 0 -> {
-                                    // Note: we handle the time-based ramp inside the LaunchedEffect below by updating a local state
-                                    // but we can also do a simpler version here if we track 'crescendoProgress'
                                     -2f // Special marker for crescendo loop
                                 }
-                                // 4. Default firing state (High brightness, adapted to room)
+                                // 5. Default firing state (High brightness, adapted to room)
                                 else -> {
                                     if (lux > 50f) 1.0f else maxOf(0.8f, initialBrightness)
                                 }
@@ -252,8 +270,8 @@ class AlarmActivity : ComponentActivity() {
                     }
 
                     // Handle the crescendo loop separately to update 'manualBrightness'
-                    LaunchedEffect(isGentleWake, crescendoMins, isDismissing, showBriefingScreen) {
-                        if (isGentleWake && crescendoMins > 0 && !isDismissing && !showBriefingScreen) {
+                    LaunchedEffect(isGentleWake, crescendoMins, isChallengeActive, showBriefingScreen, snoozedUntil) {
+                        if (isGentleWake && crescendoMins > 0 && !isChallengeActive && !showBriefingScreen && snoozedUntil == null) {
                             val durationMs = crescendoMins * 60_000L
                             val startTime = System.currentTimeMillis()
                             while (true) {
@@ -353,7 +371,9 @@ class AlarmActivity : ComponentActivity() {
                     
                     if (showSmileScreen) {
                         SmileDismissScreen(
+                            lux = lux,
                             fallbackMethod = smileFallbackMethod,
+                            onFlashlightStateChanged = { isSmileFlashlightActive = it },
                             onFallbackTriggered = {
                                 showSmileScreen = false
                                 if (smileFallbackMethod == "MATH") {

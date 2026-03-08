@@ -61,7 +61,9 @@ import kotlin.math.abs
  */
 @Composable
 fun SmileDismissScreen(
+    lux: Float,
     fallbackMethod: String,
+    onFlashlightStateChanged: (Boolean) -> Unit,
     onFallbackTriggered: () -> Unit,
     onDismissed: () -> Unit
 ) {
@@ -105,26 +107,10 @@ fun SmileDismissScreen(
     // If so, we activate the top/bottom white screen panels and set max brightness.
     // It stays on consistently until the face challenges are completed.
     var isRoomDark by remember { mutableStateOf(false) }
-    DisposableEffect(Unit) {
-        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        val lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
-        val listener = object : SensorEventListener {
-            override fun onSensorChanged(event: SensorEvent) {
-                // event.values[0] is ambient light level in SI lux units
-                // < 10 lux is generally considered a dark room.
-                // We LATCH the flashlight on so that the screen's own generated 
-                // light doesn't trick the sensor into turning the flashlight back off!
-                val lux = event.values[0]
-                if (lux < 10f) {
-                    isRoomDark = true
-                }
-            }
-            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
+    LaunchedEffect(lux) {
+        if (lux < 10f) {
+            isRoomDark = true
         }
-        lightSensor?.let {
-            sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_UI)
-        }
-        onDispose { sensorManager.unregisterListener(listener) }
     }
 
     // Smoothly fade the flashlight on or off based on the room's ambient light
@@ -134,16 +120,9 @@ fun SmileDismissScreen(
         label = "flashlightAlpha"
     )
 
-    // Bump screen brightness to max when flashlight is active
-    val activity = context as? Activity
+    // Notify activity about flashlight state
     LaunchedEffect(flashlightAlpha) {
-        activity?.let {
-            val window = it.window
-            val lp = window.attributes
-            // 1.0f = max brightness, -1f = back to system default/user preference
-            lp.screenBrightness = if (flashlightAlpha > 0.01f) 1.0f else -1f
-            window.attributes = lp
-        }
+        onFlashlightStateChanged(flashlightAlpha > 0.01f)
     }
 
     // Auto-fallback timer
