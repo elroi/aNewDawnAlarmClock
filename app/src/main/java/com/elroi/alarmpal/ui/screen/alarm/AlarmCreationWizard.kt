@@ -279,7 +279,7 @@ fun AlarmCreationWizard(
                         1 -> WakeUpStyleStep(
                             selectedPersona, { selectedPersona = it },
                             isBriefingEnabled, { enabled -> 
-                                if (enabled && geminiApiKey.isBlank()) {
+                                if (enabled && isCloudAiEnabled && geminiApiKey.isBlank()) {
                                     showCloudAiSetupDialog = true
                                 } else {
                                     isBriefingEnabled = enabled

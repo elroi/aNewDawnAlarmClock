@@ -134,6 +134,7 @@ fun AlarmDetailScreen(
     }
 
     val geminiApiKey by viewModel.geminiApiKey.collectAsState()
+    val isCloudAiEnabled by viewModel.isCloudAiEnabled.collectAsState()
     var showCloudAiSetupDialog by remember { mutableStateOf(false) }
 
     // Preview — launches AlarmActivity in preview mode + plays audio
@@ -900,7 +901,7 @@ fun AlarmDetailScreen(
                         Text("Personalized AI briefing when you wake up", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(checked = isBriefingEnabled, onCheckedChange = { enabled -> 
-                        if (enabled && geminiApiKey.isBlank()) {
+                        if (enabled && isCloudAiEnabled && geminiApiKey.isBlank()) {
                             showCloudAiSetupDialog = true
                         } else {
                             isBriefingEnabled = enabled
