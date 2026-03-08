@@ -329,9 +329,13 @@ class AlarmService : Service() {
     private fun handleDismiss() {
         Log.d("TTS_DEBUG", "handleDismiss called")
         
-        if (!currentIsRepeating && currentAlarmId != null) {
-            serviceScope.launch {
-                repository.updateAlarmToggle(currentAlarmId!!, false)
+        // Fetch the alarm directly to verify if it's repeating, rather than just relying on the intent.
+        serviceScope.launch(kotlinx.coroutines.NonCancellable) {
+            val alarmId = currentAlarmId ?: return@launch
+            val alarm = repository.getAlarmById(alarmId)
+            if (alarm != null && alarm.daysOfWeek.isEmpty()) {
+                Log.d("TTS_DEBUG", "One-time alarm dismissed, disabling: $alarmId")
+                repository.updateAlarmToggle(alarmId, false)
             }
         }
 
@@ -437,9 +441,12 @@ class AlarmService : Service() {
             scheduleWakeupCheck()
         }
         
-        if (!currentIsRepeating && currentAlarmId != null) {
-            serviceScope.launch {
-                repository.updateAlarmToggle(currentAlarmId!!, false)
+        serviceScope.launch(kotlinx.coroutines.NonCancellable) {
+            val alarmId = currentAlarmId ?: return@launch
+            val alarm = repository.getAlarmById(alarmId)
+            if (alarm != null && alarm.daysOfWeek.isEmpty()) {
+                Log.d("TTS_DEBUG", "One-time alarm TTS finished, disabling: $alarmId")
+                repository.updateAlarmToggle(alarmId, false)
             }
         }
 
