@@ -692,19 +692,19 @@ fun AlarmFiringScreen(
                 val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
                 if (is24Hour) {
                     Text(
-                        text = currentTime.format(DateTimeFormatter.ofPattern("HH:mm")),
-                        fontSize = 80.sp,
+                        text = currentTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")),
+                        fontSize = 64.sp,
                         fontWeight = FontWeight.Bold
                     )
                 } else {
                     Text(
-                        text = currentTime.format(DateTimeFormatter.ofPattern("hh:mm")),
-                        fontSize = 80.sp,
+                        text = currentTime.format(DateTimeFormatter.ofPattern("hh:mm:ss")),
+                        fontSize = 64.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = currentTime.format(DateTimeFormatter.ofPattern(" a")),
-                        fontSize = 40.sp,
+                        fontSize = 32.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
