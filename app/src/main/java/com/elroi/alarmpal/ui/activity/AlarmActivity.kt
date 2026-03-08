@@ -84,6 +84,7 @@ class AlarmActivity : ComponentActivity() {
         val isEvasiveSnooze = intent.getBooleanExtra("ALARM_IS_EVASIVE_SNOOZE", false)
         val evasiveSnoozesBeforeMoving = intent.getIntExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING, 0)
         val isSnoozeEnabled = intent.getBooleanExtra("ALARM_IS_SNOOZE_ENABLED", true)
+        val isBriefingEnabled = intent.getBooleanExtra(com.elroi.alarmpal.service.AlarmService.EXTRA_BRIEFING_ENABLED, true)
         
         // Pre-request CAMERA permission so SmileDismissScreen can use it immediately
         cameraPermissionGranted = ContextCompat.checkSelfPermission(
@@ -191,7 +192,7 @@ class AlarmActivity : ComponentActivity() {
                         } else if (mathDifficulty > 0) {
                             showMathDialog = true
                         } else {
-                            triggerDismissLogic(isPreview, { showBriefingScreen = true })
+                            triggerDismissLogic(isPreview, isBriefingEnabled, { showBriefingScreen = true })
                         }
                     }
                     
@@ -357,7 +358,7 @@ class AlarmActivity : ComponentActivity() {
                                 if (smileFallbackMethod == "MATH") {
                                     showMathDialog = true
                                 } else {
-                                    triggerDismissLogic(isPreview, { showBriefingScreen = true })
+                                    triggerDismissLogic(isPreview, isBriefingEnabled, { showBriefingScreen = true })
                                 }
                             },
                             onDismissed = { 
@@ -399,7 +400,7 @@ class AlarmActivity : ComponentActivity() {
                                     showMathDialog = true
                                 } else {
                                     // Proceed to dismissal/briefing
-                                    triggerDismissLogic(isPreview, { showBriefingScreen = true })
+                                    triggerDismissLogic(isPreview, isBriefingEnabled, { showBriefingScreen = true })
                                 }
                             }
                         )
@@ -409,13 +410,17 @@ class AlarmActivity : ComponentActivity() {
         }
     }
 
-    private fun triggerDismissLogic(isPreview: Boolean, showBriefingScreen: () -> Unit) {
+    private fun triggerDismissLogic(isPreview: Boolean, isBriefingEnabled: Boolean, showBriefingScreen: () -> Unit) {
         if (!isPreview) {
             startService(Intent(this, com.elroi.alarmpal.service.AlarmService::class.java).apply {
                 action = com.elroi.alarmpal.service.AlarmService.ACTION_DISMISS
             })
-            // Switch UI immediately to Briefing spinner
-            showBriefingScreen()
+            // Switch UI immediately to Briefing spinner ONLY if enabled
+            if (isBriefingEnabled) {
+                showBriefingScreen()
+            } else {
+                finish()
+            }
         } else {
             finish()
         }

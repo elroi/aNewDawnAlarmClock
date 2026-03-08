@@ -412,6 +412,7 @@ fun AlarmDetailScreen(
                             isSnoozeEnabled = isSnoozeEnabled,
                             crescendoDurationMinutes = crescendoDuration,
                             isTtsEnabled = isTtsEnabled,
+                            isBriefingEnabled = isBriefingEnabled,
                             isEvasiveSnooze = isEvasiveSnooze,
                             evasiveSnoozesBeforeMoving = evasiveSnoozesBeforeMoving,
                             isSmoothFadeOut = isSmoothFadeOut,
