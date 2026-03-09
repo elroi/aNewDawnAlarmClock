@@ -1,0 +1,33 @@
+---
+description: Jetpack Compose and UI conventions for LemurLoop
+alwaysApply: true
+---
+
+# UI & Compose Conventions
+
+- **Screen structure**
+  - Each screen has a single public entry Composable named `XxxScreen`.
+  - Screen state and side effects live in a ViewModel; Composables are as stateless as possible.
+  - Break complex layouts into smaller private Composables colocated in the same file.
+
+- **State & events**
+  - **Preferred (new screens):** ViewModels expose a single immutable `UiState` data class and event channel (`UiEvent` or similar). UI reads one `StateFlow<UiState>` and sends events.
+  - **Existing pattern:** Some screens (e.g. Settings, Alarm list) use multiple `StateFlow`s instead of one `UiState`; this is acceptable until refactored. When adding new state, prefer extending toward a single `UiState` where practical.
+  - UI reads state via `StateFlow`, `LiveData`, or Compose `State`, never mutates it directly.
+  - User actions are modeled as events/intents or ViewModel methods, not as ad-hoc callbacks sprinkled through the UI tree.
+
+- **Navigation**
+  - Use a central NavHost/graph; avoid manual fragment transactions or ad-hoc navigation logic.
+  - Pass only the minimum required arguments; prefer stable, serializable types.
+  - Do not embed navigation decisions deep inside leaf Composables; delegate to screen-level handlers.
+
+- **Design & accessibility**
+  - Use Material 3 components, app theme colors, and typography tokens instead of ad-hoc styling.
+  - Respect a consistent spacing scale for padding and margins.
+  - All interactive elements must have clear labels/content descriptions and adequate touch targets.
+
+- **Settings & About**
+  - Settings rows should map cleanly to a single source of truth in `data`/`domain` (e.g. DataStore via SettingsManager).
+  - Avoid duplicating configuration logic in multiple screens; prefer a shared settings/state holder.
+  - About/Info surfaces: use BuildConfig or PackageManager for version; keep layout and tone consistent (see AboutScreen).
+

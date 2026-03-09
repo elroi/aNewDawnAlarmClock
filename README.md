@@ -1,6 +1,6 @@
-# AlarmPal: Android Alarm Clock Xtreme Reimagined
+# LemurLoop: Android Alarm Clock Xtreme Reimagined
 
-Welcome to **AlarmPal**, your new accountability partner and gentle wake-up assistant.
+Welcome to **LemurLoop**, your new accountability partner and gentle wake-up assistant.
 
 ## Features at a Glance
 - 🌞 **Gentle Wake**: Volume crescendo over 60 seconds.

@@ -29,11 +29,11 @@ plugins {
 }
 
 android {
-    namespace = "com.elroi.alarmpal"
+    namespace = "com.elroi.lemurloop"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.elroi.alarmpal"
+        applicationId = "com.elroi.lemurloop"
         minSdk = 26
         targetSdk = 34
         versionCode = 3

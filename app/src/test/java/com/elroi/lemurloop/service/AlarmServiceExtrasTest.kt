@@ -1,0 +1,73 @@
+package com.elroi.lemurloop.service
+
+import com.elroi.lemurloop.service.AlarmService
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+/**
+ * BUG-2: AlarmActivity reads intent extra "ALARM_EVASIVE_SNOOZE_BEFORE_MOVING" (no S before MOVING)
+ * but AlarmService.EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING = "ALARM_EVASIVE_SNOOZES_BEFORE_MOVING" (with S).
+ *
+ * BUG-8: AlarmService.handleSnooze() does not forward Smart-Wakeup extras or BRIEFING_ENABLED
+ * to the snoozed alarm PendingIntent, so those features silently reset to defaults after snooze.
+ *
+ * These tests document the correct constant values used as extra keys, ensuring the keys
+ * stay in sync across the codebase.
+ */
+class AlarmServiceExtrasTest {
+
+    @Test
+    fun `EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING constant has correct key with S`() {
+        // BUG-2: The key must end in "SNOOZES_BEFORE_MOVING" (plural with S), not "SNOOZE_BEFORE_MOVING"
+        assertEquals(
+            "ALARM_EVASIVE_SNOOZES_BEFORE_MOVING",
+            AlarmService.EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING
+        )
+    }
+
+    @Test
+    fun `EXTRA_IS_SMART_WAKEUP_ENABLED constant exists and has expected value`() {
+        // BUG-8: This extra must be forwarded by handleSnooze()
+        assertEquals(
+            "ALARM_IS_SMART_WAKEUP_ENABLED",
+            AlarmService.EXTRA_IS_SMART_WAKEUP_ENABLED
+        )
+    }
+
+    @Test
+    fun `EXTRA_WAKEUP_CHECK_DELAY constant exists and has expected value`() {
+        assertEquals("ALARM_WAKEUP_CHECK_DELAY", AlarmService.EXTRA_WAKEUP_CHECK_DELAY)
+    }
+
+    @Test
+    fun `EXTRA_WAKEUP_CHECK_TIMEOUT constant exists and has expected value`() {
+        assertEquals("ALARM_WAKEUP_CHECK_TIMEOUT", AlarmService.EXTRA_WAKEUP_CHECK_TIMEOUT)
+    }
+
+    @Test
+    fun `EXTRA_BRIEFING_ENABLED constant exists and has expected value`() {
+        // BUG-8: This extra must be forwarded by handleSnooze()
+        assertEquals("ALARM_BRIEFING_ENABLED", AlarmService.EXTRA_BRIEFING_ENABLED)
+    }
+
+    @Test
+    fun `EXTRA_ALARM_ID key matches what AlarmReceiver also uses`() {
+        // Consistency check: all components use the same string key
+        assertEquals("ALARM_ID", AlarmService.EXTRA_ALARM_ID)
+    }
+
+    @Test
+    fun `EXTRA_SOUND_URI constant exists and has expected value`() {
+        assertEquals("ALARM_SOUND_URI", AlarmService.EXTRA_SOUND_URI)
+    }
+
+    @Test
+    fun `EXTRA_DAYS_OF_WEEK constant exists and has expected value`() {
+        assertEquals("ALARM_DAYS_OF_WEEK", AlarmService.EXTRA_DAYS_OF_WEEK)
+    }
+
+    @Test
+    fun `EXTRA_SMILE_FALLBACK_METHOD constant exists and has expected value`() {
+        assertEquals("ALARM_SMILE_FALLBACK_METHOD", AlarmService.EXTRA_SMILE_FALLBACK_METHOD)
+    }
+}

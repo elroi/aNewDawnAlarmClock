@@ -1,0 +1,25 @@
+---
+description: Testing conventions and expectations for LemurLoop
+alwaysApply: true
+---
+
+# Testing & Quality Rules
+
+- **What to test**
+  - `domain` use cases should have unit tests that cover success, failure, and edge cases.
+  - `data` repositories should be tested for correct interaction with APIs/storage and error translation.
+  - Critical user journeys in `ui` should have UI or integration tests where practical.
+
+- **Test style**
+  - Prefer small, focused tests with clear arrange–act–assert sections.
+  - Name tests using `functionUnderTest_condition_expectedResult`.
+  - Avoid unnecessary mocking; use fakes where behavior matters.
+
+- **Libraries & placement**
+  - Place fast, JVM-only tests under `test`; use `androidTest` only when you need real Android components.
+  - Use the existing assertion and mocking libraries consistently (e.g. Truth/AssertJ, MockK, Turbine for `Flow`).
+
+- **Regression & performance**
+  - When fixing a bug, add or update a test to prevent the regression from returning.
+  - For performance-sensitive flows, add targeted tests or benchmarks where feasible, or document manual checks.
+

@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AlarmPal"
+rootProject.name = "LemurLoop"
 include(":app")

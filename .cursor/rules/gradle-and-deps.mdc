@@ -1,0 +1,25 @@
+---
+description: Gradle, dependency, and build configuration conventions for LemurLoop
+alwaysApply: true
+---
+
+# Gradle & Dependency Rules
+
+- **Versions & catalogs**
+  - Keep dependency versions centralized (version catalogs or shared constants), not scattered inline.
+  - When adding a new library, follow the existing pattern for where versions are defined.
+
+- **Adding dependencies**
+  - Prefer one well-chosen library per concern instead of overlapping duplicates.
+  - Avoid adding dependencies that duplicate standard library or Kotlin/AndroidX capabilities.
+  - Keep experimental or heavy dependencies isolated and well-documented.
+
+- **Build configuration**
+  - Keep `build.gradle.kts` files focused on configuration; no business logic.
+  - Document the purpose of buildTypes/flavors and avoid introducing unnecessary variants.
+  - Do not hardcode secrets or environment-specific values in Gradle files; use `local.properties` or secure mechanisms.
+
+- **KSP, annotation processors, and shrinkers**
+  - Use KSP/annotation processors only when they provide clear, project-wide benefit.
+  - When enabling R8/ProGuard rules, keep them minimal and documented; avoid blanket `-dontwarn` unless justified.
+
