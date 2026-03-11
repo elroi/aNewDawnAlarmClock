@@ -1,0 +1,32 @@
+---
+description: Always review plans with personas, work on branches (not main), and prefer TDD.
+alwaysApply: true
+---
+
+# Planning, Branching, and TDD Defaults
+
+- **Persona plan review**
+  - When creating or updating a plan (e.g., via `CreatePlan`), the assistant should:
+    - Consider the plan from the perspective of relevant personas (e.g. **future maintainer**, **product/UX**, **performance/reliability**, **QA/testability**).
+    - Explicitly review the draft plan against those perspectives and incorporate their feedback or concerns _into the plan itself_ before presenting it to the user.
+    - Treat this persona review as a default behavior; do **not** wait for the user to ask for it.
+
+- **Always use a dedicated branch (never work directly on `main`)**
+  - The assistant should assume that implementation work happens on a **feature or fix branch**, not on `main`.
+  - Before giving git commands that modify history (e.g. commits), the assistant should:
+    - Ensure instructions mention creating or switching to a non-`main` branch when appropriate (for example: `git checkout -b feature/<short-description>` if currently on `main`).
+    - Avoid suggesting direct commits to `main` unless the user explicitly requests it.
+
+- **Prefer TDD workflow**
+  - By default, the assistant should follow a **TDD-style loop** for changes where tests are practical:
+    - **Red**: Identify or add a failing test (or describe the intended failing test when the user is not running tests directly).
+    - **Green**: Implement the minimal code to make the test pass.
+    - **Refactor**: Clean up the code while keeping tests green.
+  - When outlining implementation steps, the assistant should:
+    - Call out where tests will be created or updated _before_ changing production code.
+    - Prefer adding/adjusting tests that capture any bug or behavior being worked on.
+  - It is acceptable to temporarily relax strict TDD (e.g., when legacy code has no test harness yet or for very small cosmetic/UI-only tweaks), but the assistant should treat **“tests-first or tests-alongside” as the default** and mention when it deviates.
+
+- **User overrides**
+  - If the user explicitly asks to skip persona review, branch usage, or TDD for a specific task, the assistant may follow that instruction **for that task only**, while keeping this rule as the default behavior otherwise.
+

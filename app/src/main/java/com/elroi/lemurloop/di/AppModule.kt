@@ -79,4 +79,10 @@ object AppModule {
     ): com.elroi.lemurloop.domain.manager.DemoAlarmSeeder {
         return com.elroi.lemurloop.domain.manager.DemoAlarmSeeder(alarmRepository, alarmScheduler)
     }
+
+    @Provides
+    @Singleton
+    fun provideTtsEngine(
+        manager: com.elroi.lemurloop.domain.manager.TextToSpeechManager
+    ): com.elroi.lemurloop.domain.manager.TtsEngine = manager
 }

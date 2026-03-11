@@ -6,7 +6,7 @@ import com.elroi.lemurloop.domain.manager.GeminiManager
 import com.elroi.lemurloop.domain.generator.BriefingGenerator
 import com.elroi.lemurloop.domain.manager.LocalLLMManager
 import com.elroi.lemurloop.data.local.AppDatabase
-import com.elroi.lemurloop.domain.manager.TextToSpeechManager
+import com.elroi.lemurloop.domain.manager.TtsEngine
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,7 +25,7 @@ class SettingsCompactionTest {
     private val briefingGenerator = mockk<BriefingGenerator>(relaxed = true)
     private val localLLMManager = mockk<LocalLLMManager>(relaxed = true)
     private val database = mockk<AppDatabase>(relaxed = true)
-    private val ttsManager = mockk<TextToSpeechManager>(relaxed = true)
+    private val ttsManager = mockk<TtsEngine>(relaxed = true)
 
     private lateinit var viewModel: SettingsViewModel
     private val testDispatcher = UnconfinedTestDispatcher()

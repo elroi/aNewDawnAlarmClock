@@ -38,7 +38,7 @@ class SettingsViewModel @Inject constructor(
     private val briefingGenerator: com.elroi.lemurloop.domain.generator.BriefingGenerator,
     private val localLLMManager: com.elroi.lemurloop.domain.manager.LocalLLMManager,
     private val database: com.elroi.lemurloop.data.local.AppDatabase,
-    private val ttsManager: com.elroi.lemurloop.domain.manager.TextToSpeechManager,
+    private val ttsManager: com.elroi.lemurloop.domain.manager.TtsEngine,
     private val demoAlarmSeeder: DemoAlarmSeeder
 ) : ViewModel() {
 
@@ -406,6 +406,7 @@ class SettingsViewModel @Inject constructor(
             if (!script.isNullOrBlank()) {
                 _previewBriefingScript.value = script
                 val filteredScript = BriefingUtils.filterBriefingForTts(script)
+                ttsManager.stop()
                 ttsManager.speak(filteredScript)
             } else {
                 _message.emit("Briefing generation failed. Please check your API key and AI settings.")
@@ -429,6 +430,7 @@ class SettingsViewModel @Inject constructor(
 
     fun clearBriefingPreview() {
         _previewBriefingScript.value = null
+        ttsManager.stop()
     }
 
     fun triggerLocalModelDownload() {

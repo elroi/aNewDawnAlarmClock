@@ -38,7 +38,7 @@ class AlarmService : Service() {
     lateinit var repository: com.elroi.lemurloop.domain.repository.AlarmRepository
 
     @Inject
-    lateinit var ttsManager: com.elroi.lemurloop.domain.manager.TextToSpeechManager
+    lateinit var ttsManager: com.elroi.lemurloop.domain.manager.TtsEngine
 
     @Inject
     lateinit var briefingGenerator: com.elroi.lemurloop.domain.generator.BriefingGenerator

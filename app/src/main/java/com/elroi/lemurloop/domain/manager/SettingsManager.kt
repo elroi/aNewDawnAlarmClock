@@ -66,6 +66,51 @@ data class PersonaTemperament(
     }
 }
 
+/**
+ * Describes how a persona should sound when spoken through TTS.
+ *
+ * pitch and speechRate use the same scale as Android TextToSpeech:
+ * - 1.0f = default engine behavior
+ * - < 1.0f = lower pitch / slower speech
+ * - > 1.0f = higher pitch / faster speech
+ */
+data class PersonaVoiceConfig(
+    val preferredVoiceNamePattern: String?,
+    val pitch: Float,
+    val speechRate: Float
+) {
+    companion object {
+        fun forPersona(personaId: String?): PersonaVoiceConfig =
+            when (personaId) {
+                "COACH" -> PersonaVoiceConfig(
+                    preferredVoiceNamePattern = "male",
+                    pitch = 0.8f,
+                    speechRate = 1.4f
+                )
+                "COMEDIAN" -> PersonaVoiceConfig(
+                    preferredVoiceNamePattern = null,
+                    pitch = 1.1f,
+                    speechRate = 1.2f
+                )
+                "ZEN" -> PersonaVoiceConfig(
+                    preferredVoiceNamePattern = "female",
+                    pitch = 1.0f,
+                    speechRate = 0.7f
+                )
+                "HYPEMAN" -> PersonaVoiceConfig(
+                    preferredVoiceNamePattern = null,
+                    pitch = 1.25f,
+                    speechRate = 1.4f
+                )
+                else -> PersonaVoiceConfig(
+                    preferredVoiceNamePattern = null,
+                    pitch = 1.0f,
+                    speechRate = 1.0f
+                )
+            }
+    }
+}
+
 
 data class AlarmDefaults(
     val snoozeDurationMinutes: Int = 5,
