@@ -7,11 +7,11 @@ object BriefingUtils {
 
     /**
      * Filters the briefing text for Text-to-Speech by removing visual-only headers.
-     * 
+     *
      * Specifically, it removes:
      * 1. Lines starting with # or * (Markdown headers/lists)
-     * 2. The persona title line (e.g., "🤡 The Sarcastic Friend")
-     * 3. The "[draft]" tag
+     * 2. The persona title line (e.g., "🤡 The Sarcastic Friend" plus any source emoji ✅/✈/☁️)
+     * 3. The "[draft]" tag (kept for backward compatibility with older cached scripts)
      */
     fun filterBriefingForTts(text: String?): String {
         if (text.isNullOrBlank()) return ""

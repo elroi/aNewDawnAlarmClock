@@ -22,6 +22,9 @@ import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** Indicates how the briefing was produced: cloud AI, local (on-device) AI, or non-AI draft. */
+private enum class BriefingSource { CLOUD_AI, LOCAL_AI, NON_AI }
+
 @Singleton
 class BriefingGenerator @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -188,6 +191,7 @@ class BriefingGenerator @Inject constructor(
         
         var aiScript: String? = null
         var aiSuccess = false
+        var winningTier: String? = null
 
         val localDraft = scriptBuilder.buildLocalBriefing(persona, location, weatherText, calendarText, funFactText)
         val personaInstruction = getPersonaInstruction(persona, settings)
@@ -247,6 +251,7 @@ class BriefingGenerator @Inject constructor(
                 if (aiParagraphs.size >= draftParagraphs.size) {
                     aiScript = finalResult
                     aiSuccess = true
+                    winningTier = tier
                     BriefingStateManager.updateComponentStatus("ai", "ok")
                     android.util.Log.d("BriefingGenerator", "AI kept all ${aiParagraphs.size} paragraphs ✓")
                 } else {
@@ -265,10 +270,14 @@ class BriefingGenerator @Inject constructor(
         
         val healthStatus = "weather:$weatherStatus|calendar:ok|fact:$factStatus|ai:${if(aiSuccess) "ok" else "draft"}"
         val title = getPersonaTitleAndEmoji(persona)
-        val sourceTag = if (aiSuccess) "" else " [draft]"
-        val finalScript = if (aiSuccess && aiScript != null) "$title$sourceTag\n\n${aiScript.trim()}" else {
-            "$title [draft]\n\n${localDraft.trim()}"
+        val briefingSource = when (winningTier) {
+            "CLOUD" -> BriefingSource.CLOUD_AI
+            "ADVANCED" -> BriefingSource.LOCAL_AI
+            else -> BriefingSource.NON_AI
         }
+        val emojiTag = emojiForSource(briefingSource)
+        val body = if (aiSuccess && aiScript != null) aiScript.trim() else localDraft.trim()
+        val finalScript = "$title$emojiTag\n\n$body"
         
         settingsManager.saveBriefingCache(
             script = finalScript,
@@ -313,6 +322,13 @@ class BriefingGenerator @Inject constructor(
             "SURPRISE" -> "🎲 Surprise Me"
             else -> "🪖 The Drill Sergeant"
         }
+    }
+
+    /** Emoji shown in briefing title: ✅ non-AI, ✈ local AI (offline), ☁️ cloud AI. */
+    private fun emojiForSource(source: BriefingSource): String = when (source) {
+        BriefingSource.NON_AI -> " ✅"
+        BriefingSource.LOCAL_AI -> " ✈"
+        BriefingSource.CLOUD_AI -> " ☁️"
     }
 
     private fun buildEnhancementPrompt(

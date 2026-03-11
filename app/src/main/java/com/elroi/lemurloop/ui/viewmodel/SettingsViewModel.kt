@@ -26,6 +26,10 @@ import android.content.Context
 import com.elroi.lemurloop.util.BriefingUtils
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import com.elroi.lemurloop.domain.manager.SettingSearchItem
+import com.elroi.lemurloop.domain.manager.SettingsSearchRegistry
+import com.elroi.lemurloop.domain.manager.searchSettings
+import com.elroi.lemurloop.domain.manager.SettingSearchTarget
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -119,12 +123,29 @@ class SettingsViewModel @Inject constructor(
     private val _expandedSections = MutableStateFlow<Set<String>>(emptySet())
     val expandedSections = _expandedSections.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery = _searchQuery.asStateFlow()
+
+    private val _searchResults = MutableStateFlow<List<SettingSearchItem>>(emptyList())
+    val searchResults: StateFlow<List<SettingSearchItem>> = _searchResults.asStateFlow()
+
+    val isSearching: StateFlow<Boolean> = searchQuery
+        .map { it.isNotBlank() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    private val _events = MutableSharedFlow<SettingsUiEvent>()
+    val events = _events.asSharedFlow()
+
     fun toggleSection(sectionId: String) {
         _expandedSections.value = if (_expandedSections.value.contains(sectionId)) {
             _expandedSections.value - sectionId
         } else {
             _expandedSections.value + sectionId
         }
+    }
+
+    fun openSection(sectionId: String) {
+        _expandedSections.value = _expandedSections.value + sectionId
     }
 
     val globalBuddies: StateFlow<Set<String>> = settingsManager.globalBuddiesFlow
@@ -531,4 +552,52 @@ class SettingsViewModel @Inject constructor(
             _message.emit(text)
         }
     }
+
+    fun onSearchQueryChange(query: String) {
+        _searchQuery.value = query
+        _searchResults.value = if (query.isBlank()) {
+            emptyList()
+        } else {
+            searchSettings(query, SettingsSearchRegistry.allItems)
+        }
+    }
+
+    fun clearSearch() {
+        _searchQuery.value = ""
+        _searchResults.value = emptyList()
+    }
+
+    fun handleSearchResultClick(item: SettingSearchItem) {
+        viewModelScope.launch {
+            // Clear search so the user sees the underlying destination immediately.
+            clearSearch()
+
+            when (val target = item.target) {
+                is SettingSearchTarget.Section -> {
+                    openSection(target.sectionId)
+                    _events.emit(SettingsUiEvent.OpenSection(target.sectionId))
+                }
+                is SettingSearchTarget.SubScreen -> {
+                    _events.emit(SettingsUiEvent.OpenSubScreen(target.route))
+                }
+                is SettingSearchTarget.InlineAction -> {
+                    // For inline actions, allow the UI to both expand the right
+                    // section and scroll the specific row into view.
+                    when (target.actionId) {
+                        "scroll_snooze",
+                        "scroll_math",
+                        "scroll_face_game" -> openSection("WAKEUP")
+                    }
+                    _events.emit(SettingsUiEvent.PerformInlineAction(target.actionId))
+                }
+            }
+        }
+    }
 }
+
+sealed class SettingsUiEvent {
+    data class OpenSection(val sectionId: String) : SettingsUiEvent()
+    data class OpenSubScreen(val route: String) : SettingsUiEvent()
+    data class PerformInlineAction(val actionId: String) : SettingsUiEvent()
+}
+

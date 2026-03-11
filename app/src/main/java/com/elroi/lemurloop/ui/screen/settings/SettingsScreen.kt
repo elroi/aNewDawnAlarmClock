@@ -29,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import com.elroi.lemurloop.R
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
@@ -41,11 +42,17 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -55,8 +62,9 @@ import com.elroi.lemurloop.ui.components.BuddySelectionDialog
 import com.elroi.lemurloop.ui.components.SettingHelpIcon
 import com.elroi.lemurloop.ui.components.VibrationPatternGallery
 import com.elroi.lemurloop.ui.viewmodel.SettingsViewModel
+import com.elroi.lemurloop.ui.viewmodel.SettingsUiEvent
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SettingsScreen(
     onNavigateUp: () -> Unit,
@@ -173,6 +181,15 @@ fun SettingsScreen(
         android.widget.Toast.makeText(context, "All data wiped", android.widget.Toast.LENGTH_SHORT).show()
     }
 
+    val snoozeRequester = remember { BringIntoViewRequester() }
+    val mathRequester = remember { BringIntoViewRequester() }
+    val faceGameRequester = remember { BringIntoViewRequester() }
+    val coroutineScope = rememberCoroutineScope()
+
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val searchResults by viewModel.searchResults.collectAsState()
+    val isSearching by viewModel.isSearching.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -202,13 +219,117 @@ fun SettingsScreen(
             )
         }
     ) { padding ->
+        val scrollState = rememberScrollState()
+        val density = LocalDensity.current
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
         ) {
+            LaunchedEffect(Unit) {
+                val extraOffsetPx = with(density) { 160.dp.toPx().toInt() }
+                viewModel.events.collect { event ->
+                    when (event) {
+                        is SettingsUiEvent.OpenSection -> {
+                            // Section has been expanded in the ViewModel; UI will show it
+                            // once search has been cleared (handled in the ViewModel).
+                        }
+                        is SettingsUiEvent.OpenSubScreen -> {
+                            when (event.route) {
+                                "about" -> onNavigateToAbout()
+                                "onboarding" -> onNavigateToOnboarding()
+                                "logs" -> onNavigateToLogs()
+                            }
+                        }
+                        is SettingsUiEvent.PerformInlineAction -> {
+                            when (event.actionId) {
+                                "scroll_snooze" -> coroutineScope.launch {
+                                    delay(120)
+                                    snoozeRequester.bringIntoView()
+                                    scrollState.animateScrollTo(
+                                        (scrollState.value + extraOffsetPx).coerceAtMost(scrollState.maxValue)
+                                    )
+                                }
+                                "scroll_math" -> coroutineScope.launch {
+                                    delay(120)
+                                    mathRequester.bringIntoView()
+                                    scrollState.animateScrollTo(
+                                        (scrollState.value + extraOffsetPx).coerceAtMost(scrollState.maxValue)
+                                    )
+                                }
+                                "scroll_face_game" -> coroutineScope.launch {
+                                    delay(120)
+                                    faceGameRequester.bringIntoView()
+                                    scrollState.animateScrollTo(
+                                        (scrollState.value + extraOffsetPx).coerceAtMost(scrollState.maxValue)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { viewModel.onSearchQueryChange(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                label = { Text("Search settings") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (searchQuery.isNotBlank()) {
+                        IconButton(onClick = { viewModel.clearSearch() }) {
+                            Icon(Icons.Default.Close, contentDescription = "Clear search")
+                        }
+                    }
+                },
+                singleLine = true
+            )
+
+            if (isSearching) {
+                if (searchResults.isEmpty()) {
+                    Text(
+                        text = "No settings match \"$searchQuery\"",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        searchResults.forEach { item ->
+                            Surface(
+                                onClick = { viewModel.handleSearchResultClick(item) },
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surface,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(item.title, style = MaterialTheme.typography.titleMedium)
+                                    if (item.description.isNotBlank()) {
+                                        Text(
+                                            item.description,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    if (item.section.isNotBlank()) {
+                                        Text(
+                                            item.section,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.padding(top = 4.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
             ExpandableSection(
                 icon = Icons.Default.WbSunny,
                 title = "Morning Experience 🌅",
@@ -533,11 +654,18 @@ fun SettingsScreen(
                     Slider(
                         value = alarmDefaults.snoozeDurationMinutes.toFloat(),
                         onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(snoozeDurationMinutes = it.toInt())) },
+                        modifier = Modifier.bringIntoViewRequester(snoozeRequester),
                         valueRange = 0f..60f,
                         steps = 59
                     )
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .bringIntoViewRequester(mathRequester),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text("Evasive Snooze", style = MaterialTheme.typography.bodyLarge)
                     Switch(checked = alarmDefaults.isEvasiveSnooze, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isEvasiveSnooze = it)) })
                 }
@@ -555,7 +683,13 @@ fun SettingsScreen(
                         )
                     }
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .bringIntoViewRequester(faceGameRequester),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text("Math Challenge", style = MaterialTheme.typography.bodyLarge)
                     Switch(
                         checked = alarmDefaults.mathDifficulty > 0,
@@ -943,6 +1077,7 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+            }
         }
     }
 }
@@ -1483,9 +1618,29 @@ fun PreviewBriefingDialog(
     script: String,
     onDismiss: () -> Unit
 ) {
+    val paragraphs = script.split(Regex("\n+")).filter { it.isNotBlank() }
+    val firstLine = paragraphs.firstOrNull() ?: ""
+    val sourceLabel = when {
+        firstLine.contains("☁️") -> "Source: Cloud AI"
+        firstLine.contains("✈") -> "Source: Local AI (offline)"
+        firstLine.contains("✅") -> "Source: Simple (no AI)"
+        else -> null
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Briefing Preview 📝") },
+        title = {
+            Column {
+                Text("Briefing Preview 📝")
+                if (sourceLabel != null) {
+                    Text(
+                        text = sourceLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+        },
         text = {
             val scrollState = rememberScrollState()
             Column(
@@ -1493,11 +1648,14 @@ fun PreviewBriefingDialog(
                     .fillMaxWidth()
                     .verticalScroll(scrollState)
             ) {
-                Text(
-                    text = script,
-                    style = MaterialTheme.typography.bodyMedium,
-                    lineHeight = 20.sp
-                )
+                paragraphs.forEach { paragraph ->
+                    Text(
+                        text = paragraph.trim(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        lineHeight = 20.sp,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                }
             }
         },
         confirmButton = {
