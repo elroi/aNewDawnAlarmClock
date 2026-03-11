@@ -584,6 +584,8 @@ class SettingsViewModel @Inject constructor(
                     // For inline actions, allow the UI to both expand the right
                     // section and scroll the specific row into view.
                     when (target.actionId) {
+                        "scroll_morning_personality",
+                        "scroll_briefing_content" -> openSection("MORNING")
                         "scroll_snooze",
                         "scroll_math",
                         "scroll_face_game" -> openSection("WAKEUP")

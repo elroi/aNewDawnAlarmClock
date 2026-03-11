@@ -55,21 +55,21 @@ object SettingsSearchRegistry {
             title = "Companion personality",
             description = "Choose how LemurLoop talks to you in the morning",
             section = "Morning Experience",
-            target = SettingSearchTarget.Section("MORNING")
+            target = SettingSearchTarget.InlineAction("scroll_morning_personality")
         ),
         SettingSearchItem(
             id = "briefing_tts",
             title = "Read briefing aloud",
             description = "Enable text-to-speech for your morning briefing",
             section = "Morning Experience",
-            target = SettingSearchTarget.Section("MORNING")
+            target = SettingSearchTarget.InlineAction("scroll_briefing_content")
         ),
         SettingSearchItem(
             id = "briefing_content",
             title = "Aura report content",
             description = "Weather, calendar events, and fun fact in your briefing",
             section = "Morning Experience",
-            target = SettingSearchTarget.Section("MORNING")
+            target = SettingSearchTarget.InlineAction("scroll_briefing_content")
         ),
 
         // Wake-Up Engine

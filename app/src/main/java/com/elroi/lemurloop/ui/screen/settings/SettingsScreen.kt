@@ -30,6 +30,8 @@ import com.elroi.lemurloop.R
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
@@ -42,15 +44,14 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import androidx.compose.material3.SegmentedButton
@@ -64,7 +65,7 @@ import com.elroi.lemurloop.ui.components.VibrationPatternGallery
 import com.elroi.lemurloop.ui.viewmodel.SettingsViewModel
 import com.elroi.lemurloop.ui.viewmodel.SettingsUiEvent
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateUp: () -> Unit,
@@ -181,10 +182,20 @@ fun SettingsScreen(
         android.widget.Toast.makeText(context, "All data wiped", android.widget.Toast.LENGTH_SHORT).show()
     }
 
-    val snoozeRequester = remember { BringIntoViewRequester() }
-    val mathRequester = remember { BringIntoViewRequester() }
-    val faceGameRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
+
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    var personaScrollOffset by remember { mutableStateOf(0) }
+    var briefingScrollOffset by remember { mutableStateOf(0) }
+    var snoozeScrollOffset by remember { mutableStateOf(0) }
+    var mathScrollOffset by remember { mutableStateOf(0) }
+    var faceGameScrollOffset by remember { mutableStateOf(0) }
+    var scrollColumnTop by remember { mutableStateOf(0f) }
+    var pendingScrollActionId by remember { mutableStateOf<String?>(null) }
+    var sectionScrollOffsets by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
+    var pendingScrollToSectionId by remember { mutableStateOf<String?>(null) }
 
     val searchQuery by viewModel.searchQuery.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
@@ -227,14 +238,17 @@ fun SettingsScreen(
                 .padding(padding)
                 .padding(horizontal = 16.dp)
                 .verticalScroll(scrollState)
+                .onGloballyPositioned { scrollColumnTop = it.positionInRoot().y }
         ) {
             LaunchedEffect(Unit) {
-                val extraOffsetPx = with(density) { 160.dp.toPx().toInt() }
                 viewModel.events.collect { event ->
+                    // Hide keyboard and clear focus whenever a search result action fires.
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+
                     when (event) {
                         is SettingsUiEvent.OpenSection -> {
-                            // Section has been expanded in the ViewModel; UI will show it
-                            // once search has been cleared (handled in the ViewModel).
+                            pendingScrollToSectionId = event.sectionId
                         }
                         is SettingsUiEvent.OpenSubScreen -> {
                             when (event.route) {
@@ -244,29 +258,7 @@ fun SettingsScreen(
                             }
                         }
                         is SettingsUiEvent.PerformInlineAction -> {
-                            when (event.actionId) {
-                                "scroll_snooze" -> coroutineScope.launch {
-                                    delay(120)
-                                    snoozeRequester.bringIntoView()
-                                    scrollState.animateScrollTo(
-                                        (scrollState.value + extraOffsetPx).coerceAtMost(scrollState.maxValue)
-                                    )
-                                }
-                                "scroll_math" -> coroutineScope.launch {
-                                    delay(120)
-                                    mathRequester.bringIntoView()
-                                    scrollState.animateScrollTo(
-                                        (scrollState.value + extraOffsetPx).coerceAtMost(scrollState.maxValue)
-                                    )
-                                }
-                                "scroll_face_game" -> coroutineScope.launch {
-                                    delay(120)
-                                    faceGameRequester.bringIntoView()
-                                    scrollState.animateScrollTo(
-                                        (scrollState.value + extraOffsetPx).coerceAtMost(scrollState.maxValue)
-                                    )
-                                }
-                            }
+                            pendingScrollActionId = event.actionId
                         }
                     }
                 }
@@ -334,14 +326,37 @@ fun SettingsScreen(
                 icon = Icons.Default.WbSunny,
                 title = "Morning Experience 🌅",
                 isExpanded = expandedSections.contains("MORNING"),
-                onToggle = { viewModel.toggleSection("MORNING") }
+                onToggle = { viewModel.toggleSection("MORNING") },
+                sectionId = "MORNING",
+                headerModifier = Modifier.onGloballyPositioned { coords ->
+                    val offset = (coords.positionInRoot().y - scrollColumnTop + scrollState.value).toInt()
+                    sectionScrollOffsets = sectionScrollOffsets + ("MORNING" to offset)
+                    if (pendingScrollToSectionId == "MORNING") {
+                        pendingScrollToSectionId = null
+                        coroutineScope.launch {
+                            val topPaddingPx = with(density) { 24.dp.toPx() }
+                            scrollState.animateScrollTo((offset - topPaddingPx).toInt().coerceIn(0, scrollState.maxValue))
+                        }
+                    }
+                }
             ) {
                 // A. Companion Personality
                 Text(
                     "Companion Personality",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .onGloballyPositioned { coords ->
+                            personaScrollOffset = (coords.positionInRoot().y - scrollColumnTop + scrollState.value).toInt()
+                            if (pendingScrollActionId == "scroll_morning_personality") {
+                                pendingScrollActionId = null
+                                coroutineScope.launch {
+                                    val topPaddingPx = with(density) { 24.dp.toPx() }
+                                    scrollState.animateScrollTo((personaScrollOffset - topPaddingPx).toInt().coerceIn(0, scrollState.maxValue))
+                                }
+                            }
+                        }
                 )
                 val personas = listOf(
                     PersonaInfo("COACH", "🪖 The Drill Sergeant", "No excuses. Just results. Move it!", Icons.Default.Info, MaterialTheme.colorScheme.error),
@@ -400,7 +415,18 @@ fun SettingsScreen(
                     "Aura Report Content",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .onGloballyPositioned { coords ->
+                            briefingScrollOffset = (coords.positionInRoot().y - scrollColumnTop + scrollState.value).toInt()
+                            if (pendingScrollActionId == "scroll_briefing_content") {
+                                pendingScrollActionId = null
+                                coroutineScope.launch {
+                                    val topPaddingPx = with(density) { 24.dp.toPx() }
+                                    scrollState.animateScrollTo((briefingScrollOffset - topPaddingPx).toInt().coerceIn(0, scrollState.maxValue))
+                                }
+                            }
+                        }
                 )
                 
                 Surface(
@@ -528,7 +554,19 @@ fun SettingsScreen(
                 icon = Icons.Default.Settings,
                 title = "Wake-Up Engine ⚙️",
                 isExpanded = expandedSections.contains("WAKEUP"),
-                onToggle = { viewModel.toggleSection("WAKEUP") }
+                onToggle = { viewModel.toggleSection("WAKEUP") },
+                sectionId = "WAKEUP",
+                headerModifier = Modifier.onGloballyPositioned { coords ->
+                    val offset = (coords.positionInRoot().y - scrollColumnTop + scrollState.value).toInt()
+                    sectionScrollOffsets = sectionScrollOffsets + ("WAKEUP" to offset)
+                    if (pendingScrollToSectionId == "WAKEUP") {
+                        pendingScrollToSectionId = null
+                        coroutineScope.launch {
+                            val topPaddingPx = with(density) { 24.dp.toPx() }
+                            scrollState.animateScrollTo((offset - topPaddingPx).toInt().coerceIn(0, scrollState.maxValue))
+                        }
+                    }
+                }
             ) {
                 // A. Alarm Creation
                 Text("Alarm Creation", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
@@ -654,7 +692,16 @@ fun SettingsScreen(
                     Slider(
                         value = alarmDefaults.snoozeDurationMinutes.toFloat(),
                         onValueChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(snoozeDurationMinutes = it.toInt())) },
-                        modifier = Modifier.bringIntoViewRequester(snoozeRequester),
+                        modifier = Modifier.onGloballyPositioned { coords ->
+                            snoozeScrollOffset = (coords.positionInRoot().y - scrollColumnTop + scrollState.value).toInt()
+                            if (pendingScrollActionId == "scroll_snooze") {
+                                pendingScrollActionId = null
+                                coroutineScope.launch {
+                                    val topPaddingPx = with(density) { 24.dp.toPx() }
+                                    scrollState.animateScrollTo((snoozeScrollOffset - topPaddingPx).toInt().coerceIn(0, scrollState.maxValue))
+                                }
+                            }
+                        },
                         valueRange = 0f..60f,
                         steps = 59
                     )
@@ -662,7 +709,16 @@ fun SettingsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .bringIntoViewRequester(mathRequester),
+                        .onGloballyPositioned { coords ->
+                            mathScrollOffset = (coords.positionInRoot().y - scrollColumnTop + scrollState.value).toInt()
+                            if (pendingScrollActionId == "scroll_math") {
+                                pendingScrollActionId = null
+                                coroutineScope.launch {
+                                    val topPaddingPx = with(density) { 24.dp.toPx() }
+                                    scrollState.animateScrollTo((mathScrollOffset - topPaddingPx).toInt().coerceIn(0, scrollState.maxValue))
+                                }
+                            }
+                        },
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -686,7 +742,16 @@ fun SettingsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .bringIntoViewRequester(faceGameRequester),
+                        .onGloballyPositioned { coords ->
+                            faceGameScrollOffset = (coords.positionInRoot().y - scrollColumnTop + scrollState.value).toInt()
+                            if (pendingScrollActionId == "scroll_face_game") {
+                                pendingScrollActionId = null
+                                coroutineScope.launch {
+                                    val topPaddingPx = with(density) { 24.dp.toPx() }
+                                    scrollState.animateScrollTo((faceGameScrollOffset - topPaddingPx).toInt().coerceIn(0, scrollState.maxValue))
+                                }
+                            }
+                        },
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -786,7 +851,19 @@ fun SettingsScreen(
                 icon = Icons.Default.Group,
                 title = "Accountability 🤝",
                 isExpanded = expandedSections.contains("ACCOUNTABILITY"),
-                onToggle = { viewModel.toggleSection("ACCOUNTABILITY") }
+                onToggle = { viewModel.toggleSection("ACCOUNTABILITY") },
+                sectionId = "ACCOUNTABILITY",
+                headerModifier = Modifier.onGloballyPositioned { coords ->
+                    val offset = (coords.positionInRoot().y - scrollColumnTop + scrollState.value).toInt()
+                    sectionScrollOffsets = sectionScrollOffsets + ("ACCOUNTABILITY" to offset)
+                    if (pendingScrollToSectionId == "ACCOUNTABILITY") {
+                        pendingScrollToSectionId = null
+                        coroutineScope.launch {
+                            val topPaddingPx = with(density) { 24.dp.toPx() }
+                            scrollState.animateScrollTo((offset - topPaddingPx).toInt().coerceIn(0, scrollState.maxValue))
+                        }
+                    }
+                }
             ) {
                 BuddyManagementSection(viewModel)
             }
@@ -795,7 +872,19 @@ fun SettingsScreen(
                 icon = Icons.Default.Lightbulb,
                 title = "Intelligence 💡",
                 isExpanded = expandedSections.contains("INTELLIGENCE"),
-                onToggle = { viewModel.toggleSection("INTELLIGENCE") }
+                onToggle = { viewModel.toggleSection("INTELLIGENCE") },
+                sectionId = "INTELLIGENCE",
+                headerModifier = Modifier.onGloballyPositioned { coords ->
+                    val offset = (coords.positionInRoot().y - scrollColumnTop + scrollState.value).toInt()
+                    sectionScrollOffsets = sectionScrollOffsets + ("INTELLIGENCE" to offset)
+                    if (pendingScrollToSectionId == "INTELLIGENCE") {
+                        pendingScrollToSectionId = null
+                        coroutineScope.launch {
+                            val topPaddingPx = with(density) { 24.dp.toPx() }
+                            scrollState.animateScrollTo((offset - topPaddingPx).toInt().coerceIn(0, scrollState.maxValue))
+                        }
+                    }
+                }
             ) {
                 val isCloudAiEnabled by viewModel.isCloudAiEnabled.collectAsState()
                 
@@ -896,7 +985,19 @@ fun SettingsScreen(
                 icon = Icons.Default.Info,
                 title = "Help & System ℹ️",
                 isExpanded = expandedSections.contains("HELP"),
-                onToggle = { viewModel.toggleSection("HELP") }
+                onToggle = { viewModel.toggleSection("HELP") },
+                sectionId = "HELP",
+                headerModifier = Modifier.onGloballyPositioned { coords ->
+                    val offset = (coords.positionInRoot().y - scrollColumnTop + scrollState.value).toInt()
+                    sectionScrollOffsets = sectionScrollOffsets + ("HELP" to offset)
+                    if (pendingScrollToSectionId == "HELP") {
+                        pendingScrollToSectionId = null
+                        coroutineScope.launch {
+                            val topPaddingPx = with(density) { 24.dp.toPx() }
+                            scrollState.animateScrollTo((offset - topPaddingPx).toInt().coerceIn(0, scrollState.maxValue))
+                        }
+                    }
+                }
             ) {
                 var showDangerZone by remember { mutableStateOf(false) }
                 var showDemoDialog by remember { mutableStateOf(false) }
@@ -1546,6 +1647,8 @@ fun ExpandableSection(
     title: String,
     isExpanded: Boolean,
     onToggle: () -> Unit,
+    sectionId: String? = null,
+    headerModifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
     Card(
@@ -1565,6 +1668,7 @@ fun ExpandableSection(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .then(headerModifier)
                     .clickable { onToggle() }
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
