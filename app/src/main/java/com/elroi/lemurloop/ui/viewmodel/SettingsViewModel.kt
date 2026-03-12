@@ -117,6 +117,9 @@ class SettingsViewModel @Inject constructor(
     private val _isBriefingGenerating = MutableStateFlow(false)
     val isBriefingGenerating = _isBriefingGenerating.asStateFlow()
 
+    private val _isPreviewingPersonaVoice = MutableStateFlow(false)
+    val isPreviewingPersonaVoice = _isPreviewingPersonaVoice.asStateFlow()
+
     val generatingProgress = com.elroi.lemurloop.domain.manager.BriefingStateManager.briefingState
         .map { (it as? com.elroi.lemurloop.domain.manager.BriefingState.Generating)?.message ?: "Generating..." }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Generating...")
@@ -491,27 +494,53 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Plays a short phrase in the current persona voice (cloud or on-device) so the user can
+     * hear the voice without generating or playing the full briefing. Like Quick Gemini Test
+     * but for TTS.
+     */
+    fun previewPersonaVoiceShort() {
+        viewModelScope.launch {
+            _isPreviewingPersonaVoice.value = true
+            performSaveSettings()
+            ttsManager.stop()
+            val shortPhrase = "Testing your LemurLoop persona voice."
+            val useCloud = isCloudTtsEnabled.value && cloudTtsApiKey.value.isNotBlank()
+            if (useCloud) {
+                val persona = _draftAlarmDefaults.value.aiPersona
+                val uiLanguage = java.util.Locale.getDefault().language
+                try {
+                    cloudTtsEngine.speakOnce(shortPhrase, persona, uiLanguage)
+                } catch (_: Exception) {
+                    ttsManager.speak(shortPhrase)
+                }
+            } else {
+                ttsManager.speak(shortPhrase)
+            }
+            _isPreviewingPersonaVoice.value = false
+        }
+    }
+
     fun testCloudTtsApiKey() {
         val key = _draftCloudTtsApiKey.value.trim()
         if (key.isBlank() || _isCloudTtsKeyTesting.value) return
 
         viewModelScope.launch {
             _isCloudTtsKeyTesting.value = true
-            _cloudTtsKeyTestResult.value = null
+            _cloudTtsKeyTestResult.value = "Testing your Google Cloud TTS key..."
             try {
-                // Synthesize a tiny sample and discard; success means the key works.
                 val persona = _draftAlarmDefaults.value.aiPersona
                 val uiLanguage = java.util.Locale.getDefault().language
-                val file = cloudTtsEngine.synthesizeToFile(
+                val ok = cloudTtsEngine.testKey(
                     text = "Testing your LemurLoop persona voice.",
                     personaId = persona,
-                    uiLanguage = uiLanguage
+                    uiLanguage = uiLanguage,
+                    apiKey = key
                 )
-                if (file != null && file.exists()) {
-                    _cloudTtsKeyTestResult.value = "Cloud TTS key looks good."
-                    file.delete()
+                _cloudTtsKeyTestResult.value = if (ok) {
+                    "All set – your Google Cloud TTS key is working. You can now enable cloud-quality persona voices above."
                 } else {
-                    _cloudTtsKeyTestResult.value = "Cloud TTS test did not return audio. Please double-check your key and quota."
+                    "Cloud TTS test did not return audio. In Google Cloud Console, confirm this key belongs to a project where the Text-to-Speech API is enabled and billing/quota are active."
                 }
             } catch (e: Exception) {
                 _cloudTtsKeyTestResult.value = "Cloud TTS test failed: ${e.message ?: "unknown error"}"

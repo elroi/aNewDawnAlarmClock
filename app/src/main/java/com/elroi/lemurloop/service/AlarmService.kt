@@ -27,6 +27,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 import java.time.LocalDateTime
 import java.time.ZoneId
 import javax.inject.Inject
@@ -39,6 +40,12 @@ class AlarmService : Service() {
 
     @Inject
     lateinit var ttsManager: com.elroi.lemurloop.domain.manager.TtsEngine
+
+    @Inject
+    lateinit var cloudTtsEngine: com.elroi.lemurloop.data.local.GoogleCloudTtsEngine
+
+    @Inject
+    lateinit var settingsManager: com.elroi.lemurloop.domain.manager.SettingsManager
 
     @Inject
     lateinit var briefingGenerator: com.elroi.lemurloop.domain.generator.BriefingGenerator
@@ -55,6 +62,8 @@ class AlarmService : Service() {
     private var accountabilityJob: kotlinx.coroutines.Job? = null
     private var ttsJob: kotlinx.coroutines.Job? = null
     private var precomputedBriefing: kotlinx.coroutines.Deferred<String>? = null
+    private var precomputedCloudAudio: kotlinx.coroutines.Deferred<java.io.File?>? = null
+    private var cloudMediaPlayer: android.media.MediaPlayer? = null
     private var vibrator: android.os.Vibrator? = null
     private var vibrationJob: kotlinx.coroutines.Job? = null
 
@@ -271,6 +280,18 @@ class AlarmService : Service() {
             precomputedBriefing = serviceScope.async {
                 briefingGenerator.generateBriefing()
             }
+            precomputedCloudAudio = serviceScope.async {
+                try {
+                    val script = precomputedBriefing?.await() ?: briefingGenerator.generateBriefing()
+                    val filtered = BriefingUtils.filterBriefingForTts(script)
+                    val persona = settingsManager.alarmDefaultsFlow.first().aiPersona
+                    val uiLanguage = java.util.Locale.getDefault().language
+                    cloudTtsEngine.synthesizeToFile(filtered, persona, uiLanguage)
+                } catch (e: Exception) {
+                    Log.w("TTS_DEBUG", "Cloud TTS precompute failed: ${e.message}")
+                    null
+                }
+            }
             
             // Listen for TTS speech completion
             if (currentTtsEnabled) {
@@ -390,8 +411,36 @@ class AlarmService : Service() {
                             audioManager.setStreamVolume(android.media.AudioManager.STREAM_MUSIC, targetVolume, 0)
                         }
                         serviceScope.launch {
-                            val filteredBriefing = BriefingUtils.filterBriefingForTts(briefing)
-                            ttsManager.speak(filteredBriefing)
+                            val cloudFile = precomputedCloudAudio?.await()
+                            if (cloudFile != null) {
+                                try {
+                                    cloudMediaPlayer = android.media.MediaPlayer().apply {
+                                        setDataSource(cloudFile.absolutePath)
+                                        setOnCompletionListener {
+                                            it.release()
+                                            cloudMediaPlayer = null
+                                            cloudFile.delete()
+                                            com.elroi.lemurloop.domain.manager.BriefingStateManager.markCompleted()
+                                        }
+                                        setOnErrorListener { mp, _, _ ->
+                                            mp.release()
+                                            cloudMediaPlayer = null
+                                            cloudFile.delete()
+                                            false
+                                        }
+                                        prepare()
+                                        start()
+                                    }
+                                } catch (e: Exception) {
+                                    Log.w("TTS_DEBUG", "Failed to play cloud TTS audio, falling back to local: ${e.message}")
+                                    cloudFile.delete()
+                                    val filteredBriefing = BriefingUtils.filterBriefingForTts(briefing)
+                                    ttsManager.speak(filteredBriefing)
+                                }
+                            } else {
+                                val filteredBriefing = BriefingUtils.filterBriefingForTts(briefing)
+                                ttsManager.speak(filteredBriefing)
+                            }
                         }
                     } else if (currentBriefingEnabled) {
                         // If briefing is enabled but TTS is off (or sound is off), 
@@ -460,6 +509,11 @@ class AlarmService : Service() {
 
     private fun handleStopTts() {
         Log.d("TTS_DEBUG", "handleStopTts called")
+        cloudMediaPlayer?.let {
+            it.stop()
+            it.release()
+            cloudMediaPlayer = null
+        }
         precomputedBriefing?.cancel()
         ttsJob?.cancel()
         ttsManager.shutdown()

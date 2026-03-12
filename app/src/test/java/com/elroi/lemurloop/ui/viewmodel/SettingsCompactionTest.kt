@@ -7,6 +7,7 @@ import com.elroi.lemurloop.domain.generator.BriefingGenerator
 import com.elroi.lemurloop.domain.manager.LocalLLMManager
 import com.elroi.lemurloop.data.local.AppDatabase
 import com.elroi.lemurloop.domain.manager.TtsEngine
+import com.elroi.lemurloop.data.local.GoogleCloudTtsEngine
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,6 +27,7 @@ class SettingsCompactionTest {
     private val localLLMManager = mockk<LocalLLMManager>(relaxed = true)
     private val database = mockk<AppDatabase>(relaxed = true)
     private val ttsManager = mockk<TtsEngine>(relaxed = true)
+    private val cloudTtsEngine = mockk<GoogleCloudTtsEngine>(relaxed = true)
 
     private lateinit var viewModel: SettingsViewModel
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -61,7 +63,9 @@ class SettingsCompactionTest {
             briefingGenerator,
             localLLMManager,
             database,
-            ttsManager
+            ttsManager,
+            cloudTtsEngine,
+            demoAlarmSeeder = mockk(relaxed = true)
         )
     }
 

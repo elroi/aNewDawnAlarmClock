@@ -111,6 +111,55 @@ data class PersonaVoiceConfig(
     }
 }
 
+data class CloudPersonaVoiceConfig(
+    val voiceName: String,
+    val speakingRate: Double,
+    val pitch: Double
+)
+
+fun getCloudPersonaVoiceConfig(
+    personaId: String,
+    uiLanguage: String
+): CloudPersonaVoiceConfig {
+    val language = uiLanguage.lowercase()
+    val isEnglish = language == "en"
+
+    // For now we only tune English voices; other languages reuse the English mapping.
+    val basePersona = when (personaId) {
+        "COMEDIAN", "ZEN", "HYPEMAN", "SURPRISE", "COACH" -> personaId
+        else -> "COACH"
+    }
+
+    return when (basePersona) {
+        "COMEDIAN" -> CloudPersonaVoiceConfig(
+            voiceName = if (isEnglish) "en-US-Wavenet-H" else "en-US-Wavenet-H",
+            speakingRate = 1.15,
+            pitch = 1.0
+        )
+        "ZEN" -> CloudPersonaVoiceConfig(
+            voiceName = if (isEnglish) "en-US-Wavenet-F" else "en-US-Wavenet-F",
+            speakingRate = 0.85,
+            pitch = 0.0
+        )
+        "HYPEMAN" -> CloudPersonaVoiceConfig(
+            voiceName = if (isEnglish) "en-US-Wavenet-D" else "en-US-Wavenet-D",
+            speakingRate = 1.35,
+            pitch = 2.0
+        )
+        "SURPRISE" -> {
+            // Simple random selection among the other persona configs
+            val personas = listOf("COACH", "COMEDIAN", "ZEN", "HYPEMAN")
+            val chosen = personas.random()
+            getCloudPersonaVoiceConfig(chosen, uiLanguage)
+        }
+        else -> CloudPersonaVoiceConfig(
+            voiceName = if (isEnglish) "en-US-Wavenet-D" else "en-US-Wavenet-D",
+            speakingRate = 1.25,
+            pitch = -2.0
+        )
+    }
+}
+
 
 data class AlarmDefaults(
     val snoozeDurationMinutes: Int = 5,
@@ -214,6 +263,8 @@ class SettingsManager @Inject constructor(
         val DEFAULT_BRIEFING_TIMEOUT = intPreferencesKey("default_briefing_timeout")
         val DEFAULT_VIBRATION_PATTERN = stringPreferencesKey("default_vibration_pattern")
         val DEFAULT_VIBRATION_START_GAP = intPreferencesKey("default_vibration_start_gap")
+        val CLOUD_TTS_API_KEY = stringPreferencesKey("cloud_tts_api_key")
+        val IS_CLOUD_TTS_ENABLED = booleanPreferencesKey("is_cloud_tts_enabled")
     }
 
     val locationFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -228,8 +279,16 @@ class SettingsManager @Inject constructor(
         preferences[GEMINI_API_KEY] ?: ""
     }
 
+    val cloudTtsApiKeyFlow: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[CLOUD_TTS_API_KEY] ?: ""
+    }
+
     val isCloudAiEnabledFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[IS_CLOUD_AI_ENABLED] ?: false
+    }
+
+    val isCloudTtsEnabledFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[IS_CLOUD_TTS_ENABLED] ?: false
     }
 
     val preferredAiTierFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -270,6 +329,18 @@ class SettingsManager @Inject constructor(
             // Reset working config when key changes
             settings.remove(WORKING_GEMINI_MODEL)
             settings.remove(WORKING_GEMINI_VERSION)
+        }
+    }
+
+    suspend fun saveCloudTtsApiKey(apiKey: String) {
+        context.dataStore.edit { settings ->
+            settings[CLOUD_TTS_API_KEY] = apiKey
+        }
+    }
+
+    suspend fun saveIsCloudTtsEnabled(isEnabled: Boolean) {
+        context.dataStore.edit { settings ->
+            settings[IS_CLOUD_TTS_ENABLED] = isEnabled
         }
     }
 

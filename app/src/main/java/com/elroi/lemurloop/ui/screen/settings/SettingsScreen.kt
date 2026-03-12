@@ -887,32 +887,150 @@ fun SettingsScreen(
                 }
             ) {
                 val isCloudAiEnabled by viewModel.isCloudAiEnabled.collectAsState()
-                
+                val isCloudTtsEnabled by viewModel.isCloudTtsEnabled.collectAsState()
+                val cloudTtsKey by viewModel.cloudTtsApiKey.collectAsState()
+                val brainTestResult by viewModel.briefingBrainTestResult.collectAsState()
+                val brainTesting by viewModel.briefingBrainTesting.collectAsState()
+                val isBriefingGenerating by viewModel.isBriefingGenerating.collectAsState()
+                val generatingProgress by viewModel.generatingProgress.collectAsState()
+
+                Text(
+                    "Your Aura Report has an AI brain that writes the briefing and an optional voice that performs it. You can turn each on or off independently.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                )
+
+                // Card A: Briefing Brain (Gemini)
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp), 
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                "Cloud AI Enhancement", 
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                "Uses Gemini for personalized briefings. Requires API key.",
-                                style = MaterialTheme.typography.bodySmall
+                        Text(
+                            "Briefing Brain (Gemini)",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Uses Gemini to turn weather, calendar and facts into a persona-specific script.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Use Gemini for briefings", style = MaterialTheme.typography.bodyLarge)
+                            Switch(
+                                checked = isCloudAiEnabled,
+                                onCheckedChange = { viewModel.updateIsCloudAiEnabled(it) }
                             )
                         }
-                        Switch(
-                            checked = isCloudAiEnabled,
-                            onCheckedChange = { viewModel.updateIsCloudAiEnabled(it) }
+                        Button(
+                            onClick = { viewModel.testGeminiQuick() },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !brainTesting,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            if (brainTesting) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            } else {
+                                Icon(Icons.Default.Check, contentDescription = null)
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(if (brainTesting) "Testing Gemini..." else "Quick Gemini Test")
+                        }
+                        brainTestResult?.let { result ->
+                            Text(
+                                text = "Last result: $result",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Text(
+                            "If off, LemurLoop uses its built-in persona drafts only.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                }
+
+                // Card B: Persona Voice (Cloud TTS)
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("Persona Voice (Cloud TTS)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(
+                            "Uses Google Cloud Text-to-Speech with your key to read the briefing in a richer persona voice. Falls back to the on-device voice if unavailable.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Use cloud-quality voices", style = MaterialTheme.typography.bodyLarge)
+                                Text(
+                                    "Sends briefing text to Google Cloud to synthesize audio and uses network data (including mobile). If Cloud TTS fails, LemurLoop falls back to on-device voice so alarms still work.",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Text(
+                                    "Manage your Cloud TTS key in API Credentials below.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            val hasKey = cloudTtsKey.isNotBlank()
+                            Switch(
+                                checked = isCloudTtsEnabled && hasKey,
+                                onCheckedChange = { enabled ->
+                                    if (hasKey) {
+                                        viewModel.updateIsCloudTtsEnabled(enabled)
+                                    } else {
+                                        android.widget.Toast.makeText(
+                                            context,
+                                            "Add a Google Cloud TTS API key first.",
+                                            android.widget.Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            )
+                        }
+                        val isPreviewingPersonaVoice by viewModel.isPreviewingPersonaVoice.collectAsState()
+                        Button(
+                            onClick = { viewModel.previewPersonaVoiceShort() },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !isPreviewingPersonaVoice,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            if (isPreviewingPersonaVoice) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            } else {
+                                Icon(Icons.Default.PlayArrow, contentDescription = null)
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(if (isPreviewingPersonaVoice) "Playing…" else "Preview Persona Voice")
+                        }
                     }
                 }
 
@@ -923,9 +1041,12 @@ fun SettingsScreen(
                 // API Key
                 Text("API Credentials", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                 val apiKey by viewModel.geminiApiKey.collectAsState()
+                val apiCloudTtsKey by viewModel.cloudTtsApiKey.collectAsState()
                 val isKeyValidating by viewModel.isKeyValidating.collectAsState()
                 val keyValidationResult by viewModel.keyValidationResult.collectAsState()
                 val keyValidationError by viewModel.keyValidationError.collectAsState()
+                val isCloudTtsKeyTesting by viewModel.isCloudTtsKeyTesting.collectAsState()
+                val cloudTtsKeyTestResult by viewModel.cloudTtsKeyTestResult.collectAsState()
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
@@ -939,7 +1060,7 @@ fun SettingsScreen(
                             when {
                                 isKeyValidating -> CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                                 keyValidationResult == true -> Icon(Icons.Default.CheckCircle, "Valid", tint = MaterialTheme.colorScheme.primary)
-                                keyValidationResult == false -> Icon(Icons.Default.Warning, "Invalid", tint = MaterialTheme.colorScheme.error)
+                                keyValidationResult == false -> Icon(Icons.Default.Warning, "Invalid", tint = MaterialTheme.typography.bodySmall.color)
                             }
                         }
                     )
@@ -978,6 +1099,66 @@ fun SettingsScreen(
                             modifier = Modifier.padding(horizontal = 4.dp)
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text("Google Cloud TTS API Key (persona voice)", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                    OutlinedTextField(
+                        value = apiCloudTtsKey,
+                        onValueChange = { viewModel.updateCloudTtsApiKey(it) },
+                        label = { Text("Google Cloud Text-to-Speech API key") },
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = { viewModel.testCloudTtsApiKey() },
+                            enabled = apiCloudTtsKey.isNotBlank() && !isCloudTtsKeyTesting
+                        ) {
+                            if (isCloudTtsKeyTesting) {
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(if (isCloudTtsKeyTesting) "Testing Cloud TTS..." else "Test API Key")
+                        }
+
+                        TextButton(
+                            onClick = {
+                                val intent = Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("https://console.cloud.google.com/flows/enableapi?apiid=texttospeech.googleapis.com")
+                                )
+                                context.startActivity(intent)
+                            }
+                        ) {
+                            Icon(Icons.Default.ExitToApp, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Get Key")
+                        }
+                    }
+
+                    cloudTtsKeyTestResult?.let { result ->
+                        Text(
+                            text = result,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                    }
+
+                    Text(
+                        text = "Gemini uses the AI Studio key above to write your briefing. Cloud persona voices use the Google Cloud TTS key to turn that text into audio. Both keys stay on your device and are only sent to Google for these specific requests.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
@@ -1295,6 +1476,7 @@ fun IntelligenceHealthView(viewModel: SettingsViewModel, onWipeBrainMemory: () -
                 HealthIndicator("Weather", statusParts["weather"] ?: "pending", Modifier.weight(1f))
                 HealthIndicator("Calendar", statusParts["calendar"] ?: "pending", Modifier.weight(1f))
                 HealthIndicator("AI Brain", aiState, Modifier.weight(1f))
+                HealthIndicator("AI Voice", aiState, Modifier.weight(1f))
             }
 
             error?.takeIf { it.isNotBlank() }?.let { e ->
