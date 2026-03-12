@@ -4,8 +4,13 @@ import android.app.Application
 import androidx.room.Room
 import com.elroi.lemurloop.data.local.AppDatabase
 import com.elroi.lemurloop.data.local.dao.AlarmDao
+import com.elroi.lemurloop.data.local.dao.DiagnosticLogDao
 import com.elroi.lemurloop.data.repository.AlarmRepositoryImpl
+import com.elroi.lemurloop.data.repository.AppDataRepositoryImpl
+import com.elroi.lemurloop.data.repository.DiagnosticLogRepositoryImpl
 import com.elroi.lemurloop.domain.repository.AlarmRepository
+import com.elroi.lemurloop.domain.repository.AppDataRepository
+import com.elroi.lemurloop.domain.repository.DiagnosticLogRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -52,7 +57,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideDiagnosticLogDao(db: AppDatabase): com.elroi.lemurloop.data.local.dao.DiagnosticLogDao {
+    fun provideDiagnosticLogDao(db: AppDatabase): DiagnosticLogDao {
         return db.diagnosticLogDao()
     }
 
@@ -60,6 +65,23 @@ object AppModule {
     @Singleton
     fun provideAlarmRepository(dao: AlarmDao): AlarmRepository {
         return AlarmRepositoryImpl(dao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDiagnosticLogRepository(
+        diagnosticLogDao: DiagnosticLogDao
+    ): DiagnosticLogRepository {
+        return DiagnosticLogRepositoryImpl(diagnosticLogDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAppDataRepository(
+        appDatabase: AppDatabase,
+        settingsManager: com.elroi.lemurloop.domain.manager.SettingsManager
+    ): AppDataRepository {
+        return AppDataRepositoryImpl(appDatabase, settingsManager)
     }
 
     @Provides
@@ -85,4 +107,13 @@ object AppModule {
     fun provideTtsEngine(
         manager: com.elroi.lemurloop.domain.manager.TextToSpeechManager
     ): com.elroi.lemurloop.domain.manager.TtsEngine = manager
+
+    @Provides
+    @Singleton
+    fun provideGoogleCloudTtsEngine(
+        app: Application,
+        settingsManager: com.elroi.lemurloop.domain.manager.SettingsManager
+    ): com.elroi.lemurloop.data.local.GoogleCloudTtsEngine {
+        return com.elroi.lemurloop.data.local.GoogleCloudTtsEngine(app, settingsManager)
+    }
 }

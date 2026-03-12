@@ -23,7 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.elroi.lemurloop.data.local.entity.DiagnosticLogEntity
+import com.elroi.lemurloop.domain.model.DiagnosticLog
 import com.elroi.lemurloop.ui.viewmodel.DiagnosticLogsViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -85,7 +85,7 @@ fun DiagnosticLogsScreen(
 }
 
 @Composable
-fun LogItem(log: DiagnosticLogEntity, dateFormat: SimpleDateFormat) {
+fun LogItem(log: DiagnosticLog, dateFormat: SimpleDateFormat) {
     val levelColor = when (log.level) {
         "ERROR" -> MaterialTheme.colorScheme.error
         "WARN" -> Color(0xFFFFA500) // Orange

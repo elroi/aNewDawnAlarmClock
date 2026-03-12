@@ -2,8 +2,8 @@ package com.elroi.lemurloop.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.elroi.lemurloop.data.local.dao.DiagnosticLogDao
-import com.elroi.lemurloop.data.local.entity.DiagnosticLogEntity
+import com.elroi.lemurloop.domain.model.DiagnosticLog
+import com.elroi.lemurloop.domain.repository.DiagnosticLogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,15 +13,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DiagnosticLogsViewModel @Inject constructor(
-    private val diagnosticLogDao: DiagnosticLogDao
+    private val diagnosticLogRepository: DiagnosticLogRepository
 ) : ViewModel() {
 
-    val logs: StateFlow<List<DiagnosticLogEntity>> = diagnosticLogDao.getLatestLogs()
+    val logs: StateFlow<List<DiagnosticLog>> = diagnosticLogRepository.getLatestLogs()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun clearLogs() {
         viewModelScope.launch {
-            diagnosticLogDao.clearAll()
+            diagnosticLogRepository.clearAll()
         }
     }
 

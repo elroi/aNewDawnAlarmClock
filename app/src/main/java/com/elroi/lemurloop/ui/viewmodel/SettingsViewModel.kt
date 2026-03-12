@@ -24,6 +24,7 @@ import com.elroi.lemurloop.domain.manager.DemoAlarmSeeder
 import android.content.ClipboardManager
 import android.content.Context
 import com.elroi.lemurloop.util.BriefingUtils
+import com.elroi.lemurloop.domain.repository.AppDataRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import com.elroi.lemurloop.domain.manager.SettingSearchItem
@@ -37,8 +38,9 @@ class SettingsViewModel @Inject constructor(
     private val geminiManager: GeminiManager,
     private val briefingGenerator: com.elroi.lemurloop.domain.generator.BriefingGenerator,
     private val localLLMManager: com.elroi.lemurloop.domain.manager.LocalLLMManager,
-    private val database: com.elroi.lemurloop.data.local.AppDatabase,
+    private val appDataRepository: AppDataRepository,
     private val ttsManager: com.elroi.lemurloop.domain.manager.TtsEngine,
+    private val cloudTtsEngine: com.elroi.lemurloop.data.local.GoogleCloudTtsEngine,
     private val demoAlarmSeeder: DemoAlarmSeeder
 ) : ViewModel() {
 
@@ -60,6 +62,12 @@ class SettingsViewModel @Inject constructor(
     private val _draftIsCloudAiEnabled = MutableStateFlow(false)
     val isCloudAiEnabled = _draftIsCloudAiEnabled.asStateFlow()
 
+    private val _draftCloudTtsApiKey = MutableStateFlow("")
+    val cloudTtsApiKey = _draftCloudTtsApiKey.asStateFlow()
+
+    private val _draftIsCloudTtsEnabled = MutableStateFlow(false)
+    val isCloudTtsEnabled = _draftIsCloudTtsEnabled.asStateFlow()
+
     private val _draftPreferredAiTier = MutableStateFlow("STANDARD")
     val preferredAiTier = _draftPreferredAiTier.asStateFlow()
 
@@ -75,6 +83,13 @@ class SettingsViewModel @Inject constructor(
     private val _previewBriefingScript = MutableStateFlow<String?>(null)
     val previewBriefingScript = _previewBriefingScript.asStateFlow()
 
+    // Quick Gemini brain test status (lean health check, separate from full pipeline test)
+    private val _briefingBrainTestResult = MutableStateFlow<String?>(null)
+    val briefingBrainTestResult: StateFlow<String?> = _briefingBrainTestResult.asStateFlow()
+
+    private val _briefingBrainTesting = MutableStateFlow(false)
+    val briefingBrainTesting: StateFlow<Boolean> = _briefingBrainTesting.asStateFlow()
+
     private val _draftAlarmCreationStyle = MutableStateFlow("WIZARD")
     val alarmCreationStyle = _draftAlarmCreationStyle.asStateFlow()
 
@@ -89,6 +104,12 @@ class SettingsViewModel @Inject constructor(
 
     private val _keyValidationError = MutableStateFlow<String?>(null)
     val keyValidationError = _keyValidationError.asStateFlow()
+
+    private val _isCloudTtsKeyTesting = MutableStateFlow(false)
+    val isCloudTtsKeyTesting = _isCloudTtsKeyTesting.asStateFlow()
+
+    private val _cloudTtsKeyTestResult = MutableStateFlow<String?>(null)
+    val cloudTtsKeyTestResult: StateFlow<String?> = _cloudTtsKeyTestResult.asStateFlow()
 
     private val _detectedClipboardKey = MutableStateFlow<String?>(null)
     val detectedClipboardKey = _detectedClipboardKey.asStateFlow()
@@ -161,6 +182,8 @@ class SettingsViewModel @Inject constructor(
     private val _originalAlarmDefaults = MutableStateFlow(AlarmDefaults())
     private val _originalGeminiApiKey = MutableStateFlow("")
     private val _originalIsCloudAiEnabled = MutableStateFlow(false)
+    private val _originalCloudTtsApiKey = MutableStateFlow("")
+    private val _originalIsCloudTtsEnabled = MutableStateFlow(false)
     private val _originalPreferredAiTier = MutableStateFlow("STANDARD")
     private val _originalAiFallbackOrder = MutableStateFlow("CLOUD_THEN_LOCAL")
     private val _originalAlarmCreationStyle = MutableStateFlow("WIZARD")
@@ -173,6 +196,8 @@ class SettingsViewModel @Inject constructor(
             _draftAlarmDefaults, _originalAlarmDefaults,
             _draftGeminiApiKey, _originalGeminiApiKey,
             _draftIsCloudAiEnabled, _originalIsCloudAiEnabled,
+            _draftCloudTtsApiKey, _originalCloudTtsApiKey,
+            _draftIsCloudTtsEnabled, _originalIsCloudTtsEnabled,
             _draftPreferredAiTier, _originalPreferredAiTier,
             _draftAiFallbackOrder, _originalAiFallbackOrder,
             _draftAlarmCreationStyle, _originalAlarmCreationStyle
@@ -190,13 +215,27 @@ class SettingsViewModel @Inject constructor(
         val oGemini = args[9] as String
         val cloud = args[10] as Boolean
         val oCloud = args[11] as Boolean
-        val tier = args[12] as String
-        val oTier = args[13] as String
-        val order = args[14] as String
-        val oOrder = args[15] as String
-        val style = args[16] as String
-        val oStyle = args[17] as String
-        loc != oLoc || cel != oCel || auto != oAuto || def != oDef || gemini != oGemini || cloud != oCloud || tier != oTier || order != oOrder || style != oStyle
+        val cloudApi = args[12] as String
+        val oCloudApi = args[13] as String
+        val cloudTts = args[14] as Boolean
+        val oCloudTts = args[15] as Boolean
+        val tier = args[16] as String
+        val oTier = args[17] as String
+        val order = args[18] as String
+        val oOrder = args[19] as String
+        val style = args[20] as String
+        val oStyle = args[21] as String
+        loc != oLoc ||
+            cel != oCel ||
+            auto != oAuto ||
+            def != oDef ||
+            gemini != oGemini ||
+            cloud != oCloud ||
+            cloudApi != oCloudApi ||
+            cloudTts != oCloudTts ||
+            tier != oTier ||
+            order != oOrder ||
+            style != oStyle
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     init {
@@ -279,6 +318,24 @@ class SettingsViewModel @Inject constructor(
                 _originalAlarmCreationStyle.value = valValue
                 if (_draftAlarmCreationStyle.value == prevOriginal) {
                     _draftAlarmCreationStyle.value = valValue
+                }
+            }
+        }
+        viewModelScope.launch {
+            settingsManager.cloudTtsApiKeyFlow.collectLatest { valValue ->
+                val prevOriginal = _originalCloudTtsApiKey.value
+                _originalCloudTtsApiKey.value = valValue
+                if (_draftCloudTtsApiKey.value == prevOriginal) {
+                    _draftCloudTtsApiKey.value = valValue
+                }
+            }
+        }
+        viewModelScope.launch {
+            settingsManager.isCloudTtsEnabledFlow.collectLatest { valValue ->
+                val prevOriginal = _originalIsCloudTtsEnabled.value
+                _originalIsCloudTtsEnabled.value = valValue
+                if (_draftIsCloudTtsEnabled.value == prevOriginal) {
+                    _draftIsCloudTtsEnabled.value = valValue
                 }
             }
         }
@@ -394,6 +451,14 @@ class SettingsViewModel @Inject constructor(
         _detectedClipboardKey.value = null
     }
 
+    fun updateCloudTtsApiKey(key: String) {
+        _draftCloudTtsApiKey.value = key
+    }
+
+    fun updateIsCloudTtsEnabled(enabled: Boolean) {
+        _draftIsCloudTtsEnabled.value = enabled
+    }
+
     fun launchTestBriefing() {
         viewModelScope.launch {
             _isBriefingGenerating.value = true
@@ -407,9 +472,51 @@ class SettingsViewModel @Inject constructor(
                 _previewBriefingScript.value = script
                 val filteredScript = BriefingUtils.filterBriefingForTts(script)
                 ttsManager.stop()
-                ttsManager.speak(filteredScript)
+                val useCloud = isCloudTtsEnabled.value && cloudTtsApiKey.value.isNotBlank()
+                if (useCloud) {
+                    val persona = _draftAlarmDefaults.value.aiPersona
+                    val uiLanguage = java.util.Locale.getDefault().language
+                    try {
+                        // GoogleCloudTtsEngine will handle playback and cleanup
+                        cloudTtsEngine.speakOnce(filteredScript, persona, uiLanguage)
+                    } catch (_: Exception) {
+                        ttsManager.speak(filteredScript)
+                    }
+                } else {
+                    ttsManager.speak(filteredScript)
+                }
             } else {
                 _message.emit("Briefing generation failed. Please check your API key and AI settings.")
+            }
+        }
+    }
+
+    fun testCloudTtsApiKey() {
+        val key = _draftCloudTtsApiKey.value.trim()
+        if (key.isBlank() || _isCloudTtsKeyTesting.value) return
+
+        viewModelScope.launch {
+            _isCloudTtsKeyTesting.value = true
+            _cloudTtsKeyTestResult.value = null
+            try {
+                // Synthesize a tiny sample and discard; success means the key works.
+                val persona = _draftAlarmDefaults.value.aiPersona
+                val uiLanguage = java.util.Locale.getDefault().language
+                val file = cloudTtsEngine.synthesizeToFile(
+                    text = "Testing your LemurLoop persona voice.",
+                    personaId = persona,
+                    uiLanguage = uiLanguage
+                )
+                if (file != null && file.exists()) {
+                    _cloudTtsKeyTestResult.value = "Cloud TTS key looks good."
+                    file.delete()
+                } else {
+                    _cloudTtsKeyTestResult.value = "Cloud TTS test did not return audio. Please double-check your key and quota."
+                }
+            } catch (e: Exception) {
+                _cloudTtsKeyTestResult.value = "Cloud TTS test failed: ${e.message ?: "unknown error"}"
+            } finally {
+                _isCloudTtsKeyTesting.value = false
             }
         }
     }
@@ -425,6 +532,28 @@ class SettingsViewModel @Inject constructor(
             if (script.isNullOrBlank()) {
                 _message.emit("Health test failed. Please check your API key and AI settings.")
             }
+        }
+    }
+
+    fun testGeminiQuick() {
+        val key = _draftGeminiApiKey.value.trim()
+        if (key.isBlank()) {
+            viewModelScope.launch {
+                _briefingBrainTestResult.value = "No key configured."
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _briefingBrainTesting.value = true
+            _briefingBrainTestResult.value = null
+            val error = geminiManager.testApiKey(key)
+            _briefingBrainTestResult.value = if (error == null) {
+                "Gemini responded successfully."
+            } else {
+                "Gemini error: ${error.take(80)}"
+            }
+            _briefingBrainTesting.value = false
         }
     }
 
@@ -459,6 +588,8 @@ class SettingsViewModel @Inject constructor(
         settingsManager.saveAlarmDefaults(_draftAlarmDefaults.value)
         settingsManager.saveGeminiApiKey(_draftGeminiApiKey.value)
         settingsManager.saveIsCloudAiEnabled(_draftIsCloudAiEnabled.value)
+        settingsManager.saveCloudTtsApiKey(_draftCloudTtsApiKey.value)
+        settingsManager.saveIsCloudTtsEnabled(_draftIsCloudTtsEnabled.value)
         settingsManager.savePreferredAiTier(_draftPreferredAiTier.value)
         settingsManager.saveAiFallbackOrder(_draftAiFallbackOrder.value)
         settingsManager.saveAlarmCreationStyle(_draftAlarmCreationStyle.value)
@@ -470,6 +601,8 @@ class SettingsViewModel @Inject constructor(
         _originalAlarmDefaults.value = _draftAlarmDefaults.value
         _originalGeminiApiKey.value = _draftGeminiApiKey.value
         _originalIsCloudAiEnabled.value = _draftIsCloudAiEnabled.value
+        _originalCloudTtsApiKey.value = _draftCloudTtsApiKey.value
+        _originalIsCloudTtsEnabled.value = _draftIsCloudTtsEnabled.value
         _originalPreferredAiTier.value = _draftPreferredAiTier.value
         _originalAiFallbackOrder.value = _draftAiFallbackOrder.value
         _originalAlarmCreationStyle.value = _draftAlarmCreationStyle.value
@@ -529,14 +662,9 @@ class SettingsViewModel @Inject constructor(
 
     fun wipeAllData() {
         viewModelScope.launch(Dispatchers.IO) {
-            // 1. Clear Databases
-            database.alarmDao().deleteAllAlarms()
-            database.sleepRecordDao().deleteAllRecords()
-            
-            // 2. Clear DataStore
-            settingsManager.clearAll()
-            
-            // 3. Reset local memory (optional but good)
+            appDataRepository.wipeAll()
+
+            // Reset local in-memory drafts to sane defaults after wiping persisted data.
             _draftLocation.value = "New York"
             _draftIsCelsius.value = true
             _draftIsAutoLocation.value = false

@@ -1,8 +1,7 @@
 package com.elroi.lemurloop.domain.manager
 
 import android.util.Log
-import com.elroi.lemurloop.data.local.dao.DiagnosticLogDao
-import com.elroi.lemurloop.data.local.entity.DiagnosticLogEntity
+import com.elroi.lemurloop.domain.repository.DiagnosticLogRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -12,7 +11,7 @@ import javax.inject.Singleton
 
 @Singleton
 class DiagnosticLogger @Inject constructor(
-    private val diagnosticLogDao: DiagnosticLogDao
+    private val diagnosticLogRepository: DiagnosticLogRepository
 ) {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -25,19 +24,10 @@ class DiagnosticLogger @Inject constructor(
             else -> Log.i(tag, message)
         }
 
-        // Persist to database
+        // Persist to repository
         scope.launch {
             try {
-                diagnosticLogDao.insert(
-                    DiagnosticLogEntity(
-                        tag = tag,
-                        message = message,
-                        level = level
-                    )
-                )
-                // Keep only the last 500 logs
-                // This is a bit aggressive to run every time, but fine for now
-                // Alternatively, we could run this on a timer
+                diagnosticLogRepository.appendLog(tag = tag, message = message, level = level)
             } catch (e: Exception) {
                 Log.e("DiagnosticLogger", "Failed to persist log: ${e.message}")
             }
