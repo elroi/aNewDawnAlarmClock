@@ -462,6 +462,54 @@ class SettingsViewModel @Inject constructor(
         _draftIsCloudTtsEnabled.value = enabled
     }
 
+    /**
+     * Plays a short preview phrase for a specific persona in the picker.
+     * Uses Cloud TTS with cached audio when available, and falls back to
+     * on-device TTS otherwise.
+     */
+    fun playPersonaPreview(personaId: String) {
+        viewModelScope.launch {
+            // Make sure latest settings (including Cloud TTS toggles) are persisted.
+            performSaveSettings()
+            ttsManager.stop()
+
+            val uiLanguage = java.util.Locale.getDefault().language
+
+            val useCloud = isCloudTtsEnabled.value && cloudTtsApiKey.value.isNotBlank()
+            if (useCloud) {
+                try {
+                    val cached = cloudTtsEngine.getOrCreatePersonaPreviewFile(personaId, uiLanguage)
+                    if (cached != null && cached.exists()) {
+                        try {
+                            val player = android.media.MediaPlayer().apply {
+                                setDataSource(cached.absolutePath)
+                                setOnCompletionListener { mp ->
+                                    mp.release()
+                                }
+                                setOnErrorListener { mp, _, _ ->
+                                    mp.release()
+                                    true
+                                }
+                                prepare()
+                                start()
+                            }
+                            // We intentionally do not keep a reference; MediaPlayer manages its own lifecycle above.
+                            return@launch
+                        } catch (e: Exception) {
+                            // Fall back to on-device TTS below.
+                        }
+                    }
+                } catch (_: Exception) {
+                    // Fall through to on-device TTS.
+                }
+            }
+
+            // Fallback: use on-device TTS with persona-specific config.
+            val sample = com.elroi.lemurloop.domain.manager.PersonaPreviewSamples.getPreviewText(personaId)
+            ttsManager.speak(sample, personaId)
+        }
+    }
+
     fun launchTestBriefing() {
         viewModelScope.launch {
             _isBriefingGenerating.value = true

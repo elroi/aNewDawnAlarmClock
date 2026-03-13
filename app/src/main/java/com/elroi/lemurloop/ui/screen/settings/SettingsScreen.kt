@@ -373,6 +373,9 @@ fun SettingsScreen(
                             isSelected = alarmDefaults.aiPersona == persona.id && !alarmDefaults.aiPersonaSurprise,
                             onClick = {
                                 viewModel.updateAlarmDefaults(alarmDefaults.copy(aiPersona = persona.id, aiPersonaSurprise = false))
+                            },
+                            onPreviewClick = {
+                                viewModel.playPersonaPreview(persona.id)
                             }
                         )
                     }
@@ -1378,7 +1381,8 @@ data class PersonaInfo(
 fun PersonaCard(
     info: PersonaInfo,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onPreviewClick: (() -> Unit)? = null
 ) {
     Surface(
         onClick = onClick,
@@ -1408,25 +1412,55 @@ fun PersonaCard(
             }
             
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = info.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isSelected) info.color else MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = info.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            
-            if (isSelected) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Selected",
-                    tint = info.color
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = info.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) info.color else MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = info.description,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Selected",
+                            tint = info.color
+                        )
+                    }
+                }
+
+                if (onPreviewClick != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        androidx.compose.material3.IconButton(
+                            onClick = { onPreviewClick() }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "Preview persona voice",
+                                tint = info.color
+                            )
+                        }
+                        Text(
+                            text = "Tap to hear a short sample in this persona's voice.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
     }

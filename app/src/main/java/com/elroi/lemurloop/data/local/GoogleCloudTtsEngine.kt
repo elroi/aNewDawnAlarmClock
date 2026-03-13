@@ -5,6 +5,7 @@ import android.media.MediaPlayer
 import android.util.Base64
 import android.util.Log
 import com.elroi.lemurloop.domain.manager.CloudPersonaVoiceConfig
+import com.elroi.lemurloop.domain.manager.PersonaPreviewSamples
 import com.elroi.lemurloop.domain.manager.SettingsManager
 import com.elroi.lemurloop.domain.manager.getCloudPersonaVoiceConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -155,6 +156,69 @@ class GoogleCloudTtsEngine @Inject constructor(
         } catch (e: Exception) {
             Log.w(TAG, "Cloud TTS synthesis failed: ${e.message}", e)
             null
+        }
+    }
+
+    /**
+     * Lazily generates (if needed) and returns a cached preview file for the given persona.
+     * Returns null if Cloud TTS is disabled, the key is missing, or synthesis fails.
+     *
+     * The returned file is stored under cacheDir/persona_previews/{personaId}.mp3
+     * and is kept for future previews until the cache is cleared.
+     */
+    suspend fun getOrCreatePersonaPreviewFile(
+        personaId: String,
+        uiLanguage: String
+    ): File? = withContext(Dispatchers.IO) {
+        val apiKey = settingsManager.cloudTtsApiKeyFlow.firstOrNullSafe()
+        val isEnabled = settingsManager.isCloudTtsEnabledFlow.firstOrNullSafe() ?: false
+
+        if (!isEnabled || apiKey.isNullOrBlank()) {
+            Log.d(TAG, "Cloud TTS disabled or API key missing; cannot create persona preview.")
+            return@withContext null
+        }
+
+        val previewsDir = File(context.cacheDir, "persona_previews").apply { mkdirs() }
+        val targetFile = File(previewsDir, "${personaId.ifBlank { "COACH" }}.mp3")
+
+        if (targetFile.exists()) {
+            return@withContext targetFile
+        }
+
+        val text = PersonaPreviewSamples.getPreviewText(personaId)
+        val synthesized = synthesizeToFileInternal(
+            text = text,
+            personaId = personaId,
+            uiLanguage = uiLanguage,
+            apiKey = apiKey
+        ) ?: return@withContext null
+
+        return@withContext try {
+            synthesized.copyTo(targetFile, overwrite = true)
+            synthesized.delete()
+            targetFile
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to move persona preview to cache: ${e.message}", e)
+            synthesized.delete()
+            null
+        }
+    }
+
+    /**
+     * Clears all cached persona preview files. Safe to call even if the directory does not exist.
+     */
+    suspend fun clearPersonaPreviewCache() = withContext(Dispatchers.IO) {
+        try {
+            val previewsDir = File(context.cacheDir, "persona_previews")
+            if (!previewsDir.exists()) return@withContext
+            previewsDir.listFiles()?.forEach {
+                try {
+                    if (it.isFile) it.delete()
+                } catch (_: Exception) {
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to clear persona preview cache: ${e.message}", e)
         }
     }
 
