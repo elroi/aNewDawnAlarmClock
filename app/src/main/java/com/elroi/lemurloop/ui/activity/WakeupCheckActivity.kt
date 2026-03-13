@@ -23,7 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elroi.lemurloop.service.AlarmService
+import com.elroi.lemurloop.service.AlarmIntentExtras
 import com.elroi.lemurloop.ui.theme.LemurLoopTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
@@ -41,7 +41,7 @@ class WakeupCheckActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val timeoutSeconds = intent.getIntExtra(AlarmService.EXTRA_WAKEUP_CHECK_TIMEOUT, 60)
+                    val timeoutSeconds = intent.getIntExtra(AlarmIntentExtras.EXTRA_WAKEUP_CHECK_TIMEOUT, 60)
                     WakeupCheckScreen(
                         timeoutSeconds = timeoutSeconds,
                         onConfirmed = { finish() },
@@ -53,8 +53,8 @@ class WakeupCheckActivity : ComponentActivity() {
     }
 
     private fun retriggerAlarm() {
-        val alarmId = intent.getStringExtra(AlarmService.EXTRA_ALARM_ID) ?: return
-        val alarmLabel = intent.getStringExtra(AlarmService.EXTRA_ALARM_LABEL)
+        val alarmId = intent.getStringExtra(AlarmIntentExtras.EXTRA_ALARM_ID) ?: return
+        val alarmLabel = intent.getStringExtra(AlarmIntentExtras.EXTRA_ALARM_LABEL)
         
         val retriggerIntent = Intent(this, com.elroi.lemurloop.receiver.AlarmReceiver::class.java).apply {
             putExtras(intent)

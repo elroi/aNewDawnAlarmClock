@@ -7,6 +7,7 @@ import android.content.Intent
 import com.elroi.lemurloop.domain.model.Alarm
 import com.elroi.lemurloop.domain.scheduler.AlarmScheduler
 import com.elroi.lemurloop.receiver.AlarmReceiver
+import com.elroi.lemurloop.service.AlarmIntentExtras
 import java.time.LocalDateTime
 import java.time.ZoneId
 import androidx.work.WorkManager
@@ -32,30 +33,39 @@ class AndroidAlarmScheduler(
     @android.annotation.SuppressLint("ScheduleExactAlarm")
     override fun schedule(alarm: Alarm) {
         val intent = Intent(context, AlarmReceiver::class.java).apply {
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_ALARM_ID, alarm.id)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_ALARM_LABEL, alarm.label)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_MATH_DIFFICULTY, alarm.mathDifficulty)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_MATH_PROBLEM_COUNT, alarm.mathProblemCount)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_MATH_GRADUAL_DIFFICULTY, alarm.mathGraduallyIncreaseDifficulty)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_SNOOZE_DURATION, alarm.snoozeDurationMinutes)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_SMILE_TO_DISMISS, alarm.smileToDismiss)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_SMILE_FALLBACK_METHOD, alarm.smileFallbackMethod)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_BRIEFING_ENABLED, alarm.isBriefingEnabled)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_TTS_ENABLED, alarm.isTtsEnabled)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_IS_EVASIVE_SNOOZE, alarm.isEvasiveSnooze)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING, alarm.evasiveSnoozesBeforeMoving)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_SOUND_URI, alarm.soundUri)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_IS_SMOOTH_FADE_OUT, alarm.isSmoothFadeOut)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_IS_VIBRATE, alarm.isVibrate)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_IS_SOUND_ENABLED, alarm.isSoundEnabled)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_IS_SNOOZE_ENABLED, alarm.isSnoozeEnabled)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_IS_SMART_WAKEUP_ENABLED, alarm.isSmartWakeupEnabled)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_WAKEUP_CHECK_DELAY, alarm.wakeupCheckDelayMinutes)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_WAKEUP_CHECK_TIMEOUT, alarm.wakeupCheckTimeoutSeconds)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_BRIEFING_TIMEOUT, alarm.briefingTimeoutSeconds)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_DAYS_OF_WEEK, alarm.daysOfWeek.joinToString(","))
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_VIBRATION_PATTERN, alarm.vibrationPattern)
-            putExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_VIBRATION_START_GAP, alarm.vibrationCrescendoStartGapSeconds)
+            putExtra(AlarmIntentExtras.EXTRA_ALARM_ID, alarm.id)
+            putExtra(AlarmIntentExtras.EXTRA_ALARM_LABEL, alarm.label)
+            putExtra(AlarmIntentExtras.EXTRA_MATH_DIFFICULTY, alarm.mathDifficulty)
+            putExtra(AlarmIntentExtras.EXTRA_MATH_PROBLEM_COUNT, alarm.mathProblemCount)
+            putExtra(
+                AlarmIntentExtras.EXTRA_MATH_GRADUAL_DIFFICULTY,
+                alarm.mathGraduallyIncreaseDifficulty
+            )
+            putExtra(AlarmIntentExtras.EXTRA_SNOOZE_DURATION, alarm.snoozeDurationMinutes)
+            putExtra(AlarmIntentExtras.EXTRA_SMILE_TO_DISMISS, alarm.smileToDismiss)
+            putExtra(AlarmIntentExtras.EXTRA_SMILE_FALLBACK_METHOD, alarm.smileFallbackMethod)
+            putExtra(AlarmIntentExtras.EXTRA_BRIEFING_ENABLED, alarm.isBriefingEnabled)
+            putExtra(AlarmIntentExtras.EXTRA_TTS_ENABLED, alarm.isTtsEnabled)
+            putExtra(AlarmIntentExtras.EXTRA_IS_EVASIVE_SNOOZE, alarm.isEvasiveSnooze)
+            putExtra(
+                AlarmIntentExtras.EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING,
+                alarm.evasiveSnoozesBeforeMoving
+            )
+            putExtra(AlarmIntentExtras.EXTRA_SOUND_URI, alarm.soundUri)
+            putExtra(AlarmIntentExtras.EXTRA_IS_SMOOTH_FADE_OUT, alarm.isSmoothFadeOut)
+            putExtra(AlarmIntentExtras.EXTRA_IS_VIBRATE, alarm.isVibrate)
+            putExtra(AlarmIntentExtras.EXTRA_IS_SOUND_ENABLED, alarm.isSoundEnabled)
+            putExtra(AlarmIntentExtras.EXTRA_IS_SNOOZE_ENABLED, alarm.isSnoozeEnabled)
+            putExtra(AlarmIntentExtras.EXTRA_IS_SMART_WAKEUP_ENABLED, alarm.isSmartWakeupEnabled)
+            putExtra(AlarmIntentExtras.EXTRA_WAKEUP_CHECK_DELAY, alarm.wakeupCheckDelayMinutes)
+            putExtra(AlarmIntentExtras.EXTRA_WAKEUP_CHECK_TIMEOUT, alarm.wakeupCheckTimeoutSeconds)
+            putExtra(AlarmIntentExtras.EXTRA_BRIEFING_TIMEOUT, alarm.briefingTimeoutSeconds)
+            putExtra(AlarmIntentExtras.EXTRA_DAYS_OF_WEEK, alarm.daysOfWeek.joinToString(","))
+            putExtra(AlarmIntentExtras.EXTRA_VIBRATION_PATTERN, alarm.vibrationPattern)
+            putExtra(
+                AlarmIntentExtras.EXTRA_VIBRATION_START_GAP,
+                alarm.vibrationCrescendoStartGapSeconds
+            )
         }
         
         // Calculate next alarm time using utility

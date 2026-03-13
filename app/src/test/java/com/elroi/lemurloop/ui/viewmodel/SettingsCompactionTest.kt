@@ -5,7 +5,7 @@ import com.elroi.lemurloop.domain.manager.SettingsManager
 import com.elroi.lemurloop.domain.manager.GeminiManager
 import com.elroi.lemurloop.domain.generator.BriefingGenerator
 import com.elroi.lemurloop.domain.manager.LocalLLMManager
-import com.elroi.lemurloop.data.local.AppDatabase
+import com.elroi.lemurloop.domain.repository.AppDataRepository
 import com.elroi.lemurloop.domain.manager.TtsEngine
 import com.elroi.lemurloop.data.local.GoogleCloudTtsEngine
 import io.mockk.*
@@ -25,7 +25,7 @@ class SettingsCompactionTest {
     private val geminiManager = mockk<GeminiManager>(relaxed = true)
     private val briefingGenerator = mockk<BriefingGenerator>(relaxed = true)
     private val localLLMManager = mockk<LocalLLMManager>(relaxed = true)
-    private val database = mockk<AppDatabase>(relaxed = true)
+    private val appDataRepository = mockk<AppDataRepository>(relaxed = true)
     private val ttsManager = mockk<TtsEngine>(relaxed = true)
     private val cloudTtsEngine = mockk<GoogleCloudTtsEngine>(relaxed = true)
 
@@ -52,17 +52,12 @@ class SettingsCompactionTest {
         every { settingsManager.lastBriefingScriptFlow } returns MutableStateFlow(null)
         every { settingsManager.alarmCreationStyleFlow } returns MutableStateFlow("WIZARD")
 
-        val alarmDao = mockk<com.elroi.lemurloop.data.local.dao.AlarmDao>(relaxed = true)
-        val sleepDao = mockk<com.elroi.lemurloop.data.local.dao.SleepRecordDao>(relaxed = true)
-        every { database.alarmDao() } returns alarmDao
-        every { database.sleepRecordDao() } returns sleepDao
-
         viewModel = SettingsViewModel(
             settingsManager,
             geminiManager,
             briefingGenerator,
             localLLMManager,
-            database,
+            appDataRepository,
             ttsManager,
             cloudTtsEngine,
             demoAlarmSeeder = mockk(relaxed = true)

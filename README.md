@@ -16,6 +16,19 @@ Welcome to **LemurLoop**, your new accountability partner and gentle wake-up ass
 3.  **Run**: Press the green Play button.
 4.  **Permissions**: Make sure to grant requested permissions (Notification, Alarm, SMS, Calendar) on the first run.
 
+## Running Unit Tests
+
+- **JDK requirement**: Make sure you have a recent JDK installed (the project is built and tested with a JBR/JDK compatible with AGP 8.2; JDK 17+ is recommended).
+- **Gradle JDK configuration**:
+  - By default, `gradle.properties` points `org.gradle.java.home` at Android Studio's bundled JBR.
+  - If that path does not exist on your machine or CI, either:
+    - Update `org.gradle.java.home` to a valid local JDK install, or
+    - Comment it out and rely on a correctly configured `JAVA_HOME`.
+- **Run JVM unit tests**:
+  - From the command line: `./gradlew :app:testDebugUnitTest`
+  - From Android Studio: use the Gradle tool window or run tests from the gutter in `app/src/test/java`.
+- **CI**: GitHub Actions runs the same unit tests on push/PR to `main` (see `.github/workflows/unit-tests.yml`); the workflow uses JDK 17 and does not rely on a local `org.gradle.java.home` path.
+
 ## Architecture
 - **Language**: Kotlin
 - **UI**: Jetpack Compose (Material You)

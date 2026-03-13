@@ -108,8 +108,10 @@ class AlarmService : Service() {
                 return START_NOT_STICKY
             }
             ACTION_SNOOZE -> {
-                val alarmId = intent.getStringExtra(EXTRA_ALARM_ID) ?: currentAlarmId
-                val snoozeMins = intent.getIntExtra(EXTRA_SNOOZE_DURATION, currentSnoozeDuration)
+                val alarmId =
+                    intent.getStringExtra(AlarmIntentExtras.EXTRA_ALARM_ID) ?: currentAlarmId
+                val snoozeMins =
+                    intent.getIntExtra(AlarmIntentExtras.EXTRA_SNOOZE_DURATION, currentSnoozeDuration)
                 handleSnooze(alarmId, snoozeMins)
                 return START_NOT_STICKY
             }
@@ -136,35 +138,61 @@ class AlarmService : Service() {
             }
         }
 
-        val alarmId = intent?.getStringExtra(EXTRA_ALARM_ID) ?: return START_NOT_STICKY
-        val alarmLabel = intent.getStringExtra(EXTRA_ALARM_LABEL) ?: "Alarm"
-        val mathDifficulty = intent.getIntExtra(EXTRA_MATH_DIFFICULTY, 0)
-        val mathProblemCount = intent.getIntExtra(EXTRA_MATH_PROBLEM_COUNT, 1)
-        val mathGradualDifficulty = intent.getBooleanExtra(EXTRA_MATH_GRADUAL_DIFFICULTY, false)
-        val snoozeDuration = intent.getIntExtra(EXTRA_SNOOZE_DURATION, 5)
-        val snoozeCount = intent.getIntExtra(EXTRA_SNOOZE_COUNT, 0)
-        val smileToDismiss = intent.getBooleanExtra(EXTRA_SMILE_TO_DISMISS, false)
-        val smileFallbackMethod = intent.getStringExtra(EXTRA_SMILE_FALLBACK_METHOD) ?: "MATH"
-        val briefingEnabled = intent.getBooleanExtra(EXTRA_BRIEFING_ENABLED, true)
-        val ttsEnabled = intent.getBooleanExtra(EXTRA_TTS_ENABLED, true)
-        val isEvasiveSnooze = intent.getBooleanExtra(EXTRA_IS_EVASIVE_SNOOZE, false)
-        val evasiveSnoozesBeforeMoving = intent.getIntExtra(EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING, 0)
-        val isSmoothFadeOut = intent.getBooleanExtra(EXTRA_IS_SMOOTH_FADE_OUT, true)
-        val soundUriStr = intent.getStringExtra(EXTRA_SOUND_URI)
-        val isVibrate = intent.getBooleanExtra(EXTRA_IS_VIBRATE, true)
-        val isSoundEnabled = intent.getBooleanExtra(EXTRA_IS_SOUND_ENABLED, true)
-        val isSnoozeEnabled = intent.getBooleanExtra(EXTRA_IS_SNOOZE_ENABLED, true)
-        val isSmartWakeupEnabled = intent.getBooleanExtra(EXTRA_IS_SMART_WAKEUP_ENABLED, false)
-        val wakeupCheckDelay = intent.getIntExtra(EXTRA_WAKEUP_CHECK_DELAY, 3)
-        val wakeupCheckTimeout = intent.getIntExtra(EXTRA_WAKEUP_CHECK_TIMEOUT, 60)
-        val briefingTimeout = intent.getIntExtra(EXTRA_BRIEFING_TIMEOUT, 30)
-        val vibrationPattern = intent.getStringExtra(EXTRA_VIBRATION_PATTERN) ?: "BASIC"
-        val vibrationStartGap = intent.getIntExtra(EXTRA_VIBRATION_START_GAP, 30)
-        val daysOfWeekStr = intent.getStringExtra(EXTRA_DAYS_OF_WEEK)
+        val alarmId =
+            intent?.getStringExtra(AlarmIntentExtras.EXTRA_ALARM_ID) ?: return START_NOT_STICKY
+        val alarmLabel =
+            intent.getStringExtra(AlarmIntentExtras.EXTRA_ALARM_LABEL) ?: "Alarm"
+        val mathDifficulty =
+            intent.getIntExtra(AlarmIntentExtras.EXTRA_MATH_DIFFICULTY, 0)
+        val mathProblemCount =
+            intent.getIntExtra(AlarmIntentExtras.EXTRA_MATH_PROBLEM_COUNT, 1)
+        val mathGradualDifficulty =
+            intent.getBooleanExtra(AlarmIntentExtras.EXTRA_MATH_GRADUAL_DIFFICULTY, false)
+        val snoozeDuration =
+            intent.getIntExtra(AlarmIntentExtras.EXTRA_SNOOZE_DURATION, 5)
+        val snoozeCount =
+            intent.getIntExtra(AlarmIntentExtras.EXTRA_SNOOZE_COUNT, 0)
+        val smileToDismiss =
+            intent.getBooleanExtra(AlarmIntentExtras.EXTRA_SMILE_TO_DISMISS, false)
+        val smileFallbackMethod =
+            intent.getStringExtra(AlarmIntentExtras.EXTRA_SMILE_FALLBACK_METHOD) ?: "MATH"
+        val briefingEnabled =
+            intent.getBooleanExtra(AlarmIntentExtras.EXTRA_BRIEFING_ENABLED, true)
+        val ttsEnabled =
+            intent.getBooleanExtra(AlarmIntentExtras.EXTRA_TTS_ENABLED, true)
+        val isEvasiveSnooze =
+            intent.getBooleanExtra(AlarmIntentExtras.EXTRA_IS_EVASIVE_SNOOZE, false)
+        val evasiveSnoozesBeforeMoving =
+            intent.getIntExtra(AlarmIntentExtras.EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING, 0)
+        val isSmoothFadeOut =
+            intent.getBooleanExtra(AlarmIntentExtras.EXTRA_IS_SMOOTH_FADE_OUT, true)
+        val soundUriStr =
+            intent.getStringExtra(AlarmIntentExtras.EXTRA_SOUND_URI)
+        val isVibrate =
+            intent.getBooleanExtra(AlarmIntentExtras.EXTRA_IS_VIBRATE, true)
+        val isSoundEnabled =
+            intent.getBooleanExtra(AlarmIntentExtras.EXTRA_IS_SOUND_ENABLED, true)
+        val isSnoozeEnabled =
+            intent.getBooleanExtra(AlarmIntentExtras.EXTRA_IS_SNOOZE_ENABLED, true)
+        val isSmartWakeupEnabled =
+            intent.getBooleanExtra(AlarmIntentExtras.EXTRA_IS_SMART_WAKEUP_ENABLED, false)
+        val wakeupCheckDelay =
+            intent.getIntExtra(AlarmIntentExtras.EXTRA_WAKEUP_CHECK_DELAY, 3)
+        val wakeupCheckTimeout =
+            intent.getIntExtra(AlarmIntentExtras.EXTRA_WAKEUP_CHECK_TIMEOUT, 60)
+        val briefingTimeout =
+            intent.getIntExtra(AlarmIntentExtras.EXTRA_BRIEFING_TIMEOUT, 30)
+        val vibrationPattern =
+            intent.getStringExtra(AlarmIntentExtras.EXTRA_VIBRATION_PATTERN) ?: "BASIC"
+        val vibrationStartGap =
+            intent.getIntExtra(AlarmIntentExtras.EXTRA_VIBRATION_START_GAP, 30)
+        val daysOfWeekStr =
+            intent.getStringExtra(AlarmIntentExtras.EXTRA_DAYS_OF_WEEK)
 
         // Stash for later use in snooze/dismiss helpers
         currentAlarmId = alarmId
-        currentIsRepeating = intent.getStringExtra(EXTRA_DAYS_OF_WEEK)?.isNotEmpty() ?: false
+        currentIsRepeating =
+            intent.getStringExtra(AlarmIntentExtras.EXTRA_DAYS_OF_WEEK)?.isNotEmpty() ?: false
         currentAlarmLabel = alarmLabel
         currentSnoozeDuration = snoozeDuration
         currentMathDifficulty = mathDifficulty
@@ -191,29 +219,32 @@ class AlarmService : Service() {
         currentVibrationStartGapSeconds = vibrationStartGap
 
         val activityIntent = Intent(this, com.elroi.lemurloop.ui.activity.AlarmActivity::class.java).apply {
-            putExtra(EXTRA_ALARM_ID, alarmId)
-            putExtra(EXTRA_ALARM_LABEL, alarmLabel)
-            putExtra(EXTRA_MATH_DIFFICULTY, mathDifficulty)
-            putExtra(EXTRA_MATH_PROBLEM_COUNT, mathProblemCount)
-            putExtra(EXTRA_MATH_GRADUAL_DIFFICULTY, mathGradualDifficulty)
-            putExtra(EXTRA_SNOOZE_DURATION, snoozeDuration)
-            putExtra(EXTRA_SNOOZE_COUNT, snoozeCount)
-            putExtra(EXTRA_SMILE_TO_DISMISS, smileToDismiss)
-            putExtra(EXTRA_SMILE_FALLBACK_METHOD, smileFallbackMethod)
-            putExtra(EXTRA_IS_EVASIVE_SNOOZE, isEvasiveSnooze)
-            putExtra(EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING, evasiveSnoozesBeforeMoving)
-            putExtra(EXTRA_IS_SMOOTH_FADE_OUT, isSmoothFadeOut)
-            putExtra(EXTRA_IS_VIBRATE, isVibrate)
-            putExtra(EXTRA_IS_SOUND_ENABLED, isSoundEnabled)
-            putExtra(EXTRA_IS_SNOOZE_ENABLED, isSnoozeEnabled)
-            putExtra(EXTRA_IS_SMART_WAKEUP_ENABLED, isSmartWakeupEnabled)
-            putExtra(EXTRA_WAKEUP_CHECK_DELAY, wakeupCheckDelay)
-            putExtra(EXTRA_WAKEUP_CHECK_TIMEOUT, wakeupCheckTimeout)
-            putExtra(EXTRA_BRIEFING_ENABLED, briefingEnabled)
-            putExtra(EXTRA_TTS_ENABLED, ttsEnabled)
-            putExtra(EXTRA_BRIEFING_TIMEOUT, briefingTimeout)
-            putExtra(EXTRA_VIBRATION_PATTERN, vibrationPattern)
-            putExtra(EXTRA_VIBRATION_START_GAP, vibrationStartGap)
+            putExtra(AlarmIntentExtras.EXTRA_ALARM_ID, alarmId)
+            putExtra(AlarmIntentExtras.EXTRA_ALARM_LABEL, alarmLabel)
+            putExtra(AlarmIntentExtras.EXTRA_MATH_DIFFICULTY, mathDifficulty)
+            putExtra(AlarmIntentExtras.EXTRA_MATH_PROBLEM_COUNT, mathProblemCount)
+            putExtra(AlarmIntentExtras.EXTRA_MATH_GRADUAL_DIFFICULTY, mathGradualDifficulty)
+            putExtra(AlarmIntentExtras.EXTRA_SNOOZE_DURATION, snoozeDuration)
+            putExtra(AlarmIntentExtras.EXTRA_SNOOZE_COUNT, snoozeCount)
+            putExtra(AlarmIntentExtras.EXTRA_SMILE_TO_DISMISS, smileToDismiss)
+            putExtra(AlarmIntentExtras.EXTRA_SMILE_FALLBACK_METHOD, smileFallbackMethod)
+            putExtra(AlarmIntentExtras.EXTRA_IS_EVASIVE_SNOOZE, isEvasiveSnooze)
+            putExtra(
+                AlarmIntentExtras.EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING,
+                evasiveSnoozesBeforeMoving
+            )
+            putExtra(AlarmIntentExtras.EXTRA_IS_SMOOTH_FADE_OUT, isSmoothFadeOut)
+            putExtra(AlarmIntentExtras.EXTRA_IS_VIBRATE, isVibrate)
+            putExtra(AlarmIntentExtras.EXTRA_IS_SOUND_ENABLED, isSoundEnabled)
+            putExtra(AlarmIntentExtras.EXTRA_IS_SNOOZE_ENABLED, isSnoozeEnabled)
+            putExtra(AlarmIntentExtras.EXTRA_IS_SMART_WAKEUP_ENABLED, isSmartWakeupEnabled)
+            putExtra(AlarmIntentExtras.EXTRA_WAKEUP_CHECK_DELAY, wakeupCheckDelay)
+            putExtra(AlarmIntentExtras.EXTRA_WAKEUP_CHECK_TIMEOUT, wakeupCheckTimeout)
+            putExtra(AlarmIntentExtras.EXTRA_BRIEFING_ENABLED, briefingEnabled)
+            putExtra(AlarmIntentExtras.EXTRA_TTS_ENABLED, ttsEnabled)
+            putExtra(AlarmIntentExtras.EXTRA_BRIEFING_TIMEOUT, briefingTimeout)
+            putExtra(AlarmIntentExtras.EXTRA_VIBRATION_PATTERN, vibrationPattern)
+            putExtra(AlarmIntentExtras.EXTRA_VIBRATION_START_GAP, vibrationStartGap)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or 
                      Intent.FLAG_ACTIVITY_CLEAR_TOP or 
                      Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -472,28 +503,40 @@ class AlarmService : Service() {
         val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         
         val intent = Intent(this, com.elroi.lemurloop.receiver.WakeupCheckReceiver::class.java).apply {
-            putExtra(EXTRA_ALARM_ID, alarmId)
-            putExtra(EXTRA_ALARM_LABEL, currentAlarmLabel)
-            putExtra(EXTRA_MATH_DIFFICULTY, currentMathDifficulty)
-            putExtra(EXTRA_MATH_PROBLEM_COUNT, currentMathProblemCount)
-            putExtra(EXTRA_MATH_GRADUAL_DIFFICULTY, currentMathGraduallyIncreaseDifficulty)
-            putExtra(EXTRA_SNOOZE_DURATION, currentSnoozeDuration)
-            putExtra(EXTRA_SMILE_TO_DISMISS, currentSmileToDismiss)
-            putExtra(EXTRA_TTS_ENABLED, currentTtsEnabled)
-            putExtra(EXTRA_IS_EVASIVE_SNOOZE, currentIsEvasiveSnooze)
-            putExtra(EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING, currentEvasiveSnoozesBeforeMoving)
-            putExtra(EXTRA_SOUND_URI, currentSoundUri)
-            putExtra(EXTRA_DAYS_OF_WEEK, currentDaysOfWeek)
-            putExtra(EXTRA_SMILE_FALLBACK_METHOD, currentSmileFallbackMethod)
-            putExtra(EXTRA_IS_SMOOTH_FADE_OUT, currentIsSmoothFadeOut)
-            putExtra(EXTRA_IS_VIBRATE, currentIsVibrate)
-            putExtra(EXTRA_IS_SOUND_ENABLED, currentIsSoundEnabled)
-            putExtra(EXTRA_IS_SNOOZE_ENABLED, currentIsSnoozeEnabled)
-            putExtra(EXTRA_IS_SMART_WAKEUP_ENABLED, true)
-            putExtra(EXTRA_WAKEUP_CHECK_DELAY, currentWakeupCheckDelayMinutes)
-            putExtra(EXTRA_WAKEUP_CHECK_TIMEOUT, currentWakeupCheckTimeoutSeconds)
-            putExtra(EXTRA_VIBRATION_PATTERN, currentVibrationPattern)
-            putExtra(EXTRA_VIBRATION_START_GAP, currentVibrationStartGapSeconds)
+            putExtra(AlarmIntentExtras.EXTRA_ALARM_ID, alarmId)
+            putExtra(AlarmIntentExtras.EXTRA_ALARM_LABEL, currentAlarmLabel)
+            putExtra(AlarmIntentExtras.EXTRA_MATH_DIFFICULTY, currentMathDifficulty)
+            putExtra(AlarmIntentExtras.EXTRA_MATH_PROBLEM_COUNT, currentMathProblemCount)
+            putExtra(
+                AlarmIntentExtras.EXTRA_MATH_GRADUAL_DIFFICULTY,
+                currentMathGraduallyIncreaseDifficulty
+            )
+            putExtra(AlarmIntentExtras.EXTRA_SNOOZE_DURATION, currentSnoozeDuration)
+            putExtra(AlarmIntentExtras.EXTRA_SMILE_TO_DISMISS, currentSmileToDismiss)
+            putExtra(AlarmIntentExtras.EXTRA_TTS_ENABLED, currentTtsEnabled)
+            putExtra(AlarmIntentExtras.EXTRA_IS_EVASIVE_SNOOZE, currentIsEvasiveSnooze)
+            putExtra(
+                AlarmIntentExtras.EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING,
+                currentEvasiveSnoozesBeforeMoving
+            )
+            putExtra(AlarmIntentExtras.EXTRA_SOUND_URI, currentSoundUri)
+            putExtra(AlarmIntentExtras.EXTRA_DAYS_OF_WEEK, currentDaysOfWeek)
+            putExtra(AlarmIntentExtras.EXTRA_SMILE_FALLBACK_METHOD, currentSmileFallbackMethod)
+            putExtra(AlarmIntentExtras.EXTRA_IS_SMOOTH_FADE_OUT, currentIsSmoothFadeOut)
+            putExtra(AlarmIntentExtras.EXTRA_IS_VIBRATE, currentIsVibrate)
+            putExtra(AlarmIntentExtras.EXTRA_IS_SOUND_ENABLED, currentIsSoundEnabled)
+            putExtra(AlarmIntentExtras.EXTRA_IS_SNOOZE_ENABLED, currentIsSnoozeEnabled)
+            putExtra(AlarmIntentExtras.EXTRA_IS_SMART_WAKEUP_ENABLED, true)
+            putExtra(AlarmIntentExtras.EXTRA_WAKEUP_CHECK_DELAY, currentWakeupCheckDelayMinutes)
+            putExtra(
+                AlarmIntentExtras.EXTRA_WAKEUP_CHECK_TIMEOUT,
+                currentWakeupCheckTimeoutSeconds
+            )
+            putExtra(AlarmIntentExtras.EXTRA_VIBRATION_PATTERN, currentVibrationPattern)
+            putExtra(
+                AlarmIntentExtras.EXTRA_VIBRATION_START_GAP,
+                currentVibrationStartGapSeconds
+            )
         }
         
         val pi = PendingIntent.getBroadcast(
@@ -557,32 +600,56 @@ class AlarmService : Service() {
                 .toEpochSecond() * 1_000L
 
             val intent = Intent(this, AlarmReceiver::class.java).apply {
-                putExtra(EXTRA_ALARM_ID, alarmId)
-                putExtra(EXTRA_ALARM_LABEL, currentAlarmLabel)
-                putExtra(EXTRA_SNOOZE_DURATION, snoozeMins)
-                putExtra(EXTRA_SNOOZE_COUNT, currentSnoozeCount + 1)
-                putExtra(EXTRA_MATH_DIFFICULTY, currentMathDifficulty)
-                putExtra(EXTRA_MATH_PROBLEM_COUNT, currentMathProblemCount)
-                putExtra(EXTRA_MATH_GRADUAL_DIFFICULTY, currentMathGraduallyIncreaseDifficulty)
-                putExtra(EXTRA_SMILE_TO_DISMISS, currentSmileToDismiss)
-                putExtra(EXTRA_TTS_ENABLED, currentTtsEnabled)
-                putExtra(EXTRA_IS_EVASIVE_SNOOZE, currentIsEvasiveSnooze)
-                putExtra(EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING, currentEvasiveSnoozesBeforeMoving)
-                putExtra(EXTRA_SOUND_URI, currentSoundUri)
-                putExtra(EXTRA_DAYS_OF_WEEK, currentDaysOfWeek)
-                putExtra(EXTRA_SMILE_FALLBACK_METHOD, currentSmileFallbackMethod)
-                putExtra(EXTRA_IS_SMOOTH_FADE_OUT, currentIsSmoothFadeOut)
-                putExtra(EXTRA_IS_VIBRATE, currentIsVibrate)
-                putExtra(EXTRA_IS_SOUND_ENABLED, currentIsSoundEnabled)
-                putExtra(EXTRA_IS_SNOOZE_ENABLED, currentIsSnoozeEnabled)
+                putExtra(AlarmIntentExtras.EXTRA_ALARM_ID, alarmId)
+                putExtra(AlarmIntentExtras.EXTRA_ALARM_LABEL, currentAlarmLabel)
+                putExtra(AlarmIntentExtras.EXTRA_SNOOZE_DURATION, snoozeMins)
+                putExtra(AlarmIntentExtras.EXTRA_SNOOZE_COUNT, currentSnoozeCount + 1)
+                putExtra(AlarmIntentExtras.EXTRA_MATH_DIFFICULTY, currentMathDifficulty)
+                putExtra(AlarmIntentExtras.EXTRA_MATH_PROBLEM_COUNT, currentMathProblemCount)
+                putExtra(
+                    AlarmIntentExtras.EXTRA_MATH_GRADUAL_DIFFICULTY,
+                    currentMathGraduallyIncreaseDifficulty
+                )
+                putExtra(AlarmIntentExtras.EXTRA_SMILE_TO_DISMISS, currentSmileToDismiss)
+                putExtra(AlarmIntentExtras.EXTRA_TTS_ENABLED, currentTtsEnabled)
+                putExtra(AlarmIntentExtras.EXTRA_IS_EVASIVE_SNOOZE, currentIsEvasiveSnooze)
+                putExtra(
+                    AlarmIntentExtras.EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING,
+                    currentEvasiveSnoozesBeforeMoving
+                )
+                putExtra(AlarmIntentExtras.EXTRA_SOUND_URI, currentSoundUri)
+                putExtra(AlarmIntentExtras.EXTRA_DAYS_OF_WEEK, currentDaysOfWeek)
+                putExtra(AlarmIntentExtras.EXTRA_SMILE_FALLBACK_METHOD, currentSmileFallbackMethod)
+                putExtra(AlarmIntentExtras.EXTRA_IS_SMOOTH_FADE_OUT, currentIsSmoothFadeOut)
+                putExtra(AlarmIntentExtras.EXTRA_IS_VIBRATE, currentIsVibrate)
+                putExtra(AlarmIntentExtras.EXTRA_IS_SOUND_ENABLED, currentIsSoundEnabled)
+                putExtra(AlarmIntentExtras.EXTRA_IS_SNOOZE_ENABLED, currentIsSnoozeEnabled)
                 // BUG-8 FIX: forward smart-wakeup and briefing extras so snoozed alarms
                 // preserve these settings instead of silently resetting to defaults.
-                putExtra(EXTRA_IS_SMART_WAKEUP_ENABLED, currentIsSmartWakeupEnabled)
-                putExtra(EXTRA_WAKEUP_CHECK_DELAY, currentWakeupCheckDelayMinutes)
-                putExtra(EXTRA_WAKEUP_CHECK_TIMEOUT, currentWakeupCheckTimeoutSeconds)
-                putExtra(EXTRA_BRIEFING_ENABLED, currentBriefingEnabled)
-                putExtra(EXTRA_VIBRATION_PATTERN, currentVibrationPattern)
-                putExtra(EXTRA_VIBRATION_START_GAP, currentVibrationStartGapSeconds)
+                putExtra(
+                    AlarmIntentExtras.EXTRA_IS_SMART_WAKEUP_ENABLED,
+                    currentIsSmartWakeupEnabled
+                )
+                putExtra(
+                    AlarmIntentExtras.EXTRA_WAKEUP_CHECK_DELAY,
+                    currentWakeupCheckDelayMinutes
+                )
+                putExtra(
+                    AlarmIntentExtras.EXTRA_WAKEUP_CHECK_TIMEOUT,
+                    currentWakeupCheckTimeoutSeconds
+                )
+                putExtra(
+                    AlarmIntentExtras.EXTRA_BRIEFING_ENABLED,
+                    currentBriefingEnabled
+                )
+                putExtra(
+                    AlarmIntentExtras.EXTRA_VIBRATION_PATTERN,
+                    currentVibrationPattern
+                )
+                putExtra(
+                    AlarmIntentExtras.EXTRA_VIBRATION_START_GAP,
+                    currentVibrationStartGapSeconds
+                )
             }
             val pi = PendingIntent.getBroadcast(
                 this,
@@ -793,33 +860,6 @@ class AlarmService : Service() {
         const val ACTION_RESUME_TTS = "com.elroi.lemurloop.RESUME_TTS"
         const val ACTION_STOP_TTS = "com.elroi.lemurloop.STOP_TTS"
         const val ACTION_BRIEFING_READY = "com.elroi.lemurloop.BRIEFING_READY"
-
-        const val EXTRA_ALARM_ID = "ALARM_ID"
-        const val EXTRA_ALARM_LABEL = "ALARM_LABEL"
-        const val EXTRA_MATH_DIFFICULTY = "ALARM_MATH_DIFFICULTY"
-        const val EXTRA_MATH_PROBLEM_COUNT = "ALARM_MATH_PROBLEM_COUNT"
-        const val EXTRA_MATH_GRADUAL_DIFFICULTY = "ALARM_MATH_GRADUAL_DIFFICULTY"
-        const val EXTRA_SNOOZE_DURATION = "ALARM_SNOOZE_DURATION"
-        const val EXTRA_SNOOZE_COUNT = "ALARM_SNOOZE_COUNT"
-        const val EXTRA_SMILE_TO_DISMISS = "ALARM_SMILE_TO_DISMISS"
-        const val EXTRA_SMILE_FALLBACK_METHOD = "ALARM_SMILE_FALLBACK_METHOD"
-        const val EXTRA_BRIEFING_ENABLED = "ALARM_BRIEFING_ENABLED"
-        const val EXTRA_TTS_ENABLED = "ALARM_TTS_ENABLED"
-        const val EXTRA_IS_EVASIVE_SNOOZE = "ALARM_IS_EVASIVE_SNOOZE"
-        const val EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING = "ALARM_EVASIVE_SNOOZES_BEFORE_MOVING"
-        const val EXTRA_BRIEFING_TEXT = "EXTRA_BRIEFING_TEXT"
-        const val EXTRA_SOUND_URI = "ALARM_SOUND_URI"
-        const val EXTRA_IS_SMOOTH_FADE_OUT = "ALARM_IS_SMOOTH_FADE_OUT"
-        const val EXTRA_IS_VIBRATE = "ALARM_IS_VIBRATE"
-        const val EXTRA_IS_SOUND_ENABLED = "ALARM_IS_SOUND_ENABLED"
-        const val EXTRA_IS_SNOOZE_ENABLED = "ALARM_IS_SNOOZE_ENABLED"
-        const val EXTRA_IS_SMART_WAKEUP_ENABLED = "ALARM_IS_SMART_WAKEUP_ENABLED"
-        const val EXTRA_WAKEUP_CHECK_DELAY = "ALARM_WAKEUP_CHECK_DELAY"
-        const val EXTRA_WAKEUP_CHECK_TIMEOUT = "ALARM_WAKEUP_CHECK_TIMEOUT"
-        const val EXTRA_DAYS_OF_WEEK = "ALARM_DAYS_OF_WEEK"
-        const val EXTRA_BRIEFING_TIMEOUT = "ALARM_BRIEFING_TIMEOUT"
-        const val EXTRA_VIBRATION_PATTERN = "ALARM_VIBRATION_PATTERN"
-        const val EXTRA_VIBRATION_START_GAP = "ALARM_VIBRATION_START_GAP"
 
         private const val CHANNEL_ID_VIBRATE = "alarm_ringing_channel_vibrate"
         private const val CHANNEL_ID_SILENT = "alarm_ringing_channel_silent"

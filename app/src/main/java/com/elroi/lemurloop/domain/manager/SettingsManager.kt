@@ -127,7 +127,7 @@ fun getCloudPersonaVoiceConfig(
     // For now we only tune English voices; other languages reuse the English mapping.
     val basePersona = when (personaId) {
         "COMEDIAN", "ZEN", "HYPEMAN", "SURPRISE", "COACH" -> personaId
-        else -> "COACH"
+        else -> "UNKNOWN"
     }
 
     return when (basePersona) {
@@ -146,6 +146,11 @@ fun getCloudPersonaVoiceConfig(
             speakingRate = 1.35,
             pitch = 2.0
         )
+        "COACH" -> CloudPersonaVoiceConfig(
+            voiceName = if (isEnglish) "en-US-Wavenet-D" else "en-US-Wavenet-D",
+            speakingRate = 1.25,
+            pitch = -2.0
+        )
         "SURPRISE" -> {
             // Simple random selection among the other persona configs
             val personas = listOf("COACH", "COMEDIAN", "ZEN", "HYPEMAN")
@@ -154,8 +159,8 @@ fun getCloudPersonaVoiceConfig(
         }
         else -> CloudPersonaVoiceConfig(
             voiceName = if (isEnglish) "en-US-Wavenet-D" else "en-US-Wavenet-D",
-            speakingRate = 1.25,
-            pitch = -2.0
+            speakingRate = 1.0,
+            pitch = 0.0
         )
     }
 }

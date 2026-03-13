@@ -4,11 +4,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.elroi.lemurloop.service.AlarmService
+import com.elroi.lemurloop.service.AlarmIntentExtras
 
 class WakeupCheckReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val alarmId = intent.getStringExtra(AlarmService.EXTRA_ALARM_ID) ?: return
+        val alarmId = intent.getStringExtra(AlarmIntentExtras.EXTRA_ALARM_ID) ?: return
         Log.d("WakeupCheck", "Wakeup check triggered for alarm $alarmId")
 
         val activityIntent = Intent(context, com.elroi.lemurloop.ui.activity.WakeupCheckActivity::class.java).apply {

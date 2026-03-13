@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.elroi.lemurloop.service.AlarmIntentExtras
 import com.elroi.lemurloop.service.AlarmService
 import com.elroi.lemurloop.ui.theme.LemurLoopTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -110,22 +111,29 @@ class AlarmActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent) {
         diagnosticLogger.debug("AlarmActivity", "handleIntent: action=${intent.action}, flags=${intent.flags}")
-        val alarmId = intent.getStringExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_ALARM_ID)
-        val alarmLabel = intent.getStringExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_ALARM_LABEL)
-        val mathDifficulty = intent.getIntExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_MATH_DIFFICULTY, 0)
-        val mathProblemCount = intent.getIntExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_MATH_PROBLEM_COUNT, 1)
-        val mathGradualDifficulty = intent.getBooleanExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_MATH_GRADUAL_DIFFICULTY, false)
-        val snoozeDuration = intent.getIntExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_SNOOZE_DURATION, 5)
-        val snoozeCount = intent.getIntExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_SNOOZE_COUNT, 0)
-        val smileToDismiss = intent.getBooleanExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_SMILE_TO_DISMISS, false)
-        val smileFallbackMethod = intent.getStringExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_SMILE_FALLBACK_METHOD) ?: "MATH"
+        val alarmId = intent.getStringExtra(AlarmIntentExtras.EXTRA_ALARM_ID)
+        val alarmLabel = intent.getStringExtra(AlarmIntentExtras.EXTRA_ALARM_LABEL)
+        val mathDifficulty = intent.getIntExtra(AlarmIntentExtras.EXTRA_MATH_DIFFICULTY, 0)
+        val mathProblemCount = intent.getIntExtra(AlarmIntentExtras.EXTRA_MATH_PROBLEM_COUNT, 1)
+        val mathGradualDifficulty =
+            intent.getBooleanExtra(AlarmIntentExtras.EXTRA_MATH_GRADUAL_DIFFICULTY, false)
+        val snoozeDuration = intent.getIntExtra(AlarmIntentExtras.EXTRA_SNOOZE_DURATION, 5)
+        val snoozeCount = intent.getIntExtra(AlarmIntentExtras.EXTRA_SNOOZE_COUNT, 0)
+        val smileToDismiss = intent.getBooleanExtra(AlarmIntentExtras.EXTRA_SMILE_TO_DISMISS, false)
+        val smileFallbackMethod =
+            intent.getStringExtra(AlarmIntentExtras.EXTRA_SMILE_FALLBACK_METHOD) ?: "MATH"
         val isPreview      = intent.getBooleanExtra("IS_PREVIEW", false)
-        val isEvasiveSnooze = intent.getBooleanExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_IS_EVASIVE_SNOOZE, false)
-        val evasiveSnoozesBeforeMoving = intent.getIntExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING, 0)
-        val isSnoozeEnabled = intent.getBooleanExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_IS_SNOOZE_ENABLED, true)
-        val isBriefingEnabled = intent.getBooleanExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_BRIEFING_ENABLED, true)
-        val isTtsEnabled = intent.getBooleanExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_TTS_ENABLED, true)
-        val briefingTimeout = intent.getIntExtra(com.elroi.lemurloop.service.AlarmService.EXTRA_BRIEFING_TIMEOUT, 30)
+        val isEvasiveSnooze =
+            intent.getBooleanExtra(AlarmIntentExtras.EXTRA_IS_EVASIVE_SNOOZE, false)
+        val evasiveSnoozesBeforeMoving =
+            intent.getIntExtra(AlarmIntentExtras.EXTRA_EVASIVE_SNOOZES_BEFORE_MOVING, 0)
+        val isSnoozeEnabled =
+            intent.getBooleanExtra(AlarmIntentExtras.EXTRA_IS_SNOOZE_ENABLED, true)
+        val isBriefingEnabled =
+            intent.getBooleanExtra(AlarmIntentExtras.EXTRA_BRIEFING_ENABLED, true)
+        val isTtsEnabled = intent.getBooleanExtra(AlarmIntentExtras.EXTRA_TTS_ENABLED, true)
+        val briefingTimeout =
+            intent.getIntExtra(AlarmIntentExtras.EXTRA_BRIEFING_TIMEOUT, 30)
         
         // Pre-request CAMERA permission so SmileDismissScreen can use it immediately
         cameraPermissionGranted = ContextCompat.checkSelfPermission(
@@ -499,8 +507,8 @@ class AlarmActivity : ComponentActivity() {
     private fun snoozeAlarm(originalAlarmId: String?, durationMinutes: Int) {
         startService(Intent(this, AlarmService::class.java).apply {
             action = AlarmService.ACTION_SNOOZE
-            putExtra(AlarmService.EXTRA_ALARM_ID, originalAlarmId)
-            putExtra(AlarmService.EXTRA_SNOOZE_DURATION, durationMinutes)
+            putExtra(AlarmIntentExtras.EXTRA_ALARM_ID, originalAlarmId)
+            putExtra(AlarmIntentExtras.EXTRA_SNOOZE_DURATION, durationMinutes)
         })
         // Activity stays open to show SnoozedScreen
     }

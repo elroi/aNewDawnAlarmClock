@@ -61,8 +61,8 @@ class DemoAlarmSeederTest {
 
         val alarms = repo.current()
         assertEquals(insertedCount, alarms.size)
-        // We expect a small, rich set (3-5) of demo alarms
-        assertEquals(4, alarms.size)
+        // We expect a small, rich set (currently 5) of demo alarms
+        assertEquals(5, alarms.size)
 
         // Basic shape checks – labels and times are as expected
         val labels = alarms.mapNotNull { it.label }.toSet()
@@ -70,9 +70,10 @@ class DemoAlarmSeederTest {
         org.junit.Assert.assertTrue(labels.contains("Gym Mission"))
         org.junit.Assert.assertTrue(labels.contains("Weekend Sleep-In"))
         org.junit.Assert.assertTrue(labels.contains("Smart Wake-Up Check"))
+        org.junit.Assert.assertTrue(labels.contains("Face Game Challenge"))
 
         // Ensure alarms were scheduled
-        assertEquals(4, scheduler.scheduled.size)
+        assertEquals(5, scheduler.scheduled.size)
     }
 
     @Test
@@ -93,8 +94,8 @@ class DemoAlarmSeederTest {
         val totalAfterSecond = repo.current().size
 
         // First run should add all demo alarms except the existing matching one
-        assertEquals(3, insertedFirst)
-        assertEquals(4, totalAfterFirst)
+        assertEquals(4, insertedFirst)
+        assertEquals(5, totalAfterFirst)
 
         // Second run should detect all demo shapes as already present and add nothing
         assertEquals(0, insertedSecond)
