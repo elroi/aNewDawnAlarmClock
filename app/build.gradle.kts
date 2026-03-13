@@ -42,8 +42,11 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
-    // Firebase
-    alias(libs.plugins.google.services)
+    // Firebase: applied below only when google-services.json exists (so CI can run without it)
+}
+
+if (file("src/google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }
 
 android {
