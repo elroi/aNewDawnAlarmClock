@@ -698,6 +698,7 @@ class SettingsViewModel @Inject constructor(
 
             if (lastKnownLocation != null) {
                 val geocoder = android.location.Geocoder(context, Locale.getDefault())
+                @Suppress("DEPRECATION")
                 val addresses = geocoder.getFromLocation(lastKnownLocation.latitude, lastKnownLocation.longitude, 1)
                 if (!addresses.isNullOrEmpty()) {
                     val addr = addresses[0]

@@ -72,6 +72,7 @@ class WakeupCheckActivity : ComponentActivity() {
             val km = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
             km.requestDismissKeyguard(this, null)
         } else {
+            @Suppress("DEPRECATION")
             window.addFlags(
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                 WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON or

@@ -120,7 +120,7 @@ fun AlarmListScreen(
                         text = "Active",
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp).animateItemPlacement()
+                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp).animateItem()
                     )
                 }
                 
@@ -134,7 +134,7 @@ fun AlarmListScreen(
                         visible = isVisible,
                         enter = fadeIn() + expandVertically(),
                         exit = fadeOut() + shrinkVertically(),
-                        modifier = Modifier.animateItemPlacement()
+                        modifier = Modifier.animateItem()
                     ) {
                         val dismissState = rememberSwipeToDismissBoxState(
                             confirmValueChange = { dismissValue ->
@@ -200,7 +200,7 @@ fun AlarmListScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
                             .padding(top = if (activeAlarms.isNotEmpty()) 24.dp else 8.dp, bottom = 4.dp)
-                            .animateItemPlacement()
+                            .animateItem()
                     )
                 }
                 
@@ -214,7 +214,7 @@ fun AlarmListScreen(
                         visible = isVisible,
                         enter = fadeIn() + expandVertically(),
                         exit = fadeOut() + shrinkVertically(),
-                        modifier = Modifier.animateItemPlacement()
+                        modifier = Modifier.animateItem()
                     ) {
                         val dismissState = rememberSwipeToDismissBoxState(
                             confirmValueChange = { dismissValue ->
@@ -276,7 +276,7 @@ fun AlarmListScreen(
             if (activeAlarms.isEmpty() && inactiveAlarms.isEmpty()) {
                 item(key = "empty_state") {
                     Column(
-                        modifier = Modifier.fillParentMaxSize().animateItemPlacement(),
+                        modifier = Modifier.fillParentMaxSize().animateItem(),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {

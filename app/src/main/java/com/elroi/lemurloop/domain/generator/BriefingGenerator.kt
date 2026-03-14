@@ -95,6 +95,7 @@ class BriefingGenerator @Inject constructor(
                         
                     lastKnownLocation?.let {
                         val geocoder = Geocoder(context, Locale.getDefault())
+                        @Suppress("DEPRECATION")
                         val addresses = geocoder.getFromLocation(it.latitude, it.longitude, 1)
                         if (!addresses.isNullOrEmpty()) {
                             val addr = addresses[0]
@@ -112,6 +113,7 @@ class BriefingGenerator @Inject constructor(
             weatherStatus = "fail"
             weatherText = try {
                 val geocoder = Geocoder(context, Locale.getDefault())
+                @Suppress("DEPRECATION")
                 val addresses = geocoder.getFromLocationName(location, 1)
                 if (!addresses.isNullOrEmpty()) {
                     val lat = addresses[0].latitude
