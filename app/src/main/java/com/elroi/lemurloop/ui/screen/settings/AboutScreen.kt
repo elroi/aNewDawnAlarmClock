@@ -32,7 +32,7 @@ fun AboutScreen(
             val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             val suffix = com.elroi.lemurloop.BuildConfig.VERSION_SUFFIX
             val date = com.elroi.lemurloop.BuildConfig.BUILD_DATE
-            "${pInfo.versionName}$suffix (${pInfo.versionCode})\nBuilt on $date"
+            "${pInfo.versionName}$suffix (${androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(pInfo)})\nBuilt on $date"
         } catch (e: Exception) {
             "Unknown"
         }

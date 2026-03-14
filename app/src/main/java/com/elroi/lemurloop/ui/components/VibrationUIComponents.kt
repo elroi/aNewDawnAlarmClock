@@ -131,7 +131,7 @@ fun VibrationPatternGallery(
     onPatternSelected: (String) -> Unit
 ) {
     val context = LocalContext.current
-    val vibrator = remember { context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator }
+    val vibrator = remember { context.getSystemService(android.os.Vibrator::class.java)!! }
     val scope = rememberCoroutineScope()
     var previewingPattern by remember { mutableStateOf<String?>(null) }
 

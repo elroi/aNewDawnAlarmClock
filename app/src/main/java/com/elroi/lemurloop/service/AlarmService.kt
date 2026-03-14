@@ -764,7 +764,7 @@ class AlarmService : Service() {
         pattern: String = "BASIC",
         startGapSeconds: Int = 30
     ) {
-        val vibratorService = getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+        val vibratorService = getSystemService(android.os.Vibrator::class.java)
         vibrator = vibratorService
         
         if (!currentIsVibrate) return
