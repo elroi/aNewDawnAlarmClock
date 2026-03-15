@@ -1,0 +1,605 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LemurLoop</string>
+    <string name="about_tagline">התעורר בדרך שלך. כל בוקר.</string>
+    <string name="about_version_format">גרסה %1$s (%2$s)\nנבנה ב-%3$s</string>
+    <string name="about_built_by">נבנה על ידי LemurLoop</string>
+
+    <!-- Onboarding - Page 1 -->
+    <string name="onboarding_back">חזרה</string>
+    <string name="onboarding_1_title">פגוש את בן לווית ההשכמה החדש שלך</string>
+    <string name="onboarding_1_body">LemurLoop הוא השעון המעורר שלא רק מעיר אותך — הוא הופך את זה לכיף!\nהוא מסכם לך את מזג האוויר, היומן והמשימה היומית, בהתאמה אישית ובקול הדמות שבחרת.</string>
+    <string name="onboarding_1_primary">בוא נתחיל</string>
+
+    <!-- Onboarding - Page 2 -->
+    <string name="onboarding_2_title">אפשר התראות והתראות שעון</string>
+    <string name="onboarding_2_body">LemurLoop צריך הרשאה לשלוח התראות ולתזמן שעונים מדויקים. בלי זה השעונים לא יופעלו.\n\nזה נדרש כדי שהאפליקציה תעבוד.</string>
+    <string name="onboarding_2_primary">אפשר הרשאות</string>
+    <string name="onboarding_2_continue">המשך</string>
+    <string name="onboarding_2_secondary">דלג (לא מומלץ)</string>
+    <string name="onboarding_2_permission_notifications">התראות</string>
+    <string name="onboarding_2_desc_notifications">נדרש כדי להתריע כשהשעון מצלצל.</string>
+    <string name="onboarding_2_permission_alarms">שעונים מדויקים</string>
+    <string name="onboarding_2_desc_alarms">מאפשר לאפליקציה להעיר אותך בדקה המדויקת שבחרת.</string>
+    <string name="onboarding_2_permission_overlay">כיסוי מסך</string>
+    <string name="onboarding_2_desc_overlay">מציג את השעון מעל אפליקציות אחרות או במסך הנעילה.</string>
+    <string name="onboarding_core_all_set">הכל מוכן! הקש למטה להמשך.</string>
+    <string name="onboarding_core_grant_hint">אפשר הרשאות כדי להמשיך.</string>
+    <string name="onboarding_core_setup_progress">הגדרה עיקרית: %1$d / %2$d</string>
+
+    <!-- Onboarding - Page 3 -->
+    <string name="onboarding_3_title">דמויות והתאמה אישית</string>
+    <string name="onboarding_3_body">בחר את סגנון ההשכמה שלך! דמויות ה-AI שלנו מסכמות את הבריפינג עם טוויסט ייחודי:</string>
+    <string name="onboarding_3_personas">\n• 🎖️ הסמל: אהבה קשיחה בלבד.\n• 🎭 החבר הסרקסטי: שנון ויבש.\n• 🧘 מאסטר הזן: רגוע ומודע.\n• ⚡ ה-Hype-Man: אנרגיה גבוהה.</string>
+    <string name="onboarding_3_label_name">אשמח שיקראו לי… (אופציונלי)</string>
+    <string name="onboarding_3_hint_name">הזן את שמך כדי שיהיה אישי</string>
+    <string name="onboarding_3_primary">הפעל תכונות בריפינג</string>
+    <string name="onboarding_3_continue">המשך</string>
+    <string name="onboarding_3_setup_progress">הגדרת בריפינג: %1$d / %2$d</string>
+    <string name="onboarding_3_setup_instructions">אפשר הרשאות לבריפינג הבוקר שלך</string>
+    <string name="onboarding_3_permission_calendar">אירועי יומן</string>
+    <string name="onboarding_3_desc_calendar">מסכם את הלו\"ז של היום כדי שתדע מה צפוי.</string>
+    <string name="onboarding_3_permission_weather">דוח מזג אוויר</string>
+    <string name="onboarding_3_desc_weather">מגיד אם צריך מטריה או משקפי שמש (דורש מיקום).</string>
+    <string name="onboarding_3_setup_complete">ההתאמה האישית מוכנה! הקש למטה להמשך.</string>
+    <string name="onboarding_3_secondary">דלג כרגע</string>
+
+    <!-- Onboarding - Page 4 (AI) -->
+    <string name="onboarding_ai_title">מופעל על ידי Lemur AI</string>
+    <string name="onboarding_ai_body">LemurLoop יוצר את בריפינג הבוקר בצורה חכמה. ברירת המחדל היא Cloud AI מתקדם להשכמה הכי חכמה, עם אפשרות ל-Local AI מאובטח במכשיר או טקסט קלאסי לפי הפרטיות והביצועים שלך.</string>
+    <string name="onboarding_ai_primary">הבנתי</string>
+
+    <!-- Onboarding - Page 5 (Buddy) -->
+    <string name="onboarding_4_title">גיבוי להשכמה</string>
+    <string name="onboarding_4_body">הוסף חבר אחריות שיקבל הודעה אם תאחר יותר מדי או תפספס את השעון.\n\nאפשר להגדיר את זה בעת יצירה או עריכת שעון. טיפ: נסה להוסיף את עצמך קודם!</string>
+    <string name="onboarding_4_primary">נשמע מעולה</string>
+    <string name="onboarding_4_enable">הפעל גיבוי חבר</string>
+    <string name="onboarding_4_permission_sms">גישה ל-SMS</string>
+    <string name="onboarding_4_desc_sms">נדרש כדי להתריע לחבר כשמאחרים</string>
+    <string name="onboarding_4_secondary">דלג כרגע</string>
+    <string name="onboarding_4_secondary_next">הבא</string>
+    <string name="onboarding_buddy_assigned_prefix">חבר הוגדר: </string>
+
+    <!-- Onboarding - Done -->
+    <string name="onboarding_5_title">הכל מוכן!</string>
+    <string name="onboarding_5_body">צור את השעון הראשון עם כפתור + — ואז גלה מה הופך בוקר לכיף:</string>
+    <string name="onboarding_5_hint_settings">😊 חיוך לכיבוי • 🏃 כפתור איחור שבורח • 🧠 בריפינג AI עשיר • 🤝 חבר אחריות כשצריך • ועוד בהגדרות</string>
+    <string name="onboarding_5_primary">צור את השעון הראשון שלי</string>
+    <string name="onboarding_5_secondary">אולי אחר כך</string>
+
+    <!-- Alarm Wizard -->
+    <string name="wizard_1_title">מתי להעיר אותך?</string>
+    <string name="wizard_1_body">בחר שעה והימים שבהם השעון יחזור.</string>
+    <string name="wizard_2_title">בחר את סגנון ההשכמה</string>
+    <string name="wizard_2_body">בחר דמות שתסכם את הבריפינג ואת התכונות לכלול.</string>
+    <string name="wizard_3_title">אתגר ההשכמה</string>
+    <string name="wizard_3_body">בחר משימה מנטלית או פיזית כדי להוכיח שיצאת מהמיטה.</string>
+    <string name="wizard_advanced_options">אפשרויות מתקדמות</string>
+    <string name="wizard_2_ai_engine">מנוע Lemur AI</string>
+    <string name="wizard_2_cloud_ai_title">שיפור Cloud AI</string>
+    <string name="wizard_2_cloud_ai_desc">השתמש בענן לבריפינג חכם יותר. כבוי משתמש ב-AI מקומי מהיר יותר.</string>
+    <string name="wizard_cloud_ai_setup_title">הגדרת Cloud AI</string>
+    <string name="wizard_cloud_ai_setup_body">כדי להשתמש בשיפור Cloud AI החכם יותר, נדרש מפתח API של Google Gemini. חינם, מהיר ומאובטח.</string>
+    <string name="wizard_cloud_ai_setup_hint">מפתח API Gemini (AIza...)</string>
+    <string name="wizard_cloud_ai_setup_get_key">קבל מפתח API מ-Google</string>
+    <string name="wizard_cloud_ai_setup_save">שמור והפעל</string>
+    <string name="wizard_2_slick_audio">אודיו חלק</string>
+    <string name="wizard_2_gentle_wake">השכמה עדינה</string>
+    <string name="wizard_2_gentle_wake_desc">הגברת עוצמה בהדרגה</string>
+    <string name="wizard_2_gentle_wake_duration">משך עלייה</string>
+    <string name="wizard_2_gentle_wake_unit_min">%1$d דק׳</string>
+    <string name="wizard_2_smooth_fade">עמעום חלק</string>
+    <string name="wizard_2_smooth_fade_desc">עמעום הדרגתי בכיבוי</string>
+    <string name="wizard_2_snooze_duration">משך איחור</string>
+    <string name="wizard_2_snooze_off">כבוי</string>
+    <string name="wizard_2_evasive_snooze">איחור מתחמק</string>
+    <string name="wizard_2_smart_snooze">איחור חכם</string>
+    <string name="wizard_2_evasive_snooze_desc">הכפתור קופץ כדי להעיר אותך</string>
+    <string name="wizard_2_evasive_starts_after">מתחיל אחרי %1$d איחור</string>
+    <string name="wizard_2_evasive_starts_after_plural">מתחיל אחרי %1$d איחורים</string>
+    <string name="wizard_3_face_title">אתגר פנים</string>
+    <string name="wizard_3_face_desc">חייך לכיבוי — אימות AI מקומי ופרטי</string>
+    <string name="wizard_3_face_help">ה-AI מעבד נתוני מצלמה מקומית ופרטית כדי לוודא שאתה באמת ער. תמונות לא נשמרות או נשלחות לענן.</string>
+    <string name="wizard_3_math_title">אתגר חשבון</string>
+    <string name="wizard_3_math_desc">פתור תרגילים לכיבוי</string>
+    <string name="wizard_3_math_gradual">קושי הדרגתי</string>
+    <string name="wizard_3_math_gradual_desc">הגדלת קושי באיחורים</string>
+    <string name="wizard_3_face_fallback">שיטת גיבוי</string>
+    <string name="wizard_3_face_fallback_none">ללא</string>
+    <string name="wizard_3_face_fallback_math">אתגר חשבון</string>
+    <string name="wizard_3_challenge_dynamics">דינמיקת אתגרים</string>
+    <string name="wizard_3_safety_net">רשת ביטחון</string>
+    <string name="wizard_3_smart_check">בדיקת השכמה חכמה</string>
+    <string name="wizard_3_smart_check_desc">וידוא שעדיין ער אחר כך</string>
+    <string name="wizard_3_smart_delay">בדיקה אחרי %1$d דק׳</string>
+    <string name="wizard_3_smart_timeout">זמן המתנה לתגובה: %1$d שניות</string>
+    <string name="wizard_4_title">חבר ההשכמה שלך</string>
+    <string name="wizard_4_body">בחר מישהו שיגבה אותך. יקבל הודעה אם אתה תקוע באיחורים.</string>
+    <string name="wizard_4_btn_invite">שלח הזמנת הצטרפות</string>
+    <string name="wizard_4_btn_resend">שלח שוב</string>
+    <string name="wizard_4_status_confirmed">חבר אושר ✅</string>
+    <string name="wizard_4_status_pending">ממתין לתשובה...</string>
+    <string name="wizard_4_custom_message">הודעה מותאמת</string>
+    <string name="wizard_4_custom_message_hint">למשל {name} עדיין ישן! עזרו!</string>
+    <string name="wizard_4_alert_after">התראה אחרי השהייה</string>
+    <string name="wizard_4_your_name_label">השם שלך (ל-SMS)</string>
+    <string name="wizard_4_your_name_hint">למשל אלרוי</string>
+    <string name="wizard_5_title">סיכום והתאמה</string>
+    <string name="wizard_5_body">תן לשעון כותרת ובדוק את ההגדרות לפני שנקבע.</string>
+    <string name="wizard_btn_finish">הגדר שעון ⏰</string>
+
+    <!-- Common -->
+    <string name="btn_cancel">ביטול</string>
+    <string name="btn_back">חזרה</string>
+    <string name="btn_next">הבא</string>
+    <string name="btn_save">שמור</string>
+    <string name="btn_add">הוסף</string>
+
+    <!-- Buddy Selection Dialog -->
+    <string name="buddy_dialog_title_add">הוסף חבר חדש</string>
+    <string name="buddy_dialog_title_select">בחר חבר</string>
+    <string name="buddy_dialog_btn_pick_contacts">בחר אנשי קשר</string>
+    <string name="buddy_dialog_label_manual_entry">- או הזן ידנית -</string>
+    <string name="buddy_dialog_field_name">שם החבר</string>
+    <string name="buddy_dialog_field_phone">מספר טלפון</string>
+    <string name="buddy_dialog_hint_phone">+972...</string>
+    <string name="buddy_dialog_unknown">לא ידוע</string>
+    <string name="buddy_dialog_btn_add_new">הוסף חבר חדש</string>
+    <string name="buddy_dialog_btn_add_select">הוסף ובחר</string>
+
+    <!-- Settings - Accountability -->
+    <string name="settings_buddy_title">חברי אחריות</string>
+    <string name="settings_buddy_empty_state">עדיין לא נוספו חברים. החברים עוזרים לך להישאר מחויב אם אתה ישן דרך השעון.</string>
+    <string name="settings_buddy_status_confirmed">אושר</string>
+    <string name="settings_buddy_status_pending">ממתין להצטרפות</string>
+    <string name="settings_buddy_btn_remove">הסר חבר</string>
+    <string name="buddy_btn_change">החלף חבר</string>
+    <string name="buddy_btn_add">הוסף חבר</string>
+
+    <!-- Settings - System & Tutorial -->
+    <string name="settings_system_title">מערכת והדרכה</string>
+    <string name="settings_onboarding_replay">הפעל שוב הדרכת אפליקציה</string>
+    <string name="settings_onboarding_replay_desc">עבור שוב על מדריך ההתקנה להגדרת הבריפינג והחברים.</string>
+    <string name="settings_about_title">אודות LemurLoop</string>
+
+    <!-- Settings - AI Persona -->
+    <string name="settings_persona_description">אפשר להתאים את הוראות המערכת ל-AI לכל סוג אישיות.</string>
+    <string name="settings_persona_label_coach">הסמל</string>
+    <string name="settings_persona_label_comedian">החבר הסרקסטי</string>
+    <string name="settings_persona_label_zen">מאסטר הזן</string>
+    <string name="settings_persona_label_hypeman">ה-Hype-Man</string>
+
+    <!-- Persona display names (with emoji) and descriptions -->
+    <string name="persona_name_coach">🪖 הסמל</string>
+    <string name="persona_desc_coach">בלי תירוצים. רק תוצאות. קדימה!</string>
+    <string name="persona_name_comedian">🤡 החבר הסרקסטי</string>
+    <string name="persona_desc_comedian">אה, אתה ער. מרשים.</string>
+    <string name="persona_name_zen">🧘 מאסטר הזן</string>
+    <string name="persona_desc_zen">נשום. היום מחכה, במודעות.</string>
+    <string name="persona_name_hypeman">🚀 ה-Hype-Man</string>
+    <string name="persona_desc_hypeman">בואו! אתה יכול!</string>
+    <string name="persona_name_surprise">🎲 הפתעה לי</string>
+    <string name="persona_desc_surprise">אישיות אקראית כל בוקר.</string>
+    <string name="settings_persona_btn_reset">איפוס לברירת מחדל</string>
+
+    <!-- Alarm Detail - Accountability -->
+    <string name="alarm_detail_buddy_clear_content_desc">נקה חבר</string>
+    <string name="alarm_detail_buddy_field_phone_or_type">או הקלד מספר טלפון</string>
+    <string name="alarm_detail_buddy_hint_phone">+972 50 123 4567</string>
+    <string name="alarm_detail_buddy_field_user_name">השם שלך</string>
+    <string name="alarm_detail_buddy_hint_user_name">אלכס</string>
+    <string name="alarm_detail_buddy_field_message">הודעה</string>
+    <string name="alarm_detail_buddy_message_hint">השתמש ב-{name} כממלא מקום לשמך</string>
+    <string name="alarm_detail_buddy_alert_after">התראה אחרי</string>
+    <string name="alarm_detail_buddy_unit_min">%1$d דק׳</string>
+    <string name="alarm_detail_buddy_message_preview">תצוגת הודעה</string>
+    <string name="alarm_detail_buddy_permissions_error">נדרשת הרשאת SMS לשליחה/קבלת הודעות</string>
+    <string name="alarm_detail_buddy_status_confirmed">חבר אושר</string>
+    <string name="alarm_detail_buddy_status_awaiting_code">ממתין לקוד: %1$s</string>
+    <string name="alarm_detail_buddy_status_notify">התרא לחבר</string>
+    <string name="alarm_detail_buddy_desc_confirmed">הם הצטרפו! יקבלו התראה אם תפספס.</string>
+    <string name="alarm_detail_buddy_desc_awaiting_code">ההזמנה נשלחה. בקש מהם לענות עם הקוד.</string>
+    <string name="alarm_detail_buddy_desc_notify">שלח להם הודעת הזמנה כדי שיוכלו להצטרף.</string>
+    <string name="alarm_detail_buddy_btn_resend">שלח שוב</string>
+    <string name="wizard_4_user_name">השם שלך</string>
+    <string name="wizard_4_user_name_hint">משמש בהתראת SMS</string>
+
+    <!-- Vibration -->
+    <string name="vibration_advanced_title">הגדרות מתקדמות רטט</string>
+    <string name="vibration_pattern_label">דפוס קצב</string>
+    <string name="vibration_pattern_basic">פעימה בסיסית</string>
+    <string name="vibration_pattern_pulse">פעימה מהירה</string>
+    <string name="vibration_pattern_heartbeat">דופק</string>
+    <string name="vibration_pattern_staccato">פרצים</string>
+    <string name="vibration_initial_gap_label">הפסקה התחלתית</string>
+    <string name="vibration_initial_gap_unit">%1$d שניות</string>
+
+    <!-- Settings screen -->
+    <string name="settings_screen_title">הגדרות</string>
+
+    <!-- App language -->
+    <string name="settings_language">שפת האפליקציה</string>
+    <string name="settings_language_system">ברירת מחדל של המערכת</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_hebrew">עברית</string>
+
+    <!-- Settings - Search &amp; sections -->
+    <string name="settings_search_hint">חיפוש בהגדרות</string>
+    <string name="settings_section_morning">חוויית בוקר 🌅</string>
+    <string name="settings_section_wakeup">מנוע ההשכמה ⚙️</string>
+    <string name="settings_section_accountability">אחריות 🤝</string>
+    <string name="settings_section_intelligence">אינטליגנציה 💡</string>
+    <string name="settings_section_help_system">עזרה ומערכת ℹ️</string>
+
+    <!-- Settings - System section rows -->
+    <string name="settings_about_version_credits">גרסה %1$s • קרדיטים • משפטי</string>
+    <string name="settings_demo_alarms_title">צור אזעקות הדגמה</string>
+    <string name="settings_demo_alarms_desc">הוסף אזעקות דוגמה עשירות לחקירת LemurLoop. האזעקות הקיימות נשמרות.</string>
+    <string name="settings_privacy_title">מדיניות פרטיות</string>
+    <string name="settings_privacy_desc">הנתונים שלך נשארים במכשיר</string>
+    <string name="settings_diagnostic_title">לוגים אבחוניים</string>
+    <string name="settings_diagnostic_desc">צפה באירועי מערכת ומידע דיבאג</string>
+
+    <!-- Settings - Danger zone -->
+    <string name="settings_danger_zone">אזור סכנה</string>
+    <string name="settings_danger_zone_show">הצג אזור סכנה</string>
+    <string name="settings_danger_zone_hide">הסתר אזור סכנה</string>
+    <string name="settings_danger_zone_desc">מחיקת כל הנתונים היא סופית ולא ניתן לבטל.</string>
+    <string name="settings_wipe_data">מחק את כל נתוני האפליקציה</string>
+
+    <!-- Settings - Demo alarms dialog -->
+    <string name="settings_demo_dialog_title">צור אזעקות הדגמה</string>
+    <string name="settings_demo_dialog_text">נוסיף קבוצה קטנה של אזעקות דוגמה (ימי שבוע, סוף שבוע, חדר כושר והשכמה חכמה). האזעקות הקיימות לא ישתנו, ותוכל לערוך או למחוק את ההדגמות בכל עת.</string>
+
+    <!-- Settings - Intelligence health -->
+    <string name="settings_intelligence_health">בריאות האינטליגנציה 🩺</string>
+    <string name="settings_diagnostic_log_title">לוג אבחון 🔍</string>
+    <string name="settings_briefing_preview_title">הבריפינג שנוצר לאחרונה 📝</string>
+    <string name="settings_briefing_preview">תצוגת בריפינג 📝</string>
+    <string name="settings_reset_brain">איפוס מוח</string>
+    <string name="btn_close">סגור</string>
+    <string name="btn_discard">בטל</string>
+    <string name="btn_keep_editing">המשך לערוך</string>
+    <string name="dialog_discard_title">לבטל שינויים שלא נשמרו?</string>
+    <string name="dialog_discard_message">יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לבטל אותם?</string>
+
+    <!-- Help screen -->
+    <string name="help_screen_title">עזרה ותכונות</string>
+    <string name="help_section_briefing_title">יצירת בריפינג השכמה</string>
+    <string name="help_section_briefing_content">אינטליגנציית LemurLoop מתחילה ליצור את הבריפינג האישי שלך ברגע שהאזעקה מצלצלת. היא אוספת נתוני מזג אוויר, אירועי היומן ועובדה מהנה, ואז משתמשת ב-AI מתקדם לכתוב מחדש בקול הפרסונה שבחרת. עד שתבטל את האזעקה, הבריפינג מוכן! הערה: Cloud AI דורש חיבור אינטרנט יציב.</string>
+    <string name="help_section_evasive_title">שינה מתחמקת</string>
+    <string name="help_section_evasive_content">למי שנרדם תוך כדי נודניק! הפעל כדי שכפתור הנודניק יקפוץ למיקום אקראי אחר במסך בכל לחיצה. זה מאלץ אותך למקד את העיניים ולעקוב אחר הכפתור, ומקשה להמשיך לישון בטעות.</string>
+    <string name="help_section_gentle_title">השכמה עדינה (קרשנדו)</string>
+    <string name="help_section_gentle_content">דרך שלווה להתחיל את היום. במקום צליל חזק פתאומי, השכמה עדינה מתחילה את צליל האזעקה שבחרת ב-0% עוצמה ומגבירה בהדרגה למקסימום במשך כמה דקות. אפשר להתאים את משך העלייה בהגדרות מתקדמות.</string>
+    <string name="help_section_fade_title">דעיכה חלקה</string>
+    <string name="help_section_fade_content">כשתבטל או תנודנק את האזעקה, הצליל לא ייכבה בפתאומיות. LemurLoop מוריד את העוצמה בעדינות במשך שנייה אחת, למעבר חלק מהאזעקה לבריפינג או לשינה נוספת.</string>
+    <string name="help_section_challenges_title">אתגרי מתמטיקה ופנים</string>
+    <string name="help_section_challenges_content">הוכח שאתה ער! אתגרי מתמטיקה דורשים פתרון בעיות ברמת הקושי שבחרת. אתגרי פנים משתמשים במצלמה הקדמית כדי לוודא שאתה עושה הבעות מסוימות. תנועת שרירי הפנים וחישוב מנטלי עוזרים להעיר את המוח.</string>
+    <string name="help_section_smart_title">בדיקת השכמה חכמה (אחריות)</string>
+    <string name="help_section_smart_content">רשת הביטחון האולטימטיבית. כמה דקות אחרי ביטול האזעקה, LemurLoop שולח \'בדיקת דופק\'. אם לא תגיב תוך 60 שניות, המערכת תניח שנרדמת שוב ותפעיל אזעקה משנית חזקה או תשלח הודעה לחבר האחריות שבחרת.</string>
+    <string name="help_section_buddy_title">חבר אחריות</string>
+    <string name="help_section_buddy_content">הוסף חבר מהימן כחבר אחריות. אם לא תגיב לבדיקת השכמה חכמה, החבר יקבל הודעת SMS (בתעריף סטנדרטי) שיידע אותו שאתה תקוע במיטה וצריך השכמה אמיתית!</string>
+
+    <!-- Diagnostic logs screen -->
+    <string name="diagnostic_no_logs">אין עדיין לוגים</string>
+
+    <!-- Settings - Morning Experience (expanded) -->
+    <string name="settings_surprise_me">🎲 הפתעה לי</string>
+    <string name="settings_surprise_me_desc">אישיות אקראית כל בוקר.</string>
+    <string name="settings_companion_personality">דמות המלווה</string>
+    <string name="settings_read_aloud_tts">הקראה בקול (TTS)</string>
+    <string name="settings_briefing_timeout">זמן בריפינג</string>
+    <string name="settings_seconds_value">%1$d ש׳</string>
+    <string name="settings_weather_report">דוח מזג אוויר</string>
+    <string name="settings_calendar_events">אירועי יומן</string>
+    <string name="settings_fun_fact">עובדה מהנה</string>
+    <string name="settings_advanced_customization">התאמה מתקדמת</string>
+    <string name="settings_customize_persona_prompts">התאמת הנחיות דמויות</string>
+    <string name="settings_edit_prompts">עריכת הנחיות</string>
+    <string name="persona_prompt_coach">הסמל. אתה רועם, דורש ומשתמש במונחים צבאיים. כלל נוקשה: אתה מתרגם את הטקסט. אסור לשנות עובדות, שעה או מזג אוויר. אסור להוסיף מידע חדש. אסור לשלב את משפט הטריוויה הסופי עם שאר הטקסט.</string>
+    <string name="persona_prompt_comedian">החבר הסרקסטי. אתה שנון, יבש ומעט אירוני. כלל נוקשה: אתה מתרגם את הטקסט. אסור לשנות עובדות, שעה או מזג אוויר. אסור להוסיף מידע חדש. אסור לשלב את משפט הטריוויה הסופי עם שאר הטקסט.</string>
+    <string name="persona_prompt_zen">מאסטר הזן. אתה רגוע, פואטי ומודע. כלל נוקשה: אתה מתרגם את הטקסט. אסור לשנות עובדות, שעה או מזג אוויר. אסור להוסיף מידע חדש. אסור לשלב את משפט הטריוויה הסופי עם שאר הטקסט.</string>
+    <string name="persona_prompt_hypeman">ה-Hype-Man. אתה אנרגטי מאוד, משתמש באותיות גדולות ומתלהב. כלל נוקשה: אתה מתרגם את הטקסט. אסור לשנות עובדות, שעה או מזג אוויר. אסור להוסיף מידע חדש. אסור לשלב את משפט הטריוויה הסופי עם שאר הטקסט.</string>
+    <string name="settings_aura_report_content">תוכן דוח הבריפינג</string>
+
+    <!-- Settings - Wake-Up Engine (expanded) -->
+    <string name="settings_alarm_creation">יצירת אזעקות</string>
+    <string name="settings_default_alarm_behavior">התנהגות ברירת מחדל</string>
+    <string name="settings_audio_haptics">אודיו ורטט</string>
+    <string name="settings_alarm_sound">צליל אזעקה</string>
+    <string name="settings_sound_source">מקור צליל</string>
+    <string name="settings_vibrate">רטט</string>
+    <string name="settings_gentle_wake">השכמה עדינה</string>
+    <string name="settings_requires_sound_or_vibrate">דורש צליל או רטט</string>
+    <string name="settings_crescendo_duration">משך קרשנדו</string>
+    <string name="settings_crescendo_unit_min">%1$d דק׳</string>
+    <string name="settings_snooze_dismissal">איחור וביטול</string>
+    <string name="settings_snooze_duration">משך איחור</string>
+    <string name="settings_evasive_snooze">איחור מתחמק</string>
+    <string name="settings_movement_threshold">סף תנועה</string>
+    <string name="settings_snoozes_count">%1$d איחורים</string>
+    <string name="settings_math_challenge">אתגר חשבון</string>
+    <string name="settings_advanced_math_options">אפשרויות מתמטיקה מתקדמות</string>
+    <string name="settings_problem_count">מספר בעיות</string>
+    <string name="settings_gradual_difficulty">קושי הדרגתי</string>
+    <string name="settings_face_game">משחק פנים</string>
+    <string name="settings_fallback_method">שיטת גיבוי</string>
+    <string name="settings_day_groups">קבוצות ימים</string>
+    <string name="settings_select_weekend_days">בחר את ימי סוף השבוע</string>
+    <string name="day_sun">א׳</string>
+    <string name="day_mon">ב׳</string>
+    <string name="day_tue">ג׳</string>
+    <string name="day_wed">ד׳</string>
+    <string name="day_thu">ה׳</string>
+    <string name="day_fri">ו׳</string>
+    <string name="day_sat">ש׳</string>
+    <string name="quick_select_weekdays">ימי השבוע</string>
+    <string name="quick_select_weekend">סוף שבוע</string>
+    <string name="quick_select_every_day">כל יום</string>
+
+    <!-- Settings - Intelligence (expanded) -->
+    <string name="settings_use_gemini_briefings">השתמש ב-Gemini לבריפינגים</string>
+    <string name="intel_aura_desc">לדוח האאורה יש מוח AI שכותב את הבריפינג וקול אופציונלי שמבצע אותו. אפשר להפעיל או לכבות כל אחד בנפרד.</string>
+    <string name="intel_briefing_brain_title">מוח הבריפינג (Gemini)</string>
+    <string name="intel_briefing_brain_desc">משתמש ב-Gemini להפוך מזג אוויר, יומן ועובדות לתסריט לפי פרסונה.</string>
+    <string name="intel_quick_gemini_test">בדיקת Gemini מהירה</string>
+    <string name="intel_testing_gemini">בודק Gemini…</string>
+    <string name="intel_last_result">תוצאה אחרונה: %1$s</string>
+    <string name="intel_brain_off_fallback">כשכבוי, LemurLoop משתמש רק בטיוטות המובנות.</string>
+    <string name="intel_cloud_tts_desc">משתמש ב-Google Cloud Text-to-Speech עם המפתח שלך להקריא את הבריפינג בקול דמות עשיר יותר. נסוג לקול המכשיר אם לא זמין.</string>
+    <string name="intel_cloud_tts_network_note">שולח את טקסט הבריפינג ל-Google Cloud לסינתזת אודיו ומשתמש בנתוני רשת (כולל סלולר). אם Cloud TTS נכשל, LemurLoop עובר לקול המכשיר כדי שהאזעקות ימשיכו לעבוד.</string>
+    <string name="intel_cloud_tts_manage_key">נהל את מפתח Cloud TTS בהרשאות API למטה.</string>
+    <string name="intel_add_cloud_tts_key_first">הוסף קודם מפתח Google Cloud TTS API.</string>
+    <string name="intel_preview_persona_voice">האזן לקול הדמות</string>
+    <string name="intel_playing">מתנגן…</string>
+    <string name="intel_keys_explanation">Gemini משתמש במפתח AI Studio למעלה לכתיבת הבריפינג. קולות הענן משתמשים במפתח Google Cloud TTS להפוך את הטקסט לאודיו. שני המפתחות נשארים במכשיר ונשלחים ל-Google רק לבקשות אלה.</string>
+    <string name="settings_persona_voice_cloud_tts">קול דמות (Cloud TTS)</string>
+    <string name="settings_use_cloud_voices">קולות איכות ענן</string>
+    <string name="settings_api_credentials">פרטי גישה ל-API</string>
+    <string name="settings_gemini_api_key">מפתח API של Gemini</string>
+    <string name="settings_test_api_key">בדוק מפתח</string>
+    <string name="settings_testing_cloud_tts">בודק Cloud TTS…</string>
+    <string name="settings_get_key">קבל מפתח</string>
+    <string name="settings_google_cloud_tts_label">מפתח Google Cloud TTS (קול דמות)</string>
+    <string name="settings_google_cloud_tts_hint">מפתח Google Cloud Text-to-Speech API</string>
+    <string name="settings_health_weather">מזג אוויר</string>
+    <string name="settings_health_calendar">יומן</string>
+    <string name="settings_health_ai_brain">מוח AI</string>
+    <string name="settings_health_ai_voice">קול AI</string>
+    <string name="settings_issue_tap_details">בעיה: %1$s… (הקש לפרטים)</string>
+    <string name="settings_toast_brain_wiped">זיכרון המוח נמחק</string>
+    <string name="settings_toast_calendar_required">נדרש גישה ליומן כדי לכלול אירועים בבריפינג</string>
+    <string name="settings_toast_saved">ההגדרות נשמרו בהצלחה</string>
+    <string name="settings_toast_briefing_failed">יצירת הבריפינג נכשלה. בדוק את מפתח ה-API והגדרות ה-AI.</string>
+    <string name="settings_toast_health_failed">בדיקת הבריאות נכשלה. בדוק את מפתח ה-API והגדרות ה-AI.</string>
+    <string name="settings_toast_demo_created">נוצרו %1$d אזעקות הדגמה. אפשר לערוך או למחוק אותן בכל עת.</string>
+    <string name="settings_toast_demo_exist">אזעקות ההדגמה כבר קיימות. לא נוספו אזעקות חדשות.</string>
+
+    <!-- Main &amp; Alarm list -->
+    <string name="loading">טוען…</string>
+    <string name="alarm_list_title">LemurLoop</string>
+    <string name="alarm_list_active">פעיל</string>
+    <string name="alarm_list_inactive">לא פעיל</string>
+    <string name="alarm_list_deleted">נמחק %1$s%2$s</string>
+    <string name="alarm_list_undo">בטל</string>
+    <string name="alarm_list_empty">אין עדיין אזעקות</string>
+    <string name="alarm_default_label">אזעקה</string>
+    <string name="content_desc_help_for">עזרה עבור %1$s</string>
+    <string name="content_desc_settings">הגדרות</string>
+    <string name="settings_search_no_match">אין הגדרות התואמות \"%1$s\"</string>
+    <string name="settings_preview_briefing">תצוגת בריפינג</string>
+    <string name="settings_test_intelligence_health">בדיקת בריאות האינטליגנציה</string>
+    <string name="settings_generating">מייצר…</string>
+    <string name="settings_style_guided_wizard">אשף מודרך</string>
+    <string name="settings_style_simple_setup">הגדרה פשוטה</string>
+    <string name="settings_snooze_disabled">כבוי</string>
+    <string name="settings_snooze_min">%1$d דק׳</string>
+    <string name="settings_sound_default">ברירת מחדל</string>
+    <string name="settings_sound_unknown">לא ידוע</string>
+    <string name="settings_sound_custom">צליל מותאם</string>
+    <string name="wakeup_check_title">אתה ער?</string>
+    <string name="wakeup_check_message">הקש על הכפתור למטה כדי לאשר שאתה ער, אחרת האזעקה תופעל שוב!</string>
+    <string name="wakeup_check_seconds_remaining">שניות נותרו</string>
+    <string name="wakeup_check_btn">אני ער!</string>
+    <string name="dialog_delete_alarm_title">למחוק אזעקה?</string>
+    <string name="dialog_delete_alarm_message">האם אתה בטוח שברצונך למחוק את האזעקה הזו?</string>
+    <string name="btn_delete">מחק</string>
+    <string name="btn_ok">אישור</string>
+
+    <!-- Alarm Detail screen -->
+    <string name="alarm_detail_guided_wizard">אשף מודרך</string>
+    <string name="alarm_detail_label_optional">תווית (אופציונלי)</string>
+    <string name="alarm_detail_select_sound">בחר צליל</string>
+    <string name="alarm_detail_gentle_wake_desc">הגברת עוצמה בהדרגה</string>
+    <string name="alarm_detail_crescendo_duration">משך קרשנדו</string>
+    <string name="alarm_detail_smooth_fade_desc">עמעום הדרגתי בביטול או באיחור</string>
+    <string name="alarm_detail_snooze_label">איחור</string>
+    <string name="alarm_detail_snooze_duration">משך איחור</string>
+    <string name="alarm_detail_evasive_desc">כפתור האיחור קופץ כדי להעיר אותך</string>
+    <string name="alarm_detail_starts_moving_after">מתחיל לזוז אחרי</string>
+    <string name="alarm_detail_math_problems_count">מספר בעיות: %1$d</string>
+    <string name="alarm_detail_gradual_difficulty_desc">מתחיל קל ומתקשה עד לרמה שבחרת</string>
+    <string name="alarm_detail_fallback_math_difficulty">קושי גיבוי בחשבון</string>
+    <string name="alarm_detail_smart_check_desc">דורש תגובה 3 דקות אחרי ביטול</string>
+    <string name="alarm_detail_delay_before_check">עיכוב לפני בדיקה</string>
+    <string name="alarm_detail_response_timeout">זמן המתנה לתגובה</string>
+    <string name="alarm_detail_briefing_title">בריפינג השכמה</string>
+    <string name="alarm_detail_briefing_desc">בריפינג AI אישי כשאתה מתעורר</string>
+    <string name="alarm_detail_tts_desc">הקראת הבריפינג בקול</string>
+    <string name="alarm_detail_btn_save_alarm">שמור אזעקה</string>
+    <string name="alarm_detail_set_time">הגדר שעה</string>
+    <string name="alarm_detail_sms_permission_title">📱 נדרשת הרשאת SMS</string>
+    <string name="alarm_detail_allow_sms">אפשר SMS</string>
+    <string name="alarm_detail_not_now">לא עכשיו</string>
+    <string name="alarm_detail_accountability_buddy">חבר אחריות</string>
+
+    <!-- Alarm Creation Wizard -->
+    <string name="wizard_quick_setup">הגדרה מהירה</string>
+    <string name="wizard_label_placeholder">למשל בוקר עבודה (אופציונלי)</string>
+    <string name="wizard_difficulty">קושי</string>
+    <string name="wizard_difficulty_easy">קל</string>
+    <string name="wizard_difficulty_medium">בינוני</string>
+    <string name="wizard_difficulty_hard">קשה</string>
+    <string name="wizard_math_problems_count">מספר בעיות: %1$d</string>
+
+    <!-- Alarm Activity (ringing) -->
+    <string name="alarm_activity_math_challenge">אתגר חשבון</string>
+    <string name="alarm_activity_submit_answer">שלח תשובה</string>
+    <string name="alarm_activity_dismiss">בטל</string>
+    <string name="alarm_activity_dismiss_time">בטל (%1$s)</string>
+    <string name="alarm_activity_incorrect_try_again">שגוי, נסה שוב</string>
+    <string name="alarm_snoozed_title">האזעקה נדחתה</string>
+    <string name="alarm_snoozed_next_at">אזעקה הבאה ב-%1$s</string>
+
+    <!-- Content descriptions (a11y) -->
+    <string name="content_desc_clear_search">נקה חיפוש</string>
+    <string name="content_desc_selected">נבחר</string>
+    <string name="content_desc_preview_persona">האזן לקול הדמות</string>
+    <string name="content_desc_add_alarm">הוסף אזעקה</string>
+    <string name="content_desc_delete">מחק</string>
+    <string name="content_desc_success">הצלחה</string>
+    <string name="content_desc_share">שתף</string>
+    <string name="content_desc_clear">נקה</string>
+    <string name="content_desc_snoozed">נדחה</string>
+    <string name="content_desc_save_alarm">שמור אזעקה</string>
+    <string name="content_desc_app_logo">לוגו האפליקציה</string>
+    <string name="content_desc_lemur_logo">לוגו LemurLoop</string>
+
+    <!-- Wizard - Wake-up features -->
+    <string name="wizard_daily_briefing">בריפינג יומי</string>
+    <string name="wizard_daily_briefing_desc">סיכום AI של היום שלך</string>
+    <string name="wizard_voice_synthesis">סינתזת קול</string>
+    <string name="wizard_voice_synthesis_desc">שמע את הדמות שלך מדברת</string>
+    <string name="wizard_wake_up_features">תכונות השכמה</string>
+    <string name="wizard_summary_persona">דמות</string>
+    <string name="wizard_summary_volume">עוצמה</string>
+    <string name="wizard_summary_gentle_wake">השכמה עדינה (%1$d דק׳)</string>
+    <string name="wizard_summary_fade_out">עמעום</string>
+    <string name="wizard_summary_smooth">חלק</string>
+    <string name="wizard_summary_snooze">איחור</string>
+    <string name="wizard_summary_off">כבוי</string>
+    <string name="wizard_summary_challenge">אתגר</string>
+    <string name="wizard_summary_smile">חייך לכיבוי</string>
+    <string name="wizard_summary_math">חשבון (%1$s)</string>
+    <string name="wizard_math_med">בינוני</string>
+    <string name="wizard_summary_smart_check">בדיקה חכמה</string>
+    <string name="wizard_summary_enabled">מופעל</string>
+    <string name="wizard_summary_guardian">אחראי</string>
+    <string name="wizard_summary_message">הודעה</string>
+    <string name="wizard_summary_delay">עיכוב</string>
+    <string name="wizard_summary_delay_min">%1$d דק׳</string>
+    <string name="wizard_alarm_label">תווית אזעקה</string>
+    <string name="wizard_repeat_frequency">תדירות חזרה</string>
+    <string name="wizard_ai_wakeup_persona">דמות השכמה ב-AI</string>
+    <string name="wizard_review_label">סיכום ותווית</string>
+    <string name="wizard_once">פעם אחת</string>
+    <string name="wizard_repeats_on_days">חוזר ב-%1$d ימים</string>
+    <string name="wizard_starts_in">מתחיל %1$s</string>
+    <string name="wizard_add_buddy">הוסף חבר אחריות</string>
+    <string name="wizard_buddy_alerted_hint">יקבלו התראה אם לא תתעורר</string>
+    <string name="wizard_wait_seconds">המתן %1$ds</string>
+    <string name="wizard_buddy_sms_hint">לחיצה שולחת הזמנת SMS. החבר צריך לענות עם קוד כדי לאשר שיעזור.</string>
+    <string name="wizard_camera_permission_required">נדרשת הרשאת מצלמה לתכונה זו.</string>
+    <string name="wizard_enable_challenge_for_dynamics">הפעל אתגר למעלה כדי לראות הגדרות דינמיות.</string>
+    <string name="settings_persona_preview_hint">הקש לשמוע דוגמה קצרה בקול הדמות.</string>
+
+    <!-- Alarm Detail - Section titles -->
+    <string name="alarm_detail_section_time">שעה</string>
+    <string name="alarm_detail_section_repeat">חזרה</string>
+    <string name="alarm_detail_section_wakeup">השכמה</string>
+    <string name="alarm_detail_section_dismissal">אתגר ביטול</string>
+    <string name="alarm_detail_section_intelligence">אינטליגנציית LemurLoop</string>
+    <string name="alarm_detail_evasive_help_title">איחור מתחמק</string>
+    <string name="alarm_detail_evasive_help_content">כפתור האיחור יקפוץ באקראי על המסך בכל לחיצה, ויאלץ אותך להתרכז.</string>
+    <string name="alarm_detail_math_help_content">דורש פתרון תרגילי חשבון לפני ביטול האזעקה. אפשר להתאים קושי ומספר בעיות.</string>
+
+    <!-- Help &amp; misc -->
+    <string name="btn_got_it">הבנתי</string>
+    <string name="sleep_tracking_title">מעקב שינה</string>
+    <string name="sleep_tracking_start">התחל מעקב שינה</string>
+    <string name="sleep_tracking_stop">עצור מעקב</string>
+    <string name="smile_fallback_math">השתמש בגיבוי (חשבון)</string>
+    <string name="smile_step_complete">השלב הושלם!</string>
+
+    <!-- Toasts -->
+    <string name="toast_location_weather">נדרשת הרשאת מיקום למזג אוויר בבריפינג</string>
+    <string name="toast_location_auto">נדרשת הרשאת מיקום לזיהוי אוטומטי</string>
+    <string name="toast_all_data_wiped">כל הנתונים נמחקו</string>
+    <string name="toast_sms_failed">SMS אחריות נכשל: %1$s</string>
+
+    <!-- Notifications -->
+    <string name="notification_alarm_title">אזעקה</string>
+    <string name="notification_alarm_tap">הקש לפתוח אזעקה ולבטל</string>
+    <string name="notification_sleep_title">מעקב שינה פעיל</string>
+    <string name="notification_sleep_monitoring">מעקב שינה…</string>
+    <string name="notification_sleep_stop">עצור</string>
+
+    <!-- Face challenge prompts -->
+    <string name="face_prompt_smile">חייך!</string>
+    <string name="face_prompt_biggest_smile">החיוך הכי גדול!</string>
+    <string name="face_prompt_wink_left">קרוץ בעין שמאל!</string>
+    <string name="face_prompt_wink_right">קרוץ בעין ימין!</string>
+    <string name="face_prompt_tilt">הטה את הראש!</string>
+    <string name="face_hint_smile">פתח את הפה למעקב טוב יותר</string>
+    <string name="face_hint_biggest_smile">הראה שיניים! 😄</string>
+    <string name="face_hint_wink_left">סגור רק את השמאלית</string>
+    <string name="face_hint_wink_right">סגור רק את הימנית</string>
+    <string name="face_hint_tilt">הטה מעל 20°</string>
+    <string name="face_sit_up">🛋️ התיישב והחזק את המסך זקוף!</string>
+    <string name="face_hold_it">החזק…</string>
+    <string name="face_position_face">מקם את הפנים בשדה הראייה</string>
+
+    <!-- Time until (relative) -->
+    <string name="time_until_one_time">פעם אחת</string>
+    <string name="time_until_now">עכשיו</string>
+    <string name="time_until_in_d_h">בעוד %1$d ימים %2$d שעות</string>
+    <string name="time_until_in_d">בעוד %1$d ימים</string>
+    <string name="time_until_in_h_m">בעוד %1$d שעות %2$d דק׳</string>
+    <string name="time_until_in_h">בעוד %1$d שעות</string>
+    <string name="time_until_in_m">בעוד %1$d דק׳</string>
+    <string name="wizard_buddy_default_name">חבר</string>
+
+    <!-- Settings search result titles &amp; descriptions -->
+    <string name="search_morning_personality_title">דמות המלווה</string>
+    <string name="search_morning_personality_desc">בחר איך LemurLoop מדבר אליך בבוקר</string>
+    <string name="search_briefing_tts_title">הקראת בריפינג</string>
+    <string name="search_briefing_tts_desc">הפעל טקסט-לדיבור לבריפינג הבוקר</string>
+    <string name="search_briefing_content_title">תוכן דוח הבריפינג</string>
+    <string name="search_briefing_content_desc">מזג אוויר, אירועי יומן ועובדה בבריפינג</string>
+    <string name="search_alarm_creation_style_title">סגנון יצירת אזעקות</string>
+    <string name="search_alarm_creation_style_desc">בחר בין אשף מודרך להגדרה פשוטה</string>
+    <string name="search_alarm_sound_title">צליל אזעקה</string>
+    <string name="search_alarm_sound_desc">בחר צליל ברירת מחדל</string>
+    <string name="search_vibration_title">רטט</string>
+    <string name="search_vibration_desc">הפעל רטט ובחר דפוס</string>
+    <string name="search_gentle_wake_title">השכמה עדינה</string>
+    <string name="search_gentle_wake_desc">התחל בעדינות והגבר בהדרגה</string>
+    <string name="search_snooze_duration_title">משך איחור</string>
+    <string name="search_snooze_duration_desc">כמה זמן נמשך כל איחור</string>
+    <string name="search_math_challenge_title">אתגר חשבון</string>
+    <string name="search_math_challenge_desc">פתור תרגילים כדי לבטל את האזעקה</string>
+    <string name="search_face_game_title">משחק פנים</string>
+    <string name="search_face_game_desc">חייך כדי לבטל את האזעקה</string>
+    <string name="search_weekend_days_title">ימי סוף שבוע</string>
+    <string name="search_weekend_days_desc">בחר אילו ימים נחשבים לסוף שבוע</string>
+    <string name="search_accountability_buddies_title">חברי אחריות</string>
+    <string name="search_accountability_buddies_desc">נהל מי מקבל התראות על ההשכמות שלך</string>
+    <string name="search_cloud_ai_title">שיפור Cloud AI</string>
+    <string name="search_cloud_ai_desc">השתמש ב-Gemini לבריפינגים אישיים</string>
+    <string name="search_gemini_api_key_title">מפתח Gemini API</string>
+    <string name="search_gemini_api_key_desc">נהל את פרטי הגישה ל-API</string>
+    <string name="search_intelligence_health_title">בריאות האינטליגנציה</string>
+    <string name="search_intelligence_health_desc">בדוק את מצב ה-AI, המזג אוויר והיומן</string>
+    <string name="search_about_title">אודות LemurLoop</string>
+    <string name="search_about_desc">גרסה, קרדיטים ומשפטי</string>
+    <string name="search_replay_tutorial_title">הפעל שוב הדרכה</string>
+    <string name="search_replay_tutorial_desc">ראה שוב את אשף ההתקנה</string>
+    <string name="search_demo_alarms_title">צור אזעקות הדגמה</string>
+    <string name="search_demo_alarms_desc">הוסף אזעקות דוגמה לחקירת LemurLoop</string>
+    <string name="search_privacy_policy_title">מדיניות פרטיות</string>
+    <string name="search_privacy_policy_desc">למד איך הנתונים שלך מטופלים</string>
+    <string name="search_diagnostic_logs_title">לוגים אבחוניים</string>
+    <string name="search_diagnostic_logs_desc">צפה באירועי מערכת ומידע דיבאג</string>
+    <string name="search_danger_zone_title">אזור סכנה</string>
+    <string name="search_danger_zone_desc">איפוס או מחיקת נתוני האפליקציה</string>
+</resources>

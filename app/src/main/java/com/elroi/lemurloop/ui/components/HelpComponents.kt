@@ -9,8 +9,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elroi.lemurloop.R
 
 @Composable
 fun SettingHelpIcon(
@@ -22,7 +24,7 @@ fun SettingHelpIcon(
 
     Icon(
         imageVector = Icons.Filled.Info,
-        contentDescription = "Help for $title",
+        contentDescription = stringResource(R.string.content_desc_help_for, title),
         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
         modifier = modifier
             .size(20.dp)
@@ -57,7 +59,7 @@ fun SettingHelpIcon(
             },
             confirmButton = {
                 TextButton(onClick = { showDialog = false }) {
-                    Text("Got it")
+                    Text(stringResource(R.string.btn_got_it))
                 }
             },
             shape = MaterialTheme.shapes.large,

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.LemurLoop" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.LemurLoop" parent="Theme.AppCompat.Light.NoActionBar" />
 
     <style name="Theme.LemurLoop.Starting" parent="Theme.SplashScreen">
         <!-- Background color of the splash screen -->

@@ -27,14 +27,16 @@ fun AboutScreen(
 ) {
     val context = LocalContext.current
     
-    val versionInfo = remember {
+    val (versionLine, builtBy) = remember {
         try {
             val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             val suffix = com.elroi.lemurloop.BuildConfig.VERSION_SUFFIX
             val date = com.elroi.lemurloop.BuildConfig.BUILD_DATE
-            "${pInfo.versionName}$suffix (${androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(pInfo)})\nBuilt on $date"
+            val versionName = "${pInfo.versionName}$suffix"
+            val versionCode = androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(pInfo).toString()
+            Pair(context.getString(R.string.about_version_format, versionName, versionCode, date), context.getString(R.string.about_built_by))
         } catch (e: Exception) {
-            "Unknown"
+            Pair(context.getString(R.string.settings_sound_unknown), context.getString(R.string.about_built_by))
         }
     }
 
@@ -71,7 +73,7 @@ fun AboutScreen(
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     Image(
                         painter = painterResource(id = R.mipmap.ic_launcher_foreground),
-                        contentDescription = "App Logo",
+                        contentDescription = stringResource(R.string.content_desc_app_logo),
                         modifier = Modifier.size(120.dp)
                     )
                 }
@@ -91,7 +93,7 @@ fun AboutScreen(
 
             // Tagline
             Text(
-                text = "Wake up your way. Every morning.",
+                text = stringResource(R.string.about_tagline),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -105,7 +107,7 @@ fun AboutScreen(
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             ) {
                 Text(
-                    text = "Version $versionInfo",
+                    text = versionLine,
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -115,7 +117,7 @@ fun AboutScreen(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Built by LemurLoop",
+                text = builtBy,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )

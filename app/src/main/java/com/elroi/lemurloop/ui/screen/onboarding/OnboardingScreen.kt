@@ -202,7 +202,7 @@ fun OnboardingScreen(
             ) {
                 androidx.compose.foundation.Image(
                     painter = androidx.compose.ui.res.painterResource(id = R.mipmap.ic_launcher_foreground),
-                    contentDescription = "LemurLoop Logo",
+                    contentDescription = stringResource(R.string.content_desc_lemur_logo),
                     modifier = Modifier.size(192.dp)
                 )
             }
@@ -312,7 +312,7 @@ fun OnboardingScreen(
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
                                         Text(
-                                            text = "Core Setup: $grantedCount / $totalCount",
+                                            text = stringResource(R.string.onboarding_core_setup_progress, grantedCount, totalCount),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary,

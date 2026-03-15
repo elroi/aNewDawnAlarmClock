@@ -106,7 +106,7 @@ class AccountabilityManager @Inject constructor(
         } catch (e: Exception) {
             Log.e("AccountabilityManager", "Failed to send SMS", e)
             android.os.Handler(android.os.Looper.getMainLooper()).post {
-                Toast.makeText(context, "Accountability SMS failed: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(com.elroi.lemurloop.R.string.toast_sms_failed, e.message ?: ""), Toast.LENGTH_LONG).show()
             }
         }
     }

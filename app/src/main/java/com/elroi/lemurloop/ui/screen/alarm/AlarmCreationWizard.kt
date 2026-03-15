@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
+import android.util.Log
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.elroi.lemurloop.R
 import com.elroi.lemurloop.domain.model.Alarm
@@ -65,6 +66,15 @@ val personas = listOf(
     Persona("HYPEMAN", "Hype-Man", "🚀"),
     Persona("SURPRISE", "Surprise Me", "🎲")
 )
+
+private fun getPersonaLabelRes(id: String): Int = when (id) {
+    "COACH" -> R.string.settings_persona_label_coach
+    "COMEDIAN" -> R.string.settings_persona_label_comedian
+    "ZEN" -> R.string.settings_persona_label_zen
+    "HYPEMAN" -> R.string.settings_persona_label_hypeman
+    "SURPRISE" -> R.string.settings_surprise_me
+    else -> R.string.settings_persona_label_coach
+}
 
 @VisibleForTesting
 internal fun previousWizardPage(currentPage: Int): Int =
@@ -125,6 +135,7 @@ fun AlarmCreationWizard(
     val confirmedNumbers by viewModel.confirmedBuddyNumbers.collectAsState()
     val pendingCodes by viewModel.pendingBuddyCodes.collectAsState()
     val geminiApiKey by viewModel.geminiApiKey.collectAsState()
+    val defaultBuddyName = stringResource(R.string.wizard_buddy_default_name)
 
     // Sync persona and name with defaults when loaded
     LaunchedEffect(defaultSettings) {
@@ -155,7 +166,7 @@ fun AlarmCreationWizard(
             currentPage++
         } else {
             if (buddyPhone.isNotBlank() && globalBuddies.none { it.endsWith("|$buddyPhone") }) {
-                viewModel.addGlobalBuddy(buddyName.ifBlank { "Buddy" }, buddyPhone)
+                viewModel.addGlobalBuddy(buddyName.ifBlank { defaultBuddyName }, buddyPhone)
             }
             val newAlarm = Alarm(
                 time = selectedTime,
@@ -188,8 +199,13 @@ fun AlarmCreationWizard(
                 vibrationPattern = vibrationPattern,
                 vibrationCrescendoStartGapSeconds = vibrationCrescendoStartGapSeconds
             )
-            viewModel.addAlarm(newAlarm)
-            onFinished()
+            try {
+                viewModel.addAlarm(newAlarm)
+                onFinished()
+            } catch (e: Throwable) {
+                Log.e("AlarmWizard", "Error finishing alarm creation (e.g. Hebrew/RTL)", e)
+                onFinished()
+            }
         }
     }
 
@@ -248,7 +264,7 @@ fun AlarmCreationWizard(
                         onSwitchToSimple()
                     }
                 ) {
-                    Text("Quick Setup", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.wizard_quick_setup), style = MaterialTheme.typography.labelLarge)
                 }
                 TextButton(onClick = { onBack() }) {
                     Text(stringResource(R.string.btn_cancel))
@@ -341,7 +357,7 @@ fun AlarmCreationWizard(
                             onSendInvite = { 
                                 viewModel.sendBuddyOptInRequest(buddyPhone, buddyName, buddyUserName)
                                 if (globalBuddies.none { it.endsWith("|$buddyPhone") }) {
-                                    viewModel.addGlobalBuddy(buddyName.ifBlank { "Buddy" }, buddyPhone)
+                                    viewModel.addGlobalBuddy(buddyName.ifBlank { defaultBuddyName }, buddyPhone)
                                 }
                             }
                         )
@@ -459,7 +475,7 @@ fun TimeAndDayStep(
         Spacer(modifier = Modifier.height(32.dp))
         
         Text(
-            "Repeat Frequency",
+            stringResource(R.string.wizard_repeat_frequency),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.fillMaxWidth(),
@@ -511,7 +527,7 @@ fun WakeUpStyleStep(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         Text(
-            "AI Wake-Up Persona",
+            stringResource(R.string.wizard_ai_wakeup_persona),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
@@ -535,7 +551,7 @@ fun WakeUpStyleStep(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            "Wake-Up Features",
+            stringResource(R.string.wizard_wake_up_features),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
@@ -547,8 +563,8 @@ fun WakeUpStyleStep(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 FeatureToggle(
-                    title = "Daily Briefing",
-                    desc = "AI summary of your day",
+                    title = stringResource(R.string.wizard_daily_briefing),
+                    desc = stringResource(R.string.wizard_daily_briefing_desc),
                     checked = isBriefingEnabled,
                     onCheckedChange = onBriefingEnabledChange,
                     icon = "📻"
@@ -557,8 +573,8 @@ fun WakeUpStyleStep(
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                 
                 FeatureToggle(
-                    title = "Voice Synthesis",
-                    desc = "Hear your persona speak",
+                    title = stringResource(R.string.wizard_voice_synthesis),
+                    desc = stringResource(R.string.wizard_voice_synthesis_desc),
                     checked = isTtsEnabled,
                     onCheckedChange = onTtsEnabledChange,
                     icon = "🗣️",
@@ -568,7 +584,7 @@ fun WakeUpStyleStep(
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                 
                 FeatureToggle(
-                    title = "Alarm Sound",
+                    title = stringResource(R.string.settings_alarm_sound),
                     checked = isSoundEnabled,
                     onCheckedChange = onSoundEnabledChange,
                     icon = "🔔"
@@ -577,7 +593,7 @@ fun WakeUpStyleStep(
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                 
                 FeatureToggle(
-                    title = "Vibration",
+                    title = stringResource(R.string.settings_vibrate),
                     checked = isVibrate,
                     onCheckedChange = onVibrateChange,
                     icon = "📳"
@@ -586,7 +602,7 @@ fun WakeUpStyleStep(
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                 
                 FeatureToggle(
-                    title = "Snooze",
+                    title = stringResource(R.string.alarm_detail_snooze_label),
                     checked = isSnoozeEnabled,
                     onCheckedChange = onSnoozeEnabledChange,
                     icon = "💤"
@@ -829,7 +845,7 @@ fun PersonaCard(
             Text(persona.emoji, fontSize = 32.sp)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                persona.title,
+                stringResource(getPersonaLabelRes(persona.id)),
                 style = MaterialTheme.typography.labelMedium,
                 textAlign = TextAlign.Center,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
@@ -885,9 +901,10 @@ fun FinalSummaryStep(
     isEvasiveSnooze: Boolean,
     isSmartWakeupEnabled: Boolean
 ) {
+    val context = LocalContext.current
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         Text(
-            "Review & Label",
+            stringResource(R.string.wizard_review_label),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
@@ -909,7 +926,7 @@ fun FinalSummaryStep(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            if (selectedDays.isEmpty()) "Once" else "Repeats on ${selectedDays.size} days",
+                            if (selectedDays.isEmpty()) stringResource(R.string.wizard_once) else stringResource(R.string.wizard_repeats_on_days, selectedDays.size),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         
@@ -920,7 +937,7 @@ fun FinalSummaryStep(
                             )
                         }
                         Text(
-                            text = "Starts ${AlarmUtils.formatTimeUntil(nextOccurrence)}",
+                            text = stringResource(R.string.wizard_starts_in, AlarmUtils.formatTimeUntil(context.resources, nextOccurrence)),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold,
@@ -931,17 +948,17 @@ fun FinalSummaryStep(
                 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
                 
-                SummaryRow("Persona", "${persona.emoji} ${persona.title}")
-                if (isGentleWake) SummaryRow("Volume", "🌅 Gentle Wake (${crescendoDurationMinutes}m)")
-                if (isSmoothFadeOut) SummaryRow("Fade-Out", "🔉 Smooth")
-                SummaryRow("Snooze", if (!isSnoozeEnabled) "Off" else "${snoozeDurationMinutes}m${if(isEvasiveSnooze) " 🏃" else ""}")
-                if (smileToDismiss) SummaryRow("Challenge", "😊 Smile to Dismiss")
-                if (mathDifficulty > 0) SummaryRow("Challenge", "🧮 Math (${if(mathDifficulty==1) "Easy" else if(mathDifficulty==2) "Med" else "Hard"})")
-                if (isSmartWakeupEnabled) SummaryRow("Smart Check", "🚨 Enabled")
+                SummaryRow(stringResource(R.string.wizard_summary_persona), "${persona.emoji} ${stringResource(getPersonaLabelRes(persona.id))}")
+                if (isGentleWake) SummaryRow(stringResource(R.string.wizard_summary_volume), "🌅 ${stringResource(R.string.wizard_summary_gentle_wake, crescendoDurationMinutes)}")
+                if (isSmoothFadeOut) SummaryRow(stringResource(R.string.wizard_summary_fade_out), "🔉 ${stringResource(R.string.wizard_summary_smooth)}")
+                SummaryRow(stringResource(R.string.wizard_summary_snooze), if (!isSnoozeEnabled) stringResource(R.string.wizard_summary_off) else "${snoozeDurationMinutes}m${if(isEvasiveSnooze) " 🏃" else ""}")
+                if (smileToDismiss) SummaryRow(stringResource(R.string.wizard_summary_challenge), "😊 ${stringResource(R.string.wizard_summary_smile)}")
+                if (mathDifficulty > 0) SummaryRow(stringResource(R.string.wizard_summary_challenge), "🧮 ${stringResource(R.string.wizard_summary_math, if (mathDifficulty == 1) stringResource(R.string.wizard_difficulty_easy) else if (mathDifficulty == 2) stringResource(R.string.wizard_math_med) else stringResource(R.string.wizard_difficulty_hard))}")
+                if (isSmartWakeupEnabled) SummaryRow(stringResource(R.string.wizard_summary_smart_check), "🚨 ${stringResource(R.string.wizard_summary_enabled)}")
                 if (buddyName.isNotBlank()) {
-                    SummaryRow("Guardian", "👤 $buddyName")
-                    if (buddyMessage.isNotBlank()) SummaryRow("Message", "✉️ \"$buddyMessage\"")
-                    SummaryRow("Delay", "⏱️ $buddyAlertAfterMinutes min")
+                    SummaryRow(stringResource(R.string.wizard_summary_guardian), "👤 $buddyName")
+                    if (buddyMessage.isNotBlank()) SummaryRow(stringResource(R.string.wizard_summary_message), "✉️ \"$buddyMessage\"")
+                    SummaryRow(stringResource(R.string.wizard_summary_delay), "⏱️ ${stringResource(R.string.wizard_summary_delay_min, buddyAlertAfterMinutes)}")
                 }
             }
         }
@@ -949,7 +966,7 @@ fun FinalSummaryStep(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            "Alarm Label",
+            stringResource(R.string.wizard_alarm_label),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
@@ -957,7 +974,7 @@ fun FinalSummaryStep(
         OutlinedTextField(
             value = alarmLabel,
             onValueChange = onLabelChange,
-            placeholder = { Text("e.g. Work Morning (Optional)") },
+            placeholder = { Text(stringResource(R.string.wizard_label_placeholder)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             singleLine = true
@@ -1044,7 +1061,7 @@ fun WakeUpBuddyStep(
                 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        if (buddyName.isNotBlank()) buddyName else "Add Accountability Buddy",
+                        if (buddyName.isNotBlank()) buddyName else stringResource(R.string.wizard_add_buddy),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -1052,7 +1069,7 @@ fun WakeUpBuddyStep(
                         if (isConfirmed) stringResource(R.string.wizard_4_status_confirmed)
                         else if (isPending) stringResource(R.string.wizard_4_status_pending)
                         else if (buddyPhone.isNotBlank()) buddyPhone 
-                        else "They'll be alerted if you don't wake up",
+                        else stringResource(R.string.wizard_buddy_alerted_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = if (isConfirmed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1089,14 +1106,14 @@ fun WakeUpBuddyStep(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (cooldownRemaining > 0) "Wait ${cooldownRemaining}s"
+                    text = if (cooldownRemaining > 0) stringResource(R.string.wizard_wait_seconds, cooldownRemaining)
                            else if (isPending) stringResource(R.string.wizard_4_btn_resend) 
                            else stringResource(R.string.wizard_4_btn_invite)
                 )
             }
             
             Text(
-                "Tapping this sends an SMS invite. Your buddy must reply with a code to confirm they'll help you.",
+                stringResource(R.string.wizard_buddy_sms_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -1218,7 +1235,7 @@ fun WakeUpChallengeStep(
             )
             if (smileToDismiss && !hasCameraPermission) {
                 Text(
-                    "Camera permission is required for this feature.",
+                    stringResource(R.string.wizard_camera_permission_required),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(top = 4.dp)
@@ -1235,7 +1252,7 @@ fun WakeUpChallengeStep(
             onCheckedChange = { if (it) onMathDifficultyChange(1) else onMathDifficultyChange(0) }
         ) {
             Column(modifier = Modifier.padding(top = 16.dp)) {
-                Text("Difficulty", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.wizard_difficulty), style = MaterialTheme.typography.labelMedium)
                 Slider(
                     value = mathDifficulty.toFloat(),
                     onValueChange = { onMathDifficultyChange(it.toInt()) },
@@ -1243,14 +1260,14 @@ fun WakeUpChallengeStep(
                     steps = 1
                 )
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Easy", style = MaterialTheme.typography.labelSmall)
-                    Text("Medium", style = MaterialTheme.typography.labelSmall)
-                    Text("Hard", style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(R.string.wizard_difficulty_easy), style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(R.string.wizard_difficulty_medium), style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(R.string.wizard_difficulty_hard), style = MaterialTheme.typography.labelSmall)
                 }
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                Text("Number of Problems: $mathProblemCount", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.wizard_math_problems_count, mathProblemCount), style = MaterialTheme.typography.labelMedium)
                 Slider(
                     value = mathProblemCount.toFloat(),
                     onValueChange = { onMathProblemCountChange(it.toInt()) },
@@ -1323,7 +1340,7 @@ fun WakeUpChallengeStep(
                 }
             } else {
                 Text(
-                    "Enable a challenge above to see dynamic settings.",
+                    stringResource(R.string.wizard_enable_challenge_for_dynamics),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,

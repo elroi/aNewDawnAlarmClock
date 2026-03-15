@@ -31,6 +31,13 @@ import com.elroi.lemurloop.domain.manager.SettingSearchItem
 import com.elroi.lemurloop.domain.manager.SettingsSearchRegistry
 import com.elroi.lemurloop.domain.manager.searchSettings
 import com.elroi.lemurloop.domain.manager.SettingSearchTarget
+import com.elroi.lemurloop.R
+
+/**
+ * Toast message for UI to show via [android.content.Context.getString].
+ * Use [resId] and [formatArgs] so toasts can be localized.
+ */
+data class ToastMessage(val resId: Int, val formatArgs: Array<out Any> = emptyArray())
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -77,7 +84,7 @@ class SettingsViewModel @Inject constructor(
     private val _draftAiFallbackOrder = MutableStateFlow("CLOUD_THEN_LOCAL")
     val aiFallbackOrder = _draftAiFallbackOrder.asStateFlow()
 
-    private val _message = MutableSharedFlow<String>()
+    private val _message = MutableSharedFlow<ToastMessage>()
     val message = _message.asSharedFlow()
 
     private val _previewBriefingScript = MutableStateFlow<String?>(null)
@@ -177,6 +184,23 @@ class SettingsViewModel @Inject constructor(
 
     val confirmedBuddyNumbers: StateFlow<Set<String>> = settingsManager.confirmedBuddyNumbersFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
+    val appLanguage: StateFlow<String> = settingsManager.appLanguageFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "system")
+
+    fun setAppLanguage(value: String) {
+        viewModelScope.launch {
+            settingsManager.setAppLanguage(value)
+        }
+    }
+
+    /**
+     * Persists the app language and completes only after DataStore has written.
+     * Use this before restarting the activity so attachBaseContext reads the new value.
+     */
+    suspend fun setAppLanguageAndAwait(value: String) {
+        settingsManager.setAppLanguage(value)
+    }
 
     // Original values to detect changes
     private val _originalLocation = MutableStateFlow("")
@@ -547,7 +571,7 @@ class SettingsViewModel @Inject constructor(
                     ttsManager.speak(filteredScript)
                 }
             } else {
-                _message.emit("Briefing generation failed. Please check your API key and AI settings.")
+                _message.emit(ToastMessage(R.string.settings_toast_briefing_failed))
             }
         }
     }
@@ -617,7 +641,7 @@ class SettingsViewModel @Inject constructor(
             _isBriefingGenerating.value = false
             
             if (script.isNullOrBlank()) {
-                _message.emit("Health test failed. Please check your API key and AI settings.")
+                _message.emit(ToastMessage(R.string.settings_toast_health_failed))
             }
         }
     }
@@ -694,7 +718,7 @@ class SettingsViewModel @Inject constructor(
         _originalAiFallbackOrder.value = _draftAiFallbackOrder.value
         _originalAlarmCreationStyle.value = _draftAlarmCreationStyle.value
         
-        _message.emit("Settings saved successfully")
+        _message.emit(ToastMessage(R.string.settings_toast_saved))
     }
 
     private suspend fun fetchAndSaveCurrentLocation(context: android.content.Context) = withContext(Dispatchers.IO) {
@@ -762,12 +786,12 @@ class SettingsViewModel @Inject constructor(
     fun seedDemoAlarms() {
         viewModelScope.launch {
             val inserted = demoAlarmSeeder.seedDemoAlarms()
-            val text = if (inserted > 0) {
-                "Created $inserted demo alarms. You can edit or delete them anytime."
+            val msg = if (inserted > 0) {
+                ToastMessage(R.string.settings_toast_demo_created, arrayOf(inserted))
             } else {
-                "Demo alarms already exist. No new demo alarms were added."
+                ToastMessage(R.string.settings_toast_demo_exist)
             }
-            _message.emit(text)
+            _message.emit(msg)
         }
     }
 

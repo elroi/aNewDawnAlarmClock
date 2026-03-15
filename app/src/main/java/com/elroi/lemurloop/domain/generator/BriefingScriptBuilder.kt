@@ -1,6 +1,7 @@
 package com.elroi.lemurloop.domain.generator
 
 import java.time.LocalTime
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -12,14 +13,16 @@ class BriefingScriptBuilder @Inject constructor() {
         location: String,
         weather: String,
         calendar: String,
-        funFact: String
+        funFact: String,
+        locale: Locale = Locale.getDefault()
     ): String {
-        val greeting = getGreeting(persona)
-        val timeContext = getTimeContext()
-        val weatherIntro = if (weather.isNotBlank()) getWeatherIntro(persona, location, weather) else ""
-        val calendarAdvice = if (calendar.isNotBlank()) getCalendarAdvice(persona, calendar) else ""
-        val factTransition = if (funFact.isNotBlank()) getFactTransition(persona, funFact) else ""
-        val mission = getMission(persona)
+        val hebrew = isHebrew(locale)
+        val greeting = getGreeting(persona, hebrew)
+        val timeContext = getTimeContext(hebrew, locale)
+        val weatherIntro = if (weather.isNotBlank()) getWeatherIntro(persona, location, weather, hebrew) else ""
+        val calendarAdvice = if (calendar.isNotBlank()) getCalendarAdvice(persona, calendar, hebrew) else ""
+        val factTransition = if (funFact.isNotBlank()) getFactTransition(persona, funFact, hebrew) else ""
+        val mission = getMission(persona, hebrew)
 
         val parts = listOf(greeting, timeContext, weatherIntro, calendarAdvice, factTransition, mission)
             .filter { it.isNotBlank() }
@@ -27,10 +30,21 @@ class BriefingScriptBuilder @Inject constructor() {
         return parts.joinToString("\n\n")
     }
 
-    private fun getTimeContext(): String {
+    private fun isHebrew(locale: Locale) = locale.language == "he" || locale.language == "iw"
+
+    private fun getTimeContext(hebrew: Boolean, locale: Locale): String {
         val now = java.time.LocalDateTime.now()
-        val dateStr = now.format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d"))
+        val dateStr = now.format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d", locale))
         val hour = now.hour
+        if (hebrew) {
+            val timeStr = when {
+                hour < 6 -> "עדיין מוקדם מאוד, העולם שקט."
+                hour < 9 -> "הבוקר טרי ומלא הבטחה."
+                hour < 12 -> "היום כבר בעיצומו."
+                else -> "התחלה מאוחרת, אבל יש עוד זמן להשפיע."
+            }
+            return "היום $dateStr. $timeStr"
+        }
         val timeStr = when {
             hour < 6 -> "It's still very early, the world is quiet."
             hour < 9 -> "The morning is fresh and full of promise."
@@ -40,7 +54,8 @@ class BriefingScriptBuilder @Inject constructor() {
         return "Today is $dateStr. $timeStr"
     }
 
-    private fun getGreeting(persona: String): String {
+    private fun getGreeting(persona: String, hebrew: Boolean = false): String {
+        if (hebrew) return getGreetingHe(persona)
         val greetings = when (persona) {
             "COMEDIAN" -> listOf(
                 "Oh look, the human is awake. Truly a miracle of modern science.",
@@ -73,7 +88,41 @@ class BriefingScriptBuilder @Inject constructor() {
         return greetings.random()
     }
 
-    private fun getWeatherIntro(persona: String, location: String, weather: String): String {
+    private fun getGreetingHe(persona: String): String {
+        val greetings = when (persona) {
+            "COMEDIAN" -> listOf(
+                "אה, בן האנוש התעורר. נס של ממש.",
+                "תשומת לב: אדם חשוב ומעט מנומנם חזר לחיים.",
+                "קום והתנער! או סתם קום. הרף נמוך בשעה כזו.",
+                "הודעתי לתקשורת. אתה ער. אל תאכזב."
+            )
+            "ZEN" -> listOf(
+                "השמש זורחת ומסע חדש מתחיל. נשום עמוק.",
+                "שלום עליך. העולם מחכה לנוכחות המודעת שלך.",
+                "התעורר בכוונה. הנח לשקט הבוקר להנחות אותך.",
+                "נשום את היום החדש. אתה בדיוק איפה שצריך."
+            )
+            "HYPEMAN" -> listOf(
+                "בוא ננצח! יום חדש, יעדים חדשים! בום!",
+                "התעורר אלוף! העולם לא מוכן לאנרגיה שלך היום!",
+                "בום! קום ותתחיל! זמן לעשות היסטוריה!",
+                "בוא נכבוש הכל! האגדה התעוררה!"
+            )
+            else -> listOf(
+                "קום והארץ! זמן לכבוש את העולם.",
+                "בוקר טוב! הפוטנציאל שלך בלתי מוגבל היום.",
+                "התעורר אלוף! הניצחון אוהב את מי שזז.",
+                "הדלק מנועים! היום הולך להיות מדהים.",
+                "היי! העולם טוב יותר איתך.",
+                "ער ומוכן! בוא נע�שה את היום משמעותי.",
+                "בוקר טוב! אנרגיה רעננה, הזדמנויות חדשות. קדימה!"
+            )
+        }
+        return greetings.random()
+    }
+
+    private fun getWeatherIntro(persona: String, location: String, weather: String, hebrew: Boolean = false): String {
+        if (hebrew) return getWeatherIntroHe(persona, location, weather)
         val intros = when (persona) {
             "COMEDIAN" -> listOf(
                 "In $location, it's $weather. I'd tell you it's beautiful, but I'm an AI and I don't know what beauty is.",
@@ -99,7 +148,34 @@ class BriefingScriptBuilder @Inject constructor() {
         return intros.random()
     }
 
-    private fun getCalendarAdvice(persona: String, calendar: String): String {
+    private fun getWeatherIntroHe(persona: String, location: String, weather: String): String {
+        val intros = when (persona) {
+            "COMEDIAN" -> listOf(
+                "ב$location יש $weather. יפה? אני בוט, אין לי מושג.",
+                "כרגע ב$location: $weather. או מה שאני קורא לו 'סיבה 42 להישאר במיטה'.",
+                "האטמוספירה ב$location: $weather. תכנן את ה outfit בהתאם."
+            )
+            "ZEN" -> listOf(
+                "האטמוספירה ב$location משקפת $weather. התאם עצמך אליה.",
+                "ב$location השמיים מספרים $weather. כל מזג אוויר הוא מורה.",
+                "היסודות ב$location בשלווה, $weather. צעד בעדינות היום."
+            )
+            "HYPEMAN" -> listOf(
+                "תבדוק את הוויב! ב$location יש $weather! מזג מושלם למנצח!",
+                "וואו! $location מביא $weather היום! נשתמש באנרגיה!",
+                "בום! דוח מזג אוויר: $location — $weather! בלי תירוצים!"
+            )
+            else -> listOf(
+                "כרגע $weather ב$location. התחלה טובה ליום טוב.",
+                "התחזית ל$location: $weather. תנאים מושלמים להצלחה.",
+                "ב$location היום מתחיל עם $weather. בוא ננצל את זה."
+            )
+        }
+        return intros.random()
+    }
+
+    private fun getCalendarAdvice(persona: String, calendar: String, hebrew: Boolean = false): String {
+        if (hebrew) return getCalendarAdviceHe(persona, calendar)
         val isBusy = !calendar.contains("clear") && !calendar.contains("No events")
         val advice = when (persona) {
             "COMEDIAN" -> if (isBusy) {
@@ -158,7 +234,51 @@ class BriefingScriptBuilder @Inject constructor() {
         return advice.random()
     }
 
-    private fun getFactTransition(persona: String, fact: String): String {
+    private fun getCalendarAdviceHe(persona: String, calendar: String): String {
+        val isBusy = !calendar.contains("clear") && !calendar.contains("No events")
+        val advice = when (persona) {
+            "COMEDIAN" -> if (isBusy) listOf(
+                "היומן שלך נראה כמו טטריס ברמה 99. $calendar. נסה לא לבכות.",
+                "יש לך התחייבויות. $calendar. לעבוד יש.",
+                "היומן שופט אותך. $calendar. עדיף להתחיל עם קפה."
+            ) else listOf(
+                "היומן ריק. סוף סוף תוכל להתמקד בעצמך.",
+                "אין פגישות? אני בהלם. תהנה מהחופש.",
+                "יומן ריק. אל תמלא אותו ב-productivity."
+            )
+            "ZEN" -> if (isBusy) listOf(
+                "הדרך מלאה היום. $calendar. זרום כמו מים.",
+                "הרבה הזדמנויות להיות נוכח. $calendar. כל אירוע הוא נשימה.",
+                "היומן מראה פעילות. $calendar. מצא את השקט במרכז."
+            ) else listOf(
+                "היקום נותן מרחב פנוי. השתמש בו למצוא את המרכז.",
+                "יום של שקט ביומן. התבונן בדממה.",
+                "אין דרישות מתוזמנות. תן לאינטואיציה להנחות."
+            )
+            "HYPEMAN" -> if (isBusy) listOf(
+                "היומן מתפוצץ! $calendar. מצב שליטה!",
+                "מלא! $calendar. אתה הולך לשלוט בכל פגישה!",
+                "תסתכל על הלו\"ז! $calendar. ה highlight reel מחכה!"
+            ) else listOf(
+                "קנבס ריק! היום תבנה את האימפריה!",
+                "חופש מוחלט! השתמש ביום לעשות משהו גדול!",
+                "אין פגישות? יותר זמן לניצחון! קדימה!"
+            )
+            else -> if (isBusy) listOf(
+                "הלו\"ז להיום: $calendar. בוא נטפל בזה בריכוז.",
+                "יום פרודוקטיבי לפניך. $calendar. תישאר יעיל.",
+                "אג\'נדה מלאה. $calendar. צעד אחר צעד, תצליח."
+            ) else listOf(
+                "היומן פתוח. הזדמנות להתקדם.",
+                "אין אירועים היום. יום של התקדמות מכוונת.",
+                "לו\"ז פנוי היום. התמקד ביעדים העיקריים."
+            )
+        }
+        return advice.random()
+    }
+
+    private fun getFactTransition(persona: String, fact: String, hebrew: Boolean = false): String {
+        if (hebrew) return getFactTransitionHe(persona, fact)
         val transitions = when (persona) {
             "COMEDIAN" -> listOf(
                 "By the way, did you know? $fact. Knowledge is power, apparently.",
@@ -184,7 +304,34 @@ class BriefingScriptBuilder @Inject constructor() {
         return transitions.random()
     }
 
-    private fun getMission(persona: String): String {
+    private fun getFactTransitionHe(persona: String, fact: String): String {
+        val transitions = when (persona) {
+            "COMEDIAN" -> listOf(
+                "אגב, ידעת? $fact. ידע זה כוח, כנראה.",
+                "הנה עובדה מיותרת למוח: $fact. בבקשה.",
+                "מצאתי את זה בפח של האינטרנט: $fact. נהדר, לא?"
+            )
+            "ZEN" -> listOf(
+                "חתיכת חוכמת עולם: $fact. הכל מחובר.",
+                "במארג החיים, שקול: $fact. פלאים קטנים בכל מקום.",
+                "תצפית מודעת: $fact. הרהר במקום שלה בעולם."
+            )
+            "HYPEMAN" -> listOf(
+                "המוח מתפוצץ! ידעת ש$fact?! מטורף!",
+                "טריוויה מטורפת! $fact. תשתמש בזה להרשים היום!",
+                "תקשיב! $fact. לומדים משהו חדש כל יום בדרך לפסגה!"
+            )
+            else -> listOf(
+                "עובדה מעניינת להיום: $fact. קצת חוכמה לבוקר.",
+                "ידעת? $fact. משהו לחשוב עליו כשמתחילים את היום.",
+                "הטריוויה של הבוקר: $fact. ידע הוא המפתח להצלחה."
+            )
+        }
+        return transitions.random()
+    }
+
+    private fun getMission(persona: String, hebrew: Boolean = false): String {
+        if (hebrew) return getMissionHe(persona)
         val missions = when (persona) {
             "COMEDIAN" -> listOf(
                 "Your mission: Compliment a stranger's shoes. They'll be confused, you'll be amused.",
@@ -209,6 +356,36 @@ class BriefingScriptBuilder @Inject constructor() {
                 "Mission for today: Compliment a colleague or friend. Energy is contagious.",
                 "Today's goal: Learn something new, no matter how small.",
                 "Make today count. You've got this."
+            )
+        }
+        return missions.random()
+    }
+
+    private fun getMissionHe(persona: String): String {
+        val missions = when (persona) {
+            "COMEDIAN" -> listOf(
+                "המשימה: תשבח את הנעליים של זר. הם יהיו מבולבלים, אתה מוקסם.",
+                "משימה להיום: לשתות מים לפני קפה. הגוף יודה לי, המוח ישנא.",
+                "המשימה: לא לבדוק אימייל עד שאכלת. תהיה מורד.",
+                "הוראה אחרונה: נסה לא להיתקל בקירות."
+            )
+            "ZEN" -> listOf(
+                "המשימה: חמש נשימות עמוקות לפני המשימה הראשונה.",
+                "משימה להיום: לחייך לזר. התבונן בגלי החמלה.",
+                "היום: מצא רגע אחד של דממה מוחלטת.",
+                "לך במודעות היום. המסע הוא היעד."
+            )
+            "HYPEMAN" -> listOf(
+                "משימה: HIGH-FIVE למראה! אתה אגדה! קדימה!",
+                "היעד להיום: 10 jumping jacks עכשיו! התעורר!",
+                "המשימה: לרסק את המשימה הכי קשה ראשון! ניצחון!",
+                "בוא ננצח! תעשה את היום הכי טוב בשנה! בום!"
+            )
+            else -> listOf(
+                "המשימה: להציב יעד אחד ברור ולהשיג אותו עד הצהריים.",
+                "משימה להיום: לשבח עמית או חבר. אנרגיה מדבקת.",
+                "היעד להיום: ללמוד משהו חדש, ולו קטן.",
+                "תעשה את היום משמעותי. אתה יכול."
             )
         }
         return missions.random()

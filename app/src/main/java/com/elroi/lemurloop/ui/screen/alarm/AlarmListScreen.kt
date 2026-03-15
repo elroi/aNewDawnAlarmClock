@@ -24,6 +24,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import com.elroi.lemurloop.R
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.elroi.lemurloop.domain.model.Alarm
@@ -64,19 +66,19 @@ fun AlarmListScreen(
     if (alarmToDelete != null) {
         AlertDialog(
             onDismissRequest = { alarmToDelete = null },
-            title = { Text("Delete Alarm?") },
-            text = { Text("Are you sure you want to delete this alarm?") },
+            title = { Text(stringResource(R.string.dialog_delete_alarm_title)) },
+            text = { Text(stringResource(R.string.dialog_delete_alarm_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteAlarm(alarmToDelete!!)
                     alarmToDelete = null
                 }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.btn_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { alarmToDelete = null }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.btn_cancel))
                 }
             }
         )
@@ -88,10 +90,10 @@ fun AlarmListScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("LemurLoop") },
+                title = { Text(stringResource(R.string.alarm_list_title)) },
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.content_desc_settings))
                     }
                 }
             )
@@ -104,7 +106,7 @@ fun AlarmListScreen(
                     onNavigateToDetail(null)
                 }
             }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Alarm")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.content_desc_add_alarm))
             }
         }
     ) { padding ->
@@ -117,7 +119,7 @@ fun AlarmListScreen(
             if (activeAlarms.isNotEmpty()) {
                 item(key = "header_active") {
                     Text(
-                        text = "Active",
+                        text = stringResource(R.string.alarm_list_active),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(top = 8.dp, bottom = 4.dp).animateItem()
@@ -146,10 +148,10 @@ fun AlarmListScreen(
                                         val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
                                         val pattern = if (is24Hour) "HH:mm" else "h:mm a"
                                         val alarmTimeStr = alarm.time.format(DateTimeFormatter.ofPattern(pattern))
-                                        val title = if (!alarm.label.isNullOrBlank()) " (${alarm.label})" else ""
+                                        val titleSuffix = if (!alarm.label.isNullOrBlank()) " (${alarm.label})" else ""
                                         val result = snackbarHostState.showSnackbar(
-                                            message = "Deleted $alarmTimeStr$title",
-                                            actionLabel = "Undo",
+                                            message = context.getString(R.string.alarm_list_deleted, alarmTimeStr, titleSuffix),
+                                            actionLabel = context.getString(R.string.alarm_list_undo),
                                             duration = SnackbarDuration.Short
                                         )
                                         if (result == SnackbarResult.ActionPerformed) {
@@ -175,7 +177,7 @@ fun AlarmListScreen(
                                         .padding(horizontal = 20.dp),
                                     contentAlignment = alignment
                                 ) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onError)
+                                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.content_desc_delete), tint = MaterialTheme.colorScheme.onError)
                                 }
                             },
                             content = {
@@ -195,7 +197,7 @@ fun AlarmListScreen(
             if (inactiveAlarms.isNotEmpty()) {
                 item(key = "header_inactive") {
                     Text(
-                        text = "Inactive",
+                        text = stringResource(R.string.alarm_list_inactive),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
@@ -226,10 +228,10 @@ fun AlarmListScreen(
                                         val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
                                         val pattern = if (is24Hour) "HH:mm" else "h:mm a"
                                         val alarmTimeStr = alarm.time.format(DateTimeFormatter.ofPattern(pattern))
-                                        val title = if (!alarm.label.isNullOrBlank()) " ($alarm.label)" else ""
+                                        val titleSuffix = if (!alarm.label.isNullOrBlank()) " (${alarm.label})" else ""
                                         val result = snackbarHostState.showSnackbar(
-                                            message = "Deleted ${alarmTimeStr}${title}",
-                                            actionLabel = "Undo",
+                                            message = context.getString(R.string.alarm_list_deleted, alarmTimeStr, titleSuffix),
+                                            actionLabel = context.getString(R.string.alarm_list_undo),
                                             duration = SnackbarDuration.Short
                                         )
                                         if (result == SnackbarResult.ActionPerformed) {
@@ -255,7 +257,7 @@ fun AlarmListScreen(
                                         .padding(horizontal = 20.dp),
                                     contentAlignment = alignment
                                 ) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onError)
+                                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.content_desc_delete), tint = MaterialTheme.colorScheme.onError)
                                 }
                             },
                             content = {
@@ -281,7 +283,7 @@ fun AlarmListScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            "No alarms yet",
+                            stringResource(R.string.alarm_list_empty),
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -331,7 +333,7 @@ fun AlarmItem(
                 
                 alarm.label?.let {
                     Text(
-                        text = if (it.isBlank()) "Alarm" else it, 
+                        text = if (it.isBlank()) stringResource(R.string.alarm_default_label) else it, 
                         style = MaterialTheme.typography.bodyLarge,
                         color = if (isDimmed) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) 
                                 else MaterialTheme.colorScheme.onSurfaceVariant
@@ -354,7 +356,7 @@ fun AlarmItem(
                         currentTime.toLocalTime().isAfter(alarm.time)
                     }
                     Text(
-                        text = if (isOneTimePast) "One-time" else AlarmUtils.formatTimeUntil(nextOccurrence, currentTime),
+                        text = if (isOneTimePast) stringResource(R.string.wizard_once) else AlarmUtils.formatTimeUntil(context.resources, nextOccurrence, currentTime),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium

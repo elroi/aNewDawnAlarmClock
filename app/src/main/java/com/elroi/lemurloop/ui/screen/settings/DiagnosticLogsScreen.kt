@@ -21,8 +21,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.elroi.lemurloop.R
 import com.elroi.lemurloop.domain.model.DiagnosticLog
 import com.elroi.lemurloop.ui.viewmodel.DiagnosticLogsViewModel
 import java.text.SimpleDateFormat
@@ -41,10 +43,10 @@ fun DiagnosticLogsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Diagnostic Logs") },
+                title = { Text(stringResource(R.string.settings_diagnostic_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.btn_back))
                     }
                 },
                 actions = {
@@ -57,10 +59,10 @@ fun DiagnosticLogsScreen(
                         val shareIntent = Intent.createChooser(sendIntent, null)
                         context.startActivity(shareIntent)
                     }) {
-                        Icon(Icons.Default.Share, contentDescription = "Share")
+                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.content_desc_share))
                     }
                     IconButton(onClick = { viewModel.clearLogs() }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Clear")
+                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.content_desc_clear))
                     }
                 }
             )
@@ -68,7 +70,7 @@ fun DiagnosticLogsScreen(
     ) { padding ->
         if (logs.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("No logs yet", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.diagnostic_no_logs), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             LazyColumn(

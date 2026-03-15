@@ -13,7 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.elroi.lemurloop.R
 import com.elroi.lemurloop.service.SleepTrackingService
 
 @Composable
@@ -22,7 +24,7 @@ fun SleepTrackingScreen() {
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = "Sleep Tracking", style = MaterialTheme.typography.headlineLarge)
+            Text(text = stringResource(R.string.sleep_tracking_title), style = MaterialTheme.typography.headlineLarge)
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
                 val intent = Intent(context, SleepTrackingService::class.java)
@@ -30,7 +32,7 @@ fun SleepTrackingScreen() {
                     context.startForegroundService(intent)
                 }
             }) {
-                Text("Start Sleep Tracking")
+                Text(stringResource(R.string.sleep_tracking_start))
             }
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
@@ -39,7 +41,7 @@ fun SleepTrackingScreen() {
                 }
                 context.startService(intent)
             }) {
-                Text("Stop Tracking")
+                Text(stringResource(R.string.sleep_tracking_stop))
             }
         }
     }

@@ -18,6 +18,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import android.os.Build
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -195,7 +196,13 @@ class BriefingGenerator @Inject constructor(
         var aiSuccess = false
         var winningTier: String? = null
 
-        val localDraft = scriptBuilder.buildLocalBriefing(persona, location, weatherText, calendarText, funFactText)
+        val locale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            context.resources.configuration.locales.get(0) ?: Locale.getDefault()
+        } else {
+            @Suppress("DEPRECATION")
+            context.resources.configuration.locale
+        }
+        val localDraft = scriptBuilder.buildLocalBriefing(persona, location, weatherText, calendarText, funFactText, locale)
         val personaInstruction = getPersonaInstruction(persona, settings)
         val temperament = getPersonaTemperament(persona)
         // Full prompt for Cloud (Gemini Flash handles large context fine)

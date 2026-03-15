@@ -78,6 +78,7 @@ fun AlarmDetailScreen(
     onSwitchToWizard: () -> Unit,
     viewModel: AlarmViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val defaultSettings by viewModel.defaultAlarmSettings.collectAsState()
     var time           by remember { mutableStateOf<LocalTime>(LocalTime.now()) }
     var label          by remember { mutableStateOf<String>("") }
@@ -106,7 +107,7 @@ fun AlarmDetailScreen(
     var isVibrate      by remember { mutableStateOf<Boolean>(defaultSettings.isVibrate) }
     var isSoundEnabled by remember { mutableStateOf<Boolean>(defaultSettings.isSoundEnabled) }
     var soundUri       by remember { mutableStateOf<String?>(null) }
-    var soundName      by remember { mutableStateOf<String>("Default") }
+    var soundName      by remember { mutableStateOf(context.getString(R.string.settings_sound_default)) }
     var isSmartWakeupEnabled by remember { mutableStateOf<Boolean>(false) }
     var wakeupCheckDelayMinutes by remember { mutableIntStateOf(3) }
     var wakeupCheckTimeoutSeconds by remember { mutableIntStateOf(60) }
@@ -144,7 +145,6 @@ fun AlarmDetailScreen(
 
     // Preview — launches AlarmActivity in preview mode + plays audio
     // When AlarmActivity is dismissed, the MediaPlayer stops automatically
-    val context = LocalContext.current
     var isPreviewPlaying by remember { mutableStateOf(false) }
     var previewPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
     
@@ -170,19 +170,19 @@ fun AlarmDetailScreen(
     if (showDiscardDialog) {
         AlertDialog(
             onDismissRequest = { showDiscardDialog = false },
-            title = { Text("Discard Unsaved Changes?") },
-            text = { Text("You have unsaved changes. Are you sure you want to discard them?") },
+            title = { Text(stringResource(R.string.dialog_discard_title)) },
+            text = { Text(stringResource(R.string.dialog_discard_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showDiscardDialog = false
                     onNavigateUp()
                 }) {
-                    Text("Discard", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.btn_discard), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDiscardDialog = false }) {
-                    Text("Keep Editing")
+                    Text(stringResource(R.string.btn_keep_editing))
                 }
             }
         )
@@ -332,12 +332,12 @@ fun AlarmDetailScreen(
         if (soundUri != null) {
             try {
                 val ringtone = RingtoneManager.getRingtone(context, Uri.parse(soundUri))
-                soundName = ringtone?.getTitle(context) ?: "Unknown"
+                soundName = ringtone?.getTitle(context) ?: context.getString(R.string.settings_sound_unknown)
             } catch (e: Exception) {
-                soundName = "Custom Sound"
+                soundName = context.getString(R.string.settings_sound_custom)
             }
         } else {
-            soundName = "Default"
+            soundName = context.getString(R.string.settings_sound_default)
         }
     }
 
@@ -375,7 +375,7 @@ fun AlarmDetailScreen(
                 title = { Text(if (alarmId.isNullOrBlank()) "New Alarm" else "Edit Alarm") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.btn_back))
                     }
                 },
                 actions = {
@@ -385,14 +385,14 @@ fun AlarmDetailScreen(
                             onSwitchToWizard()
                         }
                     ) {
-                        Text("Guided Wizard", color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(R.string.alarm_detail_guided_wizard), color = MaterialTheme.colorScheme.primary)
                     }
                     if (alarmId != null) {
                         IconButton(onClick = {
                             currentAlarm?.let { viewModel.deleteAlarm(it) }
                             onNavigateUp()
                         }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete")
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.content_desc_delete))
                         }
                     }
                 }
@@ -447,7 +447,7 @@ fun AlarmDetailScreen(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
-                    Icon(Icons.Default.Check, contentDescription = "Save Alarm")
+                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.content_desc_save_alarm))
                 }
             }
         },
@@ -464,7 +464,7 @@ fun AlarmDetailScreen(
 
             // ── ⏰ Time card ─────────────────────────────────────────────
 
-            SectionCard(emoji = "⏰", title = "Time") {
+            SectionCard(emoji = "⏰", title = stringResource(R.string.alarm_detail_section_time)) {
                 // Large time display — tap to open picker
                 val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
                 val pattern = if (is24Hour) "HH:mm" else "hh:mm a"
@@ -516,14 +516,14 @@ fun AlarmDetailScreen(
                 OutlinedTextField(
                     value         = label,
                     onValueChange = { label = it },
-                    label         = { Text("Label (optional)") },
+                    label         = { Text(stringResource(R.string.alarm_detail_label_optional)) },
                     singleLine    = true,
                     modifier      = Modifier.fillMaxWidth()
                 )
             }
 
             // ── 📅 Repeat card ───────────────────────────────────────────
-            SectionCard(emoji = "📅", title = "Repeat") {
+            SectionCard(emoji = "📅", title = stringResource(R.string.alarm_detail_section_repeat)) {
                 ImprovedDaySelector(
                     selectedDays    = daysOfWeek,
                     weekendDays     = weekendDays,
@@ -532,7 +532,7 @@ fun AlarmDetailScreen(
             }
 
             // ── 🔔 Wake-up card ──────────────────────────────────────────
-            SectionCard(emoji = "🔔", title = "Wake-up") {
+            SectionCard(emoji = "🔔", title = stringResource(R.string.alarm_detail_section_wakeup)) {
                 
                 // Sound Toggle
                 Row(
@@ -541,7 +541,7 @@ fun AlarmDetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Alarm Sound", fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.settings_alarm_sound), fontWeight = FontWeight.Medium)
                         Text(if (isSoundEnabled) "Sound is on" else "Sound is off", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(checked = isSoundEnabled, onCheckedChange = { isSoundEnabled = it })
@@ -554,7 +554,7 @@ fun AlarmDetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Vibrate", fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.settings_vibrate), fontWeight = FontWeight.Medium)
                         Text(if (isVibrate) "Haptic feedback enabled" else "Silent wake", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(checked = isVibrate, onCheckedChange = { isVibrate = it })
@@ -579,7 +579,7 @@ fun AlarmDetailScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
-                                Text("Select Sound", fontWeight = FontWeight.Medium)
+                                Text(stringResource(R.string.alarm_detail_select_sound), fontWeight = FontWeight.Medium)
                                 Text(soundName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                             }
                             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -597,8 +597,8 @@ fun AlarmDetailScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Gentle Wake", fontWeight = FontWeight.Medium)
-                                Text("Slowly ramp up intensity", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.settings_gentle_wake), fontWeight = FontWeight.Medium)
+                                Text(stringResource(R.string.alarm_detail_gentle_wake_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Switch(checked = isGentleWake, onCheckedChange = { isGentleWake = it })
                         }
@@ -609,7 +609,7 @@ fun AlarmDetailScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Crescendo duration", style = MaterialTheme.typography.bodyMedium)
+                                    Text(stringResource(R.string.alarm_detail_crescendo_duration), style = MaterialTheme.typography.bodyMedium)
                                     Text(
                                         if (crescendoDuration == 0) "Instant" else "${crescendoDuration} min",
                                         style = MaterialTheme.typography.labelLarge,
@@ -675,8 +675,8 @@ fun AlarmDetailScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Smooth Fade-Out", fontWeight = FontWeight.Medium)
-                                Text("Gradually fade sound on dismiss or snooze", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.wizard_2_smooth_fade), fontWeight = FontWeight.Medium)
+                                Text(stringResource(R.string.alarm_detail_smooth_fade_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Switch(checked = isSmoothFadeOut, onCheckedChange = { isSmoothFadeOut = it })
                         }
@@ -691,7 +691,7 @@ fun AlarmDetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Snooze", fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.alarm_detail_snooze_label), fontWeight = FontWeight.Medium)
                         Text(if (isSnoozeEnabled) "Allowed to rest more" else "No snooze today", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(checked = isSnoozeEnabled, onCheckedChange = { isSnoozeEnabled = it })
@@ -703,7 +703,7 @@ fun AlarmDetailScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Snooze duration", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.alarm_detail_snooze_duration), style = MaterialTheme.typography.bodyMedium)
                             Text(
                                 text     = "$snoozeDuration min",
                                 style    = MaterialTheme.typography.labelLarge,
@@ -731,11 +731,11 @@ fun AlarmDetailScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Evasive Snooze", fontWeight = FontWeight.Medium)
+                                    Text(stringResource(R.string.settings_evasive_snooze), fontWeight = FontWeight.Medium)
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    SettingHelpIcon(title = "Evasive Snooze", content = "The Snooze button will randomly jump around the screen each time you try to press it, forcing you to pay attention.")
+                                    SettingHelpIcon(title = stringResource(R.string.alarm_detail_evasive_help_title), content = stringResource(R.string.alarm_detail_evasive_help_content))
                                 }
-                                Text("Snooze button jumps away to wake you up", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.alarm_detail_evasive_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Switch(checked = isEvasiveSnooze, onCheckedChange = { isEvasiveSnooze = it })
                         }
@@ -746,7 +746,7 @@ fun AlarmDetailScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Starts moving after", style = MaterialTheme.typography.bodyMedium)
+                                    Text(stringResource(R.string.alarm_detail_starts_moving_after), style = MaterialTheme.typography.bodyMedium)
                                     Text(
                                         if (evasiveSnoozesBeforeMoving == 0) "1st snooze" else "${evasiveSnoozesBeforeMoving + 1} snoozes",
                                         style = MaterialTheme.typography.labelLarge,
@@ -766,7 +766,7 @@ fun AlarmDetailScreen(
             }
 
             // ── 🧩 Dismissal challenge card ──────────────────────────────
-            SectionCard(emoji = "🧩", title = "Dismissal challenge") {
+            SectionCard(emoji = "🧩", title = stringResource(R.string.alarm_detail_section_dismissal)) {
 
                 // Math challenge row
                 Row(
@@ -778,7 +778,7 @@ fun AlarmDetailScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(stringResource(R.string.wizard_3_math_title), fontWeight = FontWeight.Medium)
                             Spacer(modifier = Modifier.width(8.dp))
-                            SettingHelpIcon(title = stringResource(R.string.wizard_3_math_title), content = "Requires you to solve math problems before you can dismiss the alarm. You can adjust the difficulty and the number of problems.")
+                            SettingHelpIcon(title = stringResource(R.string.wizard_3_math_title), content = stringResource(R.string.alarm_detail_math_help_content))
                         }
                         Text(stringResource(R.string.wizard_3_math_desc), style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -801,7 +801,7 @@ fun AlarmDetailScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("Number of problems: $mathProblemCount", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.alarm_detail_math_problems_count, mathProblemCount), style = MaterialTheme.typography.bodyMedium)
                         }
                         Slider(
                             value = mathProblemCount.toFloat(),
@@ -811,8 +811,8 @@ fun AlarmDetailScreen(
                         )
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Gradually Increase Difficulty", fontWeight = FontWeight.Medium)
-                                Text("Starts easy and gets harder up to your selected level", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.settings_gradual_difficulty), fontWeight = FontWeight.Medium)
+                                Text(stringResource(R.string.alarm_detail_gradual_difficulty_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Switch(
                                 checked = mathGraduallyIncreaseDifficulty,
@@ -882,7 +882,7 @@ fun AlarmDetailScreen(
                         
                         AnimatedVisibility(visible = smileFallbackMethod == "MATH", enter = expandVertically(), exit = shrinkVertically()) {
                             Column(modifier = Modifier.padding(top = 8.dp)) {
-                                Text("Fallback Math Difficulty", style = MaterialTheme.typography.bodyMedium)
+                                Text(stringResource(R.string.alarm_detail_fallback_math_difficulty), style = MaterialTheme.typography.bodyMedium)
                                 MathDifficultyChips(
                                     difficulty = mathDifficulty,
                                     onSelected = { mathDifficulty = it }
@@ -901,8 +901,8 @@ fun AlarmDetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Smart Wakeup Check", fontWeight = FontWeight.Medium)
-                        Text("Requires a response 3 mins after dismissal", style = MaterialTheme.typography.bodySmall,
+Text(stringResource(R.string.wizard_3_smart_check), fontWeight = FontWeight.Medium)
+                                Text(stringResource(R.string.alarm_detail_smart_check_desc), style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(checked = isSmartWakeupEnabled, onCheckedChange = { isSmartWakeupEnabled = it })
@@ -914,8 +914,8 @@ fun AlarmDetailScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Delay before check", style = MaterialTheme.typography.bodyMedium)
-                            Text("${wakeupCheckDelayMinutes} min", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(R.string.alarm_detail_delay_before_check), style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.settings_crescendo_unit_min, wakeupCheckDelayMinutes), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                         }
                         Slider(
                             value = wakeupCheckDelayMinutes.toFloat(),
@@ -930,8 +930,8 @@ fun AlarmDetailScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Response timeout", style = MaterialTheme.typography.bodyMedium)
-                            Text("${wakeupCheckTimeoutSeconds}s", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(R.string.alarm_detail_response_timeout), style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.settings_seconds_value, wakeupCheckTimeoutSeconds), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                         }
                         Slider(
                             value = wakeupCheckTimeoutSeconds.toFloat(),
@@ -944,7 +944,7 @@ fun AlarmDetailScreen(
             }
 
             // ── 🧠 LemurLoop Intelligence card ──────────────────────────
-            SectionCard(emoji = "🧠", title = "LemurLoop Intelligence") {
+            SectionCard(emoji = "🧠", title = stringResource(R.string.alarm_detail_section_intelligence)) {
                 // Wake-up Briefing (Gen AI element)
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -952,8 +952,8 @@ fun AlarmDetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Wake-up Briefing", fontWeight = FontWeight.Medium)
-                        Text("Personalized AI briefing when you wake up", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+Text(stringResource(R.string.alarm_detail_briefing_title), fontWeight = FontWeight.Medium)
+                                Text(stringResource(R.string.alarm_detail_briefing_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(checked = isBriefingEnabled, onCheckedChange = { enabled -> 
                         if (enabled && isCloudAiEnabled && geminiApiKey.isBlank()) {
@@ -972,16 +972,16 @@ fun AlarmDetailScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Read Aloud (TTS)", fontWeight = FontWeight.Medium)
-                                Text("Speak the briefing out loud", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.settings_read_aloud_tts), fontWeight = FontWeight.Medium)
+                                Text(stringResource(R.string.alarm_detail_tts_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Switch(checked = isTtsEnabled, onCheckedChange = { isTtsEnabled = it })
                         }
                         
                         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Briefing Timeout", style = MaterialTheme.typography.bodySmall)
-                                Text("${briefingTimeoutSeconds}s", color = MaterialTheme.colorScheme.primary)
+                                Text(stringResource(R.string.settings_briefing_timeout), style = MaterialTheme.typography.bodySmall)
+                                Text(stringResource(R.string.settings_seconds_value, briefingTimeoutSeconds), color = MaterialTheme.colorScheme.primary)
                             }
                             Slider(
                                 value = briefingTimeoutSeconds.toFloat(),
@@ -1090,7 +1090,7 @@ fun AlarmDetailScreen(
                     .fillMaxWidth()
                     .height(52.dp)
             ) {
-                Text("Save alarm", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.alarm_detail_btn_save_alarm), fontWeight = FontWeight.SemiBold)
             }
 
             Spacer(Modifier.height(16.dp))
@@ -1103,7 +1103,7 @@ fun AlarmDetailScreen(
     if (showTimePicker && tps != null) {
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
-            title = { Text("Set time") },
+            title = { Text(stringResource(R.string.alarm_detail_set_time)) },
             text = {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     TimePicker(state = tps)
@@ -1113,10 +1113,10 @@ fun AlarmDetailScreen(
                 TextButton(onClick = {
                     time = LocalTime.of(tps.hour, tps.minute)
                     showTimePicker = false
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.btn_ok)) }
             },
             dismissButton = {
-                TextButton(onClick = { showTimePicker = false }) { Text("Cancel") }
+                TextButton(onClick = { showTimePicker = false }) { Text(stringResource(R.string.btn_cancel)) }
             }
         )
     }
@@ -1271,7 +1271,7 @@ fun AccountabilityBuddyContent(
     if (showSmsRationale) {
         AlertDialog(
             onDismissRequest = { showSmsRationale = false },
-            title = { Text("📱 SMS Permission Required") },
+            title = { Text(stringResource(R.string.alarm_detail_sms_permission_title)) },
             text = {
                 Text(
                     "LemurLoop needs to send and receive SMS messages on your behalf to:\n\n" +
@@ -1285,10 +1285,10 @@ fun AccountabilityBuddyContent(
                 TextButton(onClick = {
                     showSmsRationale = false
                     smsPermissionLauncher.launch(smsPermissions.toTypedArray())
-                }) { Text("Allow SMS") }
+                }) { Text(stringResource(R.string.alarm_detail_allow_sms)) }
             },
             dismissButton = {
-                TextButton(onClick = { showSmsRationale = false }) { Text("Not Now") }
+                TextButton(onClick = { showSmsRationale = false }) { Text(stringResource(R.string.alarm_detail_not_now)) }
             }
         )
     }
@@ -1309,7 +1309,7 @@ fun AccountabilityBuddyContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Accountability Buddy", fontWeight = FontWeight.Medium)
+                Text(stringResource(R.string.alarm_detail_accountability_buddy), fontWeight = FontWeight.Medium)
                 Text(
                     if (hasContact && enabled) contactName else "Text someone if you miss this alarm",
                     style = MaterialTheme.typography.bodySmall,

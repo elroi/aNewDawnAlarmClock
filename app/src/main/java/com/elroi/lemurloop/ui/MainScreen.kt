@@ -20,6 +20,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.elroi.lemurloop.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -53,7 +55,7 @@ fun MainScreen(
     if (isOnboardingComplete == null) {
         // Still loading from DataStore, show a simple splash or empty box
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Loading...", style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.loading), style = MaterialTheme.typography.bodyLarge)
         }
         return
     }

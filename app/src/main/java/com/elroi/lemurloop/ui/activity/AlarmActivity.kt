@@ -25,7 +25,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.elroi.lemurloop.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -562,7 +565,7 @@ fun MathChallengeDialog(
         onDismissRequest = { /* Prevent dismiss */ },
         title = { 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Math Challenge", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.alarm_activity_math_challenge), fontWeight = FontWeight.Bold)
                 if (problemCount > 1) {
                     Text("${solvedCount + 1} / $problemCount", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
                 }
@@ -596,7 +599,7 @@ fun MathChallengeDialog(
                 )
                 if (isError) {
                     Text(
-                        "Incorrect, please try again", 
+                        stringResource(R.string.alarm_activity_incorrect_try_again), 
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(top = 4.dp)
@@ -634,7 +637,7 @@ fun MathChallengeDialog(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Submit Answer", modifier = Modifier.padding(vertical = 4.dp), fontSize = 16.sp)
+                Text(stringResource(R.string.alarm_activity_submit_answer), modifier = Modifier.padding(vertical = 4.dp), fontSize = 16.sp)
             }
         },
         dismissButton = null
@@ -865,7 +868,7 @@ fun ChallengeSuccessScreen(
         ) {
             Icon(
                 imageVector = androidx.compose.material.icons.Icons.Filled.CheckCircle,
-                contentDescription = "Success",
+                contentDescription = stringResource(R.string.content_desc_success),
                 modifier = Modifier.size(120.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -1091,11 +1094,11 @@ fun BriefingScreen(
                     ) {
                         Icon(
                             imageVector = androidx.compose.material.icons.Icons.Filled.Close,
-                            contentDescription = "Dismiss",
+                            contentDescription = stringResource(R.string.alarm_activity_dismiss),
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Dismiss")
+                        Text(stringResource(R.string.alarm_activity_dismiss))
                     }
                 }
             }
@@ -1129,7 +1132,7 @@ fun SnoozedScreen(
         ) {
             Icon(
                 imageVector = androidx.compose.material.icons.Icons.Filled.CheckCircle,
-                contentDescription = "Snoozed",
+                contentDescription = stringResource(R.string.content_desc_snoozed),
                 modifier = Modifier.size(120.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -1137,7 +1140,7 @@ fun SnoozedScreen(
             Spacer(modifier = Modifier.height(32.dp))
             
             Text(
-                text = "Alarm Snoozed",
+                text = stringResource(R.string.alarm_snoozed_title),
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
@@ -1146,12 +1149,10 @@ fun SnoozedScreen(
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = run {
-                    val context = androidx.compose.ui.platform.LocalContext.current
-                    val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
-                    val pattern = if (is24Hour) "HH:mm" else "h:mm a"
-                    "Next alarm at ${snoozedUntil.format(DateTimeFormatter.ofPattern(pattern))}"
-                },
+                text = stringResource(
+                    R.string.alarm_snoozed_next_at,
+                    snoozedUntil.format(DateTimeFormatter.ofPattern(if (android.text.format.DateFormat.is24HourFormat(androidx.compose.ui.platform.LocalContext.current)) "HH:mm" else "h:mm a"))
+                ),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1164,7 +1165,7 @@ fun SnoozedScreen(
                 modifier = Modifier.fillMaxWidth().height(64.dp),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
             ) {
-                Text("Dismiss ($timeLeft)", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.alarm_activity_dismiss_time, timeLeft.toString()), fontSize = 24.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

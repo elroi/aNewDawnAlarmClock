@@ -31,12 +31,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.elroi.lemurloop.R
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -263,7 +265,7 @@ fun SmileDismissScreen(
             if (!isPhoneUpright) {
                 // "Sit up!" banner — phone is lying flat
                 Text(
-                    text      = "🛋️ Sit up and hold the screen upright!",
+                    text      = stringResource(R.string.face_sit_up),
                     color     = Color(0xFFFF9800),
                     fontSize  = 24.sp,
                     fontWeight = FontWeight.Bold,
@@ -271,7 +273,7 @@ fun SmileDismissScreen(
                 )
             } else {
                 Text(
-                    text  = if (isHolding) "Hold it…" else "Position your face in view",
+                    text  = if (isHolding) stringResource(R.string.face_hold_it) else stringResource(R.string.face_position_face),
                     color = if (isHolding) ringColor else Color.White.copy(alpha = 0.7f),
                     fontSize = 22.sp,
                     fontWeight = if (isHolding) FontWeight.Bold else FontWeight.Normal,
@@ -285,7 +287,7 @@ fun SmileDismissScreen(
                     onClick = onFallbackTriggered,
                     modifier = Modifier.padding(top = 16.dp)
                 ) {
-                    Text("Use Fallback (Math)", color = Color.White.copy(alpha = 0.8f))
+                    Text(stringResource(R.string.smile_fallback_math), color = Color.White.copy(alpha = 0.8f))
                 }
             } else {
                 Spacer(modifier = Modifier.height(48.dp)) // Maintain spacing
@@ -307,13 +309,13 @@ fun SmileDismissScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     androidx.compose.material3.Icon(
                         imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Success",
+                        contentDescription = stringResource(R.string.content_desc_success),
                         tint = Color(0xFF4CAF50),
                         modifier = Modifier.size(120.dp)
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        text = "Step Complete!",
+                        text = stringResource(R.string.smile_step_complete),
                         color = Color.White,
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Bold
@@ -424,7 +426,13 @@ private fun ChallengeCard(
         ) { ch ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text       = ch.title,
+                    text       = when (ch) {
+                        FaceChallenge.Smile -> stringResource(R.string.face_prompt_smile)
+                        FaceChallenge.BigSmile -> stringResource(R.string.face_prompt_biggest_smile)
+                        FaceChallenge.WinkLeft -> stringResource(R.string.face_prompt_wink_left)
+                        FaceChallenge.WinkRight -> stringResource(R.string.face_prompt_wink_right)
+                        FaceChallenge.TiltHead -> stringResource(R.string.face_prompt_tilt)
+                    },
                     color      = Color.White,
                     fontSize   = 32.sp,
                     fontWeight = FontWeight.Bold,
@@ -432,7 +440,13 @@ private fun ChallengeCard(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text      = ch.hint,
+                    text      = when (ch) {
+                        FaceChallenge.Smile -> stringResource(R.string.face_hint_smile)
+                        FaceChallenge.BigSmile -> stringResource(R.string.face_hint_biggest_smile)
+                        FaceChallenge.WinkLeft -> stringResource(R.string.face_hint_wink_left)
+                        FaceChallenge.WinkRight -> stringResource(R.string.face_hint_wink_right)
+                        FaceChallenge.TiltHead -> stringResource(R.string.face_hint_tilt)
+                    },
                     color     = Color.White.copy(alpha = 0.75f),
                     fontSize  = 15.sp,
                     textAlign = TextAlign.Center

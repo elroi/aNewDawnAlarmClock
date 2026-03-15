@@ -9,9 +9,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elroi.lemurloop.R
 
 @Composable
 fun ImprovedDaySelector(
@@ -22,8 +24,13 @@ fun ImprovedDaySelector(
     // ISO 8601 indexing to match AndroidAlarmScheduler: Mon=1 … Sat=6, Sun=7
     data class Day(val isoIndex: Int, val label: String)
     val days = listOf(
-        Day(7, "Su"), Day(1, "Mo"), Day(2, "Tu"), Day(3, "We"),
-        Day(4, "Th"), Day(5, "Fr"), Day(6, "Sa")
+        Day(7, stringResource(R.string.day_sun)),
+        Day(1, stringResource(R.string.day_mon)),
+        Day(2, stringResource(R.string.day_tue)),
+        Day(3, stringResource(R.string.day_wed)),
+        Day(4, stringResource(R.string.day_thu)),
+        Day(5, stringResource(R.string.day_fri)),
+        Day(6, stringResource(R.string.day_sat))
     )
     val everyday = listOf(1, 2, 3, 4, 5, 6, 7)
     val weekend  = everyday.filter { weekendDays.contains(it) }.sorted()
@@ -33,9 +40,9 @@ fun ImprovedDaySelector(
         // Quick-select row
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
             listOf(
-                "Weekdays"  to weekdays,
-                "Weekend"   to weekend,
-                "Every day" to everyday
+                stringResource(R.string.quick_select_weekdays) to weekdays,
+                stringResource(R.string.quick_select_weekend) to weekend,
+                stringResource(R.string.quick_select_every_day) to everyday
             ).forEach { (label, target) ->
                 val isActive = selectedDays.sorted() == target.sorted()
                 Surface(

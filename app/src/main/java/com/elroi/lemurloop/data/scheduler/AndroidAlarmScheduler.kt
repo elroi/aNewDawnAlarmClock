@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import com.elroi.lemurloop.domain.model.Alarm
 import com.elroi.lemurloop.domain.scheduler.AlarmScheduler
 import com.elroi.lemurloop.receiver.AlarmReceiver
@@ -78,13 +79,19 @@ class AndroidAlarmScheduler(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // For an alarm clock app, setAlarmClock is the ONLY way to guarantee the device
-        // wakes up from deep Doze mode at the exact minute. 
-        val alarmClockInfo = AlarmManager.AlarmClockInfo(
-            alarmTime.atZone(ZoneId.systemDefault()).toEpochSecond() * 1000,
-            pendingIntent 
-        )
-        alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+        val triggerAtMillis = alarmTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+        // For an alarm clock app, setAlarmClock is the preferred way to guarantee the device
+        // wakes from Doze at the exact minute and shows the alarm in status bar.
+        // If we don't have exact alarm permission (e.g. user denied on Android 12+), fall back
+        // to setAndAllowWhileIdle so we don't crash; the alarm still fires but may be inexact.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+            alarmManager.canScheduleExactAlarms()) {
+            val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerAtMillis, pendingIntent)
+            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+        } else {
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+        }
         
         // Schedule AI Briefing pre-generation 30 minutes before the alarm
         if (alarm.isBriefingEnabled) {

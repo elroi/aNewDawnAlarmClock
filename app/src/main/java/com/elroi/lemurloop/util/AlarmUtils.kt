@@ -1,5 +1,7 @@
 package com.elroi.lemurloop.util
 
+import android.content.res.Resources
+import com.elroi.lemurloop.R
 import com.elroi.lemurloop.domain.model.Alarm
 import java.time.Duration
 import java.time.LocalDateTime
@@ -47,32 +49,45 @@ object AlarmUtils {
     }
 
     fun formatTimeUntil(target: LocalDateTime?, now: LocalDateTime = LocalDateTime.now()): String {
-        if (target == null) return "One-time"
-        
-        // Truncate both to minutes to handle the "off by 1 min" truncation issue
+        return formatTimeUntil(null, target, now)
+    }
+
+    /**
+     * Localized relative time (e.g. "in 2h 30m", "now", "One-time").
+     * When [resources] is null, returns English.
+     */
+    fun formatTimeUntil(resources: Resources?, target: LocalDateTime?, now: LocalDateTime = LocalDateTime.now()): String {
+        if (target == null) {
+            return resources?.getString(R.string.time_until_one_time) ?: "One-time"
+        }
         val nowTruncated = now.truncatedTo(ChronoUnit.MINUTES)
         val targetTruncated = target.truncatedTo(ChronoUnit.MINUTES)
-        
         val duration = Duration.between(nowTruncated, targetTruncated)
         val totalMinutes = duration.toMinutes()
-        
-        if (totalMinutes <= 0) return "now"
-        
-        val days = duration.toDays()
-        val hours = duration.toHours() % 24
-        val minutes = duration.toMinutes() % 60
-        
-        return buildString {
-            append("in ")
-            if (days > 0) {
-                append("${days}d ")
-                if (hours > 0) append("${hours}h")
-            } else if (hours > 0) {
-                append("${hours}h ")
-                if (minutes > 0) append("${minutes}m")
-            } else {
-                append("${minutes}m")
-            }
-        }.trim()
+        if (totalMinutes <= 0) {
+            return resources?.getString(R.string.time_until_now) ?: "now"
+        }
+        val days = duration.toDays().toInt()
+        val hours = (duration.toHours() % 24).toInt()
+        val minutes = (duration.toMinutes() % 60).toInt()
+        return when {
+            resources == null -> buildString {
+                append("in ")
+                if (days > 0) {
+                    append("${days}d ")
+                    if (hours > 0) append("${hours}h")
+                } else if (hours > 0) {
+                    append("${hours}h ")
+                    if (minutes > 0) append("${minutes}m")
+                } else {
+                    append("${minutes}m")
+                }
+            }.trim()
+            days > 0 && hours > 0 -> resources.getString(R.string.time_until_in_d_h, days, hours)
+            days > 0 -> resources.getString(R.string.time_until_in_d, days)
+            hours > 0 && minutes > 0 -> resources.getString(R.string.time_until_in_h_m, hours, minutes)
+            hours > 0 -> resources.getString(R.string.time_until_in_h, hours)
+            else -> resources.getString(R.string.time_until_in_m, minutes)
+        }
     }
 }

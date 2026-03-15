@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.elroi.lemurloop.util.debugLog
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -14,6 +15,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.elroi.lemurloop.R
 
 data class PersonaTemperament(
     val styleRules: String,
@@ -270,6 +272,8 @@ class SettingsManager @Inject constructor(
         val DEFAULT_VIBRATION_START_GAP = intPreferencesKey("default_vibration_start_gap")
         val CLOUD_TTS_API_KEY = stringPreferencesKey("cloud_tts_api_key")
         val IS_CLOUD_TTS_ENABLED = booleanPreferencesKey("is_cloud_tts_enabled")
+        /** App language override: "system", "en", or "he". */
+        val APP_LANGUAGE = stringPreferencesKey("app_language")
     }
 
     val locationFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -314,6 +318,22 @@ class SettingsManager @Inject constructor(
 
     val alarmCreationStyleFlow: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[ALARM_CREATION_STYLE] ?: "WIZARD"
+    }
+
+    val appLanguageFlow: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[APP_LANGUAGE] ?: "system"
+    }
+
+    suspend fun setAppLanguage(value: String) {
+        // #region agent log
+        debugLog(context, "A", "setAppLanguage called", mapOf("value" to value))
+        // #endregion
+        context.dataStore.edit { settings ->
+            settings[APP_LANGUAGE] = value
+        }
+        // #region agent log
+        debugLog(context, "A", "setAppLanguage write done", mapOf("value" to value))
+        // #endregion
     }
 
     suspend fun saveLocation(location: String) {
@@ -447,10 +467,10 @@ class SettingsManager @Inject constructor(
             defaultSoundUri = preferences[DEFAULT_SOUND_URI],
             aiPersona = preferences[AI_PERSONA] ?: "COACH",
             aiPersonaSurprise = preferences[AI_PERSONA_SURPRISE] ?: false,
-            promptCoach = preferences[PROMPT_COACH] ?: "The Drill Sergeant. You are loud, demanding, and use military terms. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
-            promptComedian = preferences[PROMPT_COMEDIAN] ?: "The Sarcastic Best Friend. You are witty, dry, and slightly ironic. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
-            promptZen = preferences[PROMPT_ZEN] ?: "The Zen Master. You are calm, poetic, and mindful. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
-            promptHypeman = preferences[PROMPT_HYPEMAN] ?: "The Hype-Man. You are extremely energetic, use caps, and over-the-top excited. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.",
+            promptCoach = preferences[PROMPT_COACH] ?: context.getString(R.string.persona_prompt_coach),
+            promptComedian = preferences[PROMPT_COMEDIAN] ?: context.getString(R.string.persona_prompt_comedian),
+            promptZen = preferences[PROMPT_ZEN] ?: context.getString(R.string.persona_prompt_zen),
+            promptHypeman = preferences[PROMPT_HYPEMAN] ?: context.getString(R.string.persona_prompt_hypeman),
             isSmartWakeupEnabled = preferences[DEFAULT_IS_SMART_WAKEUP] ?: false,
             wakeupCheckDelayMinutes = preferences[DEFAULT_WAKEUP_CHECK_DELAY] ?: 3,
             wakeupCheckTimeoutSeconds = preferences[DEFAULT_WAKEUP_CHECK_TIMEOUT] ?: 60,

@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.res.painterResource
 import android.Manifest
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color as AndroidColor
@@ -42,6 +43,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.foundation.shape.CircleShape
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.animation.AnimatedVisibility
@@ -56,8 +59,10 @@ import androidx.compose.foundation.background
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -66,8 +71,70 @@ import com.elroi.lemurloop.ui.screen.alarm.MathDifficultyChips
 import com.elroi.lemurloop.ui.components.BuddySelectionDialog
 import com.elroi.lemurloop.ui.components.SettingHelpIcon
 import com.elroi.lemurloop.ui.components.VibrationPatternGallery
+import com.elroi.lemurloop.util.debugLog
 import com.elroi.lemurloop.ui.viewmodel.SettingsViewModel
 import com.elroi.lemurloop.ui.viewmodel.SettingsUiEvent
+import com.elroi.lemurloop.ui.viewmodel.ToastMessage
+import com.elroi.lemurloop.domain.manager.SettingSearchItem
+
+private fun getSearchItemTitleRes(id: String): Int = when (id) {
+    "morning_personality" -> R.string.search_morning_personality_title
+    "briefing_tts" -> R.string.search_briefing_tts_title
+    "briefing_content" -> R.string.search_briefing_content_title
+    "alarm_creation_style" -> R.string.search_alarm_creation_style_title
+    "alarm_sound" -> R.string.search_alarm_sound_title
+    "vibration" -> R.string.search_vibration_title
+    "gentle_wake" -> R.string.search_gentle_wake_title
+    "snooze_duration" -> R.string.search_snooze_duration_title
+    "math_challenge" -> R.string.search_math_challenge_title
+    "face_game" -> R.string.search_face_game_title
+    "weekend_days" -> R.string.search_weekend_days_title
+    "accountability_buddies" -> R.string.search_accountability_buddies_title
+    "cloud_ai" -> R.string.search_cloud_ai_title
+    "gemini_api_key" -> R.string.search_gemini_api_key_title
+    "intelligence_health" -> R.string.search_intelligence_health_title
+    "about" -> R.string.search_about_title
+    "replay_tutorial" -> R.string.search_replay_tutorial_title
+    "demo_alarms" -> R.string.search_demo_alarms_title
+    "privacy_policy" -> R.string.search_privacy_policy_title
+    "diagnostic_logs" -> R.string.search_diagnostic_logs_title
+    "danger_zone" -> R.string.search_danger_zone_title
+    else -> R.string.settings_screen_title
+}
+
+private fun getSearchItemDescRes(id: String): Int = when (id) {
+    "morning_personality" -> R.string.search_morning_personality_desc
+    "briefing_tts" -> R.string.search_briefing_tts_desc
+    "briefing_content" -> R.string.search_briefing_content_desc
+    "alarm_creation_style" -> R.string.search_alarm_creation_style_desc
+    "alarm_sound" -> R.string.search_alarm_sound_desc
+    "vibration" -> R.string.search_vibration_desc
+    "gentle_wake" -> R.string.search_gentle_wake_desc
+    "snooze_duration" -> R.string.search_snooze_duration_desc
+    "math_challenge" -> R.string.search_math_challenge_desc
+    "face_game" -> R.string.search_face_game_desc
+    "weekend_days" -> R.string.search_weekend_days_desc
+    "accountability_buddies" -> R.string.search_accountability_buddies_desc
+    "cloud_ai" -> R.string.search_cloud_ai_desc
+    "gemini_api_key" -> R.string.search_gemini_api_key_desc
+    "intelligence_health" -> R.string.search_intelligence_health_desc
+    "about" -> R.string.search_about_desc
+    "replay_tutorial" -> R.string.search_replay_tutorial_desc
+    "demo_alarms" -> R.string.search_demo_alarms_desc
+    "privacy_policy" -> R.string.search_privacy_policy_desc
+    "diagnostic_logs" -> R.string.search_diagnostic_logs_desc
+    "danger_zone" -> R.string.search_danger_zone_desc
+    else -> R.string.settings_search_hint
+}
+
+private fun getSearchSectionRes(section: String): Int = when (section) {
+    "Morning Experience" -> R.string.settings_section_morning
+    "Wake-Up Engine" -> R.string.settings_section_wakeup
+    "Accountability" -> R.string.settings_section_accountability
+    "Intelligence" -> R.string.settings_section_intelligence
+    "Help & System" -> R.string.settings_section_help_system
+    else -> R.string.settings_screen_title
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,12 +152,13 @@ fun SettingsScreen(
     val alarmDefaults by viewModel.alarmDefaults.collectAsState()
     val hasChanges by viewModel.hasChanges.collectAsState()
     val expandedSections by viewModel.expandedSections.collectAsState()
+    val appLanguage by viewModel.appLanguage.collectAsState()
     val isBriefingGenerating by viewModel.isBriefingGenerating.collectAsState()
     val generatingProgress by viewModel.generatingProgress.collectAsState()
     val previewBriefingScript by viewModel.previewBriefingScript.collectAsState()
     var showDiscardDialog by remember { mutableStateOf(false) }
-    var defaultSoundName by remember { mutableStateOf("Default") }
     val context = LocalContext.current
+    var defaultSoundName by remember { mutableStateOf(context.getString(R.string.settings_sound_default)) }
     var showAdvancedExperience by remember { mutableStateOf(false) }
     var showAdvancedMath by remember { mutableStateOf(false) }
     var showEditPrompts by remember { mutableStateOf(false) }
@@ -101,7 +169,7 @@ fun SettingsScreen(
             val suffix = com.elroi.lemurloop.BuildConfig.VERSION_SUFFIX
             "${pInfo.versionName}$suffix"
         } catch (e: Exception) {
-            "Unknown"
+            context.getString(R.string.settings_sound_unknown)
         }
     }
 
@@ -118,10 +186,10 @@ fun SettingsScreen(
             } else {
                 viewModel.updateIsAutoLocation(false)
                 if (pendingWeatherEnable) {
-                    android.widget.Toast.makeText(context, "Location permission is required for weather in your briefing", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(context, context.getString(R.string.toast_location_weather), android.widget.Toast.LENGTH_SHORT).show()
                     pendingWeatherEnable = false
                 } else {
-                    android.widget.Toast.makeText(context, "Location permission is required for auto-detect", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(context, context.getString(R.string.toast_location_auto), android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -132,7 +200,7 @@ fun SettingsScreen(
             if (isGranted) {
                 viewModel.enableBriefingIncludeCalendar()
             } else {
-                android.widget.Toast.makeText(context, "Calendar access is required to include events in your briefing", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, context.getString(R.string.settings_toast_calendar_required), android.widget.Toast.LENGTH_SHORT).show()
             }
         }
     )
@@ -152,7 +220,8 @@ fun SettingsScreen(
 
     LaunchedEffect(Unit) {
         viewModel.message.collect { msg ->
-            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+            val text = context.getString(msg.resId, *msg.formatArgs)
+            android.widget.Toast.makeText(context, text, android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -167,12 +236,12 @@ fun SettingsScreen(
         if (alarmDefaults.defaultSoundUri != null) {
             try {
                 val ringtone = RingtoneManager.getRingtone(context, Uri.parse(alarmDefaults.defaultSoundUri))
-                defaultSoundName = ringtone?.getTitle(context) ?: "Unknown"
+                defaultSoundName = ringtone?.getTitle(context) ?: context.getString(R.string.settings_sound_unknown)
             } catch (e: Exception) {
-                defaultSoundName = "Custom Sound"
+                defaultSoundName = context.getString(R.string.settings_sound_custom)
             }
         } else {
-            defaultSoundName = "Default"
+            defaultSoundName = context.getString(R.string.settings_sound_default)
         }
     }
 
@@ -183,19 +252,19 @@ fun SettingsScreen(
     if (showDiscardDialog) {
         AlertDialog(
             onDismissRequest = { showDiscardDialog = false },
-            title = { Text("Discard Unsaved Changes?") },
-            text = { Text("You have unsaved changes. Are you sure you want to discard them?") },
+            title = { Text(stringResource(R.string.dialog_discard_title)) },
+            text = { Text(stringResource(R.string.dialog_discard_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showDiscardDialog = false
                     onNavigateUp()
                 }) {
-                    Text("Discard", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.btn_discard), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDiscardDialog = false }) {
-                    Text("Keep Editing")
+                    Text(stringResource(R.string.btn_keep_editing))
                 }
             }
         )
@@ -203,12 +272,12 @@ fun SettingsScreen(
 
     val onWipeBrainMemory = {
         viewModel.wipeBrainMemory()
-        android.widget.Toast.makeText(context, "Brain memory wiped", android.widget.Toast.LENGTH_SHORT).show()
+        android.widget.Toast.makeText(context, context.getString(R.string.settings_toast_brain_wiped), android.widget.Toast.LENGTH_SHORT).show()
     }
 
     val onWipeAllData = {
         viewModel.wipeAllData()
-        android.widget.Toast.makeText(context, "All data wiped", android.widget.Toast.LENGTH_SHORT).show()
+        android.widget.Toast.makeText(context, context.getString(R.string.toast_all_data_wiped), android.widget.Toast.LENGTH_SHORT).show()
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -233,7 +302,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings_screen_title)) },
                 navigationIcon = {
                     IconButton(onClick = {
                         if (hasChanges) {
@@ -242,18 +311,18 @@ fun SettingsScreen(
                             onNavigateUp()
                         }
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.btn_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = onNavigateToHelp) {
-                        Icon(Icons.Default.Info, contentDescription = "Help")
+                        Icon(Icons.Default.Info, contentDescription = stringResource(R.string.help_screen_title))
                     }
                     TextButton(onClick = {
                         viewModel.saveSettings()
                         onNavigateUp()
                     }) {
-                        Text("SAVE", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.btn_save), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     }
                 }
             )
@@ -298,12 +367,12 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                label = { Text("Search settings") },
+                label = { Text(stringResource(R.string.settings_search_hint)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
                     if (searchQuery.isNotBlank()) {
                         IconButton(onClick = { viewModel.clearSearch() }) {
-                            Icon(Icons.Default.Close, contentDescription = "Clear search")
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.content_desc_clear_search))
                         }
                     }
                 },
@@ -313,7 +382,7 @@ fun SettingsScreen(
             if (isSearching) {
                 if (searchResults.isEmpty()) {
                     Text(
-                        text = "No settings match \"$searchQuery\"",
+                        text = stringResource(R.string.settings_search_no_match, searchQuery),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 16.dp)
@@ -329,22 +398,18 @@ fun SettingsScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(item.title, style = MaterialTheme.typography.titleMedium)
-                                    if (item.description.isNotBlank()) {
-                                        Text(
-                                            item.description,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                    if (item.section.isNotBlank()) {
-                                        Text(
-                                            item.section,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.padding(top = 4.dp)
-                                        )
-                                    }
+                                    Text(stringResource(getSearchItemTitleRes(item.id)), style = MaterialTheme.typography.titleMedium)
+                                    Text(
+                                        stringResource(getSearchItemDescRes(item.id)),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        stringResource(getSearchSectionRes(item.section)),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
                                 }
                             }
                         }
@@ -353,7 +418,7 @@ fun SettingsScreen(
             } else {
             ExpandableSection(
                 icon = Icons.Default.WbSunny,
-                title = "Morning Experience 🌅",
+                title = stringResource(R.string.settings_section_morning),
                 isExpanded = expandedSections.contains("MORNING"),
                 onToggle = { viewModel.toggleSection("MORNING") },
                 sectionId = "MORNING",
@@ -371,7 +436,7 @@ fun SettingsScreen(
             ) {
                 // A. Companion Personality
                 Text(
-                    "Companion Personality",
+                    stringResource(R.string.settings_companion_personality),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
@@ -388,11 +453,11 @@ fun SettingsScreen(
                         }
                 )
                 val personas = listOf(
-                    PersonaInfo("COACH", "🪖 The Drill Sergeant", "No excuses. Just results. Move it!", Icons.Default.Info, MaterialTheme.colorScheme.error),
-                    PersonaInfo("COMEDIAN", "🤡 The Sarcastic Friend", "Oh, you're awake. Impressive.", Icons.Default.Face, MaterialTheme.colorScheme.secondary),
-                    PersonaInfo("ZEN", "🧘 The Zen Master", "Breathe. The day awaits, mindfully.", Icons.Default.Favorite, MaterialTheme.colorScheme.tertiary),
-                    PersonaInfo("HYPEMAN", "🚀 The Hype-Man", "Let's gooo! You got this!", Icons.Default.Notifications, MaterialTheme.colorScheme.primary),
-                    PersonaInfo("SURPRISE", "🎲 Surprise Me", "A random personality every morning.", Icons.Default.Refresh, MaterialTheme.colorScheme.outline)
+                    PersonaInfo("COACH", stringResource(R.string.persona_name_coach), stringResource(R.string.persona_desc_coach), Icons.Default.Info, MaterialTheme.colorScheme.error),
+                    PersonaInfo("COMEDIAN", stringResource(R.string.persona_name_comedian), stringResource(R.string.persona_desc_comedian), Icons.Default.Face, MaterialTheme.colorScheme.secondary),
+                    PersonaInfo("ZEN", stringResource(R.string.persona_name_zen), stringResource(R.string.persona_desc_zen), Icons.Default.Favorite, MaterialTheme.colorScheme.tertiary),
+                    PersonaInfo("HYPEMAN", stringResource(R.string.persona_name_hypeman), stringResource(R.string.persona_desc_hypeman), Icons.Default.Notifications, MaterialTheme.colorScheme.primary),
+                    PersonaInfo("SURPRISE", stringResource(R.string.persona_name_surprise), stringResource(R.string.persona_desc_surprise), Icons.Default.Refresh, MaterialTheme.colorScheme.outline)
                 )
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -432,8 +497,8 @@ fun SettingsScreen(
                                 }
                             }
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("🎲 Surprise Me", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Text("A random personality every morning.", style = MaterialTheme.typography.bodySmall)
+                                Text(stringResource(R.string.settings_surprise_me), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.settings_surprise_me_desc), style = MaterialTheme.typography.bodySmall)
                             }
                             Switch(checked = alarmDefaults.aiPersonaSurprise, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(aiPersonaSurprise = it)) })
                         }
@@ -444,7 +509,7 @@ fun SettingsScreen(
 
                 // B. Aura Report Content
                 Text(
-                    "Aura Report Content",
+                    stringResource(R.string.settings_aura_report_content),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
@@ -468,14 +533,14 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("Read Aloud (TTS)", style = MaterialTheme.typography.bodyLarge)
+                            Text(stringResource(R.string.settings_read_aloud_tts), style = MaterialTheme.typography.bodyLarge)
                             Switch(checked = alarmDefaults.isTtsEnabled, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isTtsEnabled = it)) })
                         }
                         
                         Column(modifier = Modifier.padding(bottom = 8.dp)) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Briefing Timeout", style = MaterialTheme.typography.bodySmall)
-                                Text("${alarmDefaults.briefingTimeoutSeconds}s", color = MaterialTheme.colorScheme.primary)
+                                Text(stringResource(R.string.settings_briefing_timeout), style = MaterialTheme.typography.bodySmall)
+                                Text(stringResource(R.string.settings_seconds_value, alarmDefaults.briefingTimeoutSeconds), color = MaterialTheme.colorScheme.primary)
                             }
                             Slider(
                                 value = alarmDefaults.briefingTimeoutSeconds.toFloat(),
@@ -485,7 +550,7 @@ fun SettingsScreen(
                             )
                         }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("Weather Report", style = MaterialTheme.typography.bodyLarge)
+                            Text(stringResource(R.string.settings_weather_report), style = MaterialTheme.typography.bodyLarge)
                             Switch(
                                 checked = alarmDefaults.briefingIncludeWeather,
                                 onCheckedChange = { enabled ->
@@ -503,7 +568,7 @@ fun SettingsScreen(
                             )
                         }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("Calendar Events", style = MaterialTheme.typography.bodyLarge)
+                            Text(stringResource(R.string.settings_calendar_events), style = MaterialTheme.typography.bodyLarge)
                             Switch(
                                 checked = alarmDefaults.briefingIncludeCalendar,
                                 onCheckedChange = { enabled ->
@@ -520,7 +585,7 @@ fun SettingsScreen(
                             )
                         }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("Fun Fact", style = MaterialTheme.typography.bodyLarge)
+                            Text(stringResource(R.string.settings_fun_fact), style = MaterialTheme.typography.bodyLarge)
                             Switch(checked = alarmDefaults.briefingIncludeFact, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(briefingIncludeFact = it)) })
                         }
                     }
@@ -547,7 +612,7 @@ fun SettingsScreen(
                         Icon(Icons.Default.PlayArrow, contentDescription = null)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (isBriefingGenerating) generatingProgress else "Preview Briefing")
+                    Text(if (isBriefingGenerating) (if (generatingProgress == "Generating..." || generatingProgress.isBlank()) stringResource(R.string.settings_generating) else generatingProgress) else stringResource(R.string.settings_preview_briefing))
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -565,7 +630,7 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Advanced Customization", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.settings_advanced_customization), style = MaterialTheme.typography.titleMedium)
                         Icon(if (showAdvancedExperience) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null)
                     }
                 }
@@ -587,7 +652,7 @@ fun SettingsScreen(
                         ) {
                             Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Customize Persona Prompts")
+                            Text(stringResource(R.string.settings_customize_persona_prompts))
                         }
                     }
                 }
@@ -611,7 +676,7 @@ fun SettingsScreen(
 
             ExpandableSection(
                 icon = Icons.Default.Settings,
-                title = "Wake-Up Engine ⚙️",
+                title = stringResource(R.string.settings_section_wakeup),
                 isExpanded = expandedSections.contains("WAKEUP"),
                 onToggle = { viewModel.toggleSection("WAKEUP") },
                 sectionId = "WAKEUP",
@@ -628,7 +693,7 @@ fun SettingsScreen(
                 }
             ) {
                 // A. Alarm Creation
-                Text("Alarm Creation", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.settings_alarm_creation), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                 val creationStyle by viewModel.alarmCreationStyle.collectAsState()
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
                     val styles = listOf("WIZARD", "SIMPLE")
@@ -637,7 +702,7 @@ fun SettingsScreen(
                             shape = SegmentedButtonDefaults.itemShape(index = index, count = styles.size),
                             onClick = { viewModel.updateAlarmCreationStyle(style) },
                             selected = creationStyle == style,
-                            label = { Text(if (style == "WIZARD") "Guided Wizard" else "Simple Setup", fontSize = 12.sp) }
+                            label = { Text(if (style == "WIZARD") stringResource(R.string.settings_style_guided_wizard) else stringResource(R.string.settings_style_simple_setup), fontSize = 12.sp) }
                         )
                     }
                 }
@@ -645,12 +710,12 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // B. Default Alarm Behavior
-                Text("Default Alarm Behavior", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.settings_default_alarm_behavior), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                 
                 // Audio & Haptics
-                Text("Audio & Haptics", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
+                Text(stringResource(R.string.settings_audio_haptics), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Alarm Sound", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.settings_alarm_sound), style = MaterialTheme.typography.bodyLarge)
                     Switch(checked = alarmDefaults.isSoundEnabled, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isSoundEnabled = it)) })
                 }
                 AnimatedVisibility(visible = alarmDefaults.isSoundEnabled) {
@@ -670,13 +735,13 @@ fun SettingsScreen(
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
                         Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Sound Source", fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.settings_sound_source), fontWeight = FontWeight.Medium)
                             Text(defaultSoundName, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Vibrate", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.settings_vibrate), style = MaterialTheme.typography.bodyLarge)
                     Switch(checked = alarmDefaults.isVibrate, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isVibrate = it)) })
                 }
                 AnimatedVisibility(visible = alarmDefaults.isVibrate) {
@@ -709,9 +774,9 @@ fun SettingsScreen(
                     val isGentleEnabled = alarmDefaults.isGentleWake && isOutputEnabled
                     
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Gentle Wake", style = MaterialTheme.typography.bodyLarge, color = if (isOutputEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f))
+                        Text(stringResource(R.string.settings_gentle_wake), style = MaterialTheme.typography.bodyLarge, color = if (isOutputEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f))
                         if (!isOutputEnabled) {
-                            Text("Requires Sound or Vibrate", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                            Text(stringResource(R.string.settings_requires_sound_or_vibrate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
                         }
                     }
                     Switch(
@@ -723,8 +788,8 @@ fun SettingsScreen(
                 AnimatedVisibility(visible = alarmDefaults.isGentleWake && (alarmDefaults.isSoundEnabled || alarmDefaults.isVibrate)) {
                     Column(modifier = Modifier.padding(bottom = 8.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Crescendo Duration", style = MaterialTheme.typography.bodySmall)
-                            Text("${alarmDefaults.crescendoDurationMinutes} min", color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(R.string.settings_crescendo_duration), style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(R.string.settings_crescendo_unit_min, alarmDefaults.crescendoDurationMinutes), color = MaterialTheme.colorScheme.primary)
                         }
                         Slider(
                             value = alarmDefaults.crescendoDurationMinutes.toFloat(),
@@ -736,17 +801,17 @@ fun SettingsScreen(
                 }
                 AnimatedVisibility(visible = alarmDefaults.isSoundEnabled || alarmDefaults.isVibrate) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("Smooth Fade-Out", style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.wizard_2_smooth_fade), style = MaterialTheme.typography.bodyLarge)
                         Switch(checked = alarmDefaults.isSmoothFadeOut, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isSmoothFadeOut = it)) })
                     }
                 }
 
                 // Snooze & Dismissal
-                Text("Snooze & Dismissal", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
+                Text(stringResource(R.string.settings_snooze_dismissal), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
                 Column {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Snooze Duration", style = MaterialTheme.typography.bodyLarge)
-                        Text(if (alarmDefaults.snoozeDurationMinutes == 0) "Disabled" else "${alarmDefaults.snoozeDurationMinutes} min", color = if (alarmDefaults.snoozeDurationMinutes == 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+                        Text(stringResource(R.string.settings_snooze_duration), style = MaterialTheme.typography.bodyLarge)
+                        Text(if (alarmDefaults.snoozeDurationMinutes == 0) stringResource(R.string.settings_snooze_disabled) else stringResource(R.string.settings_snooze_min, alarmDefaults.snoozeDurationMinutes), color = if (alarmDefaults.snoozeDurationMinutes == 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
                     }
                     Slider(
                         value = alarmDefaults.snoozeDurationMinutes.toFloat(),
@@ -781,14 +846,14 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Evasive Snooze", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.settings_evasive_snooze), style = MaterialTheme.typography.bodyLarge)
                     Switch(checked = alarmDefaults.isEvasiveSnooze, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(isEvasiveSnooze = it)) })
                 }
                 AnimatedVisibility(visible = alarmDefaults.isEvasiveSnooze) {
                     Column(modifier = Modifier.padding(bottom = 8.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Movement Threshold", style = MaterialTheme.typography.bodySmall)
-                            Text("${alarmDefaults.evasiveSnoozesBeforeMoving + 1} snoozes", color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(R.string.settings_movement_threshold), style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(R.string.settings_snoozes_count, alarmDefaults.evasiveSnoozesBeforeMoving + 1), color = MaterialTheme.colorScheme.primary)
                         }
                         Slider(
                             value = alarmDefaults.evasiveSnoozesBeforeMoving.toFloat(),
@@ -814,7 +879,7 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Math Challenge", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.settings_math_challenge), style = MaterialTheme.typography.bodyLarge)
                     Switch(
                         checked = alarmDefaults.mathDifficulty > 0,
                         onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathDifficulty = if (it) 1 else 0)) }
@@ -832,14 +897,14 @@ fun SettingsScreen(
                             color = Color.Transparent
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Advanced Math Options", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                                Text(stringResource(R.string.settings_advanced_math_options), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                                 Icon(if (showAdvancedMath) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                         AnimatedVisibility(visible = showAdvancedMath) {
                             Column {
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Problem Count", style = MaterialTheme.typography.bodySmall)
+                                    Text(stringResource(R.string.settings_problem_count), style = MaterialTheme.typography.bodySmall)
                                     Text("${alarmDefaults.mathProblemCount}", color = MaterialTheme.colorScheme.primary)
                                 }
                                 Slider(
@@ -849,7 +914,7 @@ fun SettingsScreen(
                                     steps = 8
                                 )
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Gradual Difficulty", style = MaterialTheme.typography.bodySmall)
+                                    Text(stringResource(R.string.settings_gradual_difficulty), style = MaterialTheme.typography.bodySmall)
                                     Switch(checked = alarmDefaults.mathGraduallyIncreaseDifficulty, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(mathGraduallyIncreaseDifficulty = it)) })
                                 }
                             }
@@ -857,12 +922,12 @@ fun SettingsScreen(
                     }
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Face Game", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.settings_face_game), style = MaterialTheme.typography.bodyLarge)
                     Switch(checked = alarmDefaults.smileToDismiss, onCheckedChange = { viewModel.updateAlarmDefaults(alarmDefaults.copy(smileToDismiss = it)) })
                 }
                 AnimatedVisibility(visible = alarmDefaults.smileToDismiss) {
                     Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                        Text("Fallback Method", style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.settings_fallback_method), style = MaterialTheme.typography.bodySmall)
                         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                             val options = listOf("NONE", "MATH")
                             options.forEachIndexed { index, opt ->
@@ -879,11 +944,19 @@ fun SettingsScreen(
 
                 // C. Day Groups
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("Day Groups", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                val days = listOf(7 to "Su", 1 to "Mo", 2 to "Tu", 3 to "We", 4 to "Th", 5 to "Fr", 6 to "Sa")
+                Text(stringResource(R.string.settings_day_groups), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                val days = listOf(
+                    7 to stringResource(R.string.day_sun),
+                    1 to stringResource(R.string.day_mon),
+                    2 to stringResource(R.string.day_tue),
+                    3 to stringResource(R.string.day_wed),
+                    4 to stringResource(R.string.day_thu),
+                    5 to stringResource(R.string.day_fri),
+                    6 to stringResource(R.string.day_sat)
+                )
                 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Select your weekend days", style = MaterialTheme.typography.labelMedium)
+                    Text(stringResource(R.string.settings_select_weekend_days), style = MaterialTheme.typography.labelMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         days.forEach { (idx, label) ->
                             val isWeekend = alarmDefaults.weekendDays.contains(idx)
@@ -908,7 +981,7 @@ fun SettingsScreen(
 
             ExpandableSection(
                 icon = Icons.Default.Group,
-                title = "Accountability 🤝",
+                title = stringResource(R.string.settings_section_accountability),
                 isExpanded = expandedSections.contains("ACCOUNTABILITY"),
                 onToggle = { viewModel.toggleSection("ACCOUNTABILITY") },
                 sectionId = "ACCOUNTABILITY",
@@ -929,7 +1002,7 @@ fun SettingsScreen(
 
             ExpandableSection(
                 icon = Icons.Default.Lightbulb,
-                title = "Intelligence 💡",
+                title = stringResource(R.string.settings_section_intelligence),
                 isExpanded = expandedSections.contains("INTELLIGENCE"),
                 onToggle = { viewModel.toggleSection("INTELLIGENCE") },
                 sectionId = "INTELLIGENCE",
@@ -954,7 +1027,7 @@ fun SettingsScreen(
                 val generatingProgress by viewModel.generatingProgress.collectAsState()
 
                 Text(
-                    "Your Aura Report has an AI brain that writes the briefing and an optional voice that performs it. You can turn each on or off independently.",
+                    stringResource(R.string.intel_aura_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
@@ -971,12 +1044,12 @@ fun SettingsScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            "Briefing Brain (Gemini)",
+                            stringResource(R.string.intel_briefing_brain_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "Uses Gemini to turn weather, calendar and facts into a persona-specific script.",
+                            stringResource(R.string.intel_briefing_brain_desc),
                             style = MaterialTheme.typography.bodySmall
                         )
                         Row(
@@ -984,7 +1057,7 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Use Gemini for briefings", style = MaterialTheme.typography.bodyLarge)
+                            Text(stringResource(R.string.settings_use_gemini_briefings), style = MaterialTheme.typography.bodyLarge)
                             Switch(
                                 checked = isCloudAiEnabled,
                                 onCheckedChange = { viewModel.updateIsCloudAiEnabled(it) }
@@ -1006,17 +1079,17 @@ fun SettingsScreen(
                                 Icon(Icons.Default.Check, contentDescription = null)
                             }
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(if (brainTesting) "Testing Gemini..." else "Quick Gemini Test")
+                            Text(if (brainTesting) stringResource(R.string.intel_testing_gemini) else stringResource(R.string.intel_quick_gemini_test))
                         }
                         brainTestResult?.let { result ->
                             Text(
-                                text = "Last result: $result",
+                                text = stringResource(R.string.intel_last_result, result),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         Text(
-                            "If off, LemurLoop uses its built-in persona drafts only.",
+                            stringResource(R.string.intel_brain_off_fallback),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -1033,9 +1106,9 @@ fun SettingsScreen(
                         modifier = Modifier.padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Persona Voice (Cloud TTS)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.settings_persona_voice_cloud_tts), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Text(
-                            "Uses Google Cloud Text-to-Speech with your key to read the briefing in a richer persona voice. Falls back to the on-device voice if unavailable.",
+                            stringResource(R.string.intel_cloud_tts_desc),
                             style = MaterialTheme.typography.bodySmall
                         )
                         Row(
@@ -1044,13 +1117,13 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Use cloud-quality voices", style = MaterialTheme.typography.bodyLarge)
+                                Text(stringResource(R.string.settings_use_cloud_voices), style = MaterialTheme.typography.bodyLarge)
                                 Text(
-                                    "Sends briefing text to Google Cloud to synthesize audio and uses network data (including mobile). If Cloud TTS fails, LemurLoop falls back to on-device voice so alarms still work.",
+                                    stringResource(R.string.intel_cloud_tts_network_note),
                                     style = MaterialTheme.typography.bodySmall
                                 )
                                 Text(
-                                    "Manage your Cloud TTS key in API Credentials below.",
+                                    stringResource(R.string.intel_cloud_tts_manage_key),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -1064,7 +1137,7 @@ fun SettingsScreen(
                                     } else {
                                         android.widget.Toast.makeText(
                                             context,
-                                            "Add a Google Cloud TTS API key first.",
+                                            context.getString(R.string.intel_add_cloud_tts_key_first),
                                             android.widget.Toast.LENGTH_SHORT
                                         ).show()
                                     }
@@ -1088,7 +1161,7 @@ fun SettingsScreen(
                                 Icon(Icons.Default.PlayArrow, contentDescription = null)
                             }
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(if (isPreviewingPersonaVoice) "Playing…" else "Preview Persona Voice")
+                            Text(if (isPreviewingPersonaVoice) stringResource(R.string.intel_playing) else stringResource(R.string.intel_preview_persona_voice))
                         }
                     }
                 }
@@ -1098,7 +1171,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // API Key
-                Text("API Credentials", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.settings_api_credentials), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                 val apiKey by viewModel.geminiApiKey.collectAsState()
                 val apiCloudTtsKey by viewModel.cloudTtsApiKey.collectAsState()
                 val isKeyValidating by viewModel.isKeyValidating.collectAsState()
@@ -1111,7 +1184,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = apiKey,
                         onValueChange = { viewModel.updateGeminiApiKey(it) },
-                        label = { Text("Gemini API Key") },
+                        label = { Text(stringResource(R.string.settings_gemini_api_key)) },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = PasswordVisualTransformation(),
                         singleLine = true,
@@ -1135,7 +1208,7 @@ fun SettingsScreen(
                         ) {
                             Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Test API Key")
+                            Text(stringResource(R.string.settings_test_api_key))
                         }
                         
                         TextButton(
@@ -1146,7 +1219,7 @@ fun SettingsScreen(
                         ) {
                             Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Get Key")
+                            Text(stringResource(R.string.settings_get_key))
                         }
                     }
 
@@ -1161,11 +1234,11 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("Google Cloud TTS API Key (persona voice)", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_google_cloud_tts_label), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                     OutlinedTextField(
                         value = apiCloudTtsKey,
                         onValueChange = { viewModel.updateCloudTtsApiKey(it) },
-                        label = { Text("Google Cloud Text-to-Speech API key") },
+                        label = { Text(stringResource(R.string.settings_google_cloud_tts_hint)) },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = PasswordVisualTransformation(),
                         singleLine = true
@@ -1186,7 +1259,7 @@ fun SettingsScreen(
                                 Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                             }
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(if (isCloudTtsKeyTesting) "Testing Cloud TTS..." else "Test API Key")
+                            Text(if (isCloudTtsKeyTesting) stringResource(R.string.settings_testing_cloud_tts) else stringResource(R.string.settings_test_api_key))
                         }
 
                         TextButton(
@@ -1200,7 +1273,7 @@ fun SettingsScreen(
                         ) {
                             Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Get Key")
+                            Text(stringResource(R.string.settings_get_key))
                         }
                     }
 
@@ -1214,7 +1287,7 @@ fun SettingsScreen(
                     }
 
                     Text(
-                        text = "Gemini uses the AI Studio key above to write your briefing. Cloud persona voices use the Google Cloud TTS key to turn that text into audio. Both keys stay on your device and are only sent to Google for these specific requests.",
+                        text = stringResource(R.string.intel_keys_explanation),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1223,7 +1296,7 @@ fun SettingsScreen(
 
             ExpandableSection(
                 icon = Icons.Default.Info,
-                title = "Help & System ℹ️",
+                title = stringResource(R.string.settings_section_help_system),
                 isExpanded = expandedSections.contains("HELP"),
                 onToggle = { viewModel.toggleSection("HELP") },
                 sectionId = "HELP",
@@ -1241,6 +1314,8 @@ fun SettingsScreen(
             ) {
                 var showDangerZone by remember { mutableStateOf(false) }
                 var showDemoDialog by remember { mutableStateOf(false) }
+                var showLanguageDialog by remember { mutableStateOf(false) }
+                val activity = (context as? android.app.Activity) ?: (context as? android.content.ContextWrapper)?.baseContext as? android.app.Activity
 
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
@@ -1248,6 +1323,90 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
+                        // App language
+                        val languageSubtitle = when (appLanguage) {
+                            "he" -> stringResource(R.string.settings_language_hebrew)
+                            "en" -> stringResource(R.string.settings_language_english)
+                            else -> stringResource(R.string.settings_language_system)
+                        }
+                        Row(
+                            modifier = Modifier
+                                .clickable { showLanguageDialog = true }
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Language, contentDescription = null, modifier = Modifier.size(24.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(languageSubtitle, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+                        }
+
+                        if (showLanguageDialog) {
+                            // #region agent log
+                            debugLog(context, "E", "language dialog opened", mapOf("currentAppLanguage" to appLanguage))
+                            // #endregion
+                            AlertDialog(
+                                onDismissRequest = { showLanguageDialog = false },
+                                title = { Text(stringResource(R.string.settings_language)) },
+                                text = {
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        listOf("system" to R.string.settings_language_system, "en" to R.string.settings_language_english, "he" to R.string.settings_language_hebrew).forEach { (value, labelRes) ->
+                                            val isSelected = appLanguage == value
+                                            TextButton(
+                                                onClick = {
+                                                    showLanguageDialog = false
+                                                    coroutineScope.launch {
+                                                        debugLog(context, "Settings", "language_option_clicked", mapOf("value" to value, "activityNonNull" to (activity != null).toString()))
+                                                        debugLog(context, "Settings", "language_before_setAppLanguageAndAwait", mapOf("value" to value))
+                                                        viewModel.setAppLanguageAndAwait(value)
+                                                        debugLog(context, "Settings", "language_after_setAppLanguageAndAwait", mapOf("value" to value))
+                                                        withContext(Dispatchers.Main) {
+                                                            val tag = when (value) {
+                                                                "he" -> "he"
+                                                                "en" -> "en"
+                                                                else -> ""
+                                                            }
+                                                            debugLog(context, "Settings", "language_before_setApplicationLocales", mapOf("tag" to tag))
+                                                            AppCompatDelegate.setApplicationLocales(
+                                                                if (tag.isEmpty()) LocaleListCompat.getEmptyLocaleList() else LocaleListCompat.forLanguageTags(tag)
+                                                            )
+                                                            val act = activity
+                                                            debugLog(context, "Settings", "language_before_restart_activity", mapOf("tag" to tag, "activityNonNull" to (act != null).toString()))
+                                                            if (act != null) {
+                                                                val component = ComponentName(act, com.elroi.lemurloop.MainActivity::class.java)
+                                                                act.startActivity(Intent.makeRestartActivityTask(component))
+                                                                act.finish()
+                                                                debugLog(context, "Settings", "language_after_finish", mapOf("tag" to tag))
+                                                                // Force process kill so the next launch is a single cold start; avoids double
+                                                                // MainActivity creation and ensures the visible UI uses our localized resources.
+                                                                android.os.Process.killProcess(android.os.Process.myPid())
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Text(stringResource(labelRes))
+                                                if (isSelected) {
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                confirmButton = { TextButton(onClick = { showLanguageDialog = false }) { Text(stringResource(R.string.btn_cancel)) } }
+                            )
+                        }
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+
                         // About
                         Row(
                             modifier = Modifier
@@ -1258,8 +1417,8 @@ fun SettingsScreen(
                             Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(24.dp))
                             Spacer(modifier = Modifier.width(16.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("About LemurLoop", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Text("Version $versionDisplay • Credits • Legal", style = MaterialTheme.typography.bodySmall)
+                                Text(stringResource(R.string.settings_about_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.settings_about_version_credits, versionDisplay), style = MaterialTheme.typography.bodySmall)
                             }
                             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
                         }
@@ -1279,8 +1438,8 @@ fun SettingsScreen(
                             Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(24.dp))
                             Spacer(modifier = Modifier.width(16.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Replay Tutorial", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Text("See the setup wizard again", style = MaterialTheme.typography.bodySmall)
+                                Text(stringResource(R.string.settings_onboarding_replay), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.settings_onboarding_replay_desc), style = MaterialTheme.typography.bodySmall)
                             }
                             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
                         }
@@ -1300,9 +1459,9 @@ fun SettingsScreen(
                             Icon(Icons.Default.Alarm, contentDescription = null, modifier = Modifier.size(24.dp))
                             Spacer(modifier = Modifier.width(16.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Create Demo Alarms", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.settings_demo_alarms_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                                 Text(
-                                    "Add rich example alarms to explore LemurLoop. Existing alarms are kept.",
+                                    stringResource(R.string.settings_demo_alarms_desc),
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
@@ -1328,8 +1487,8 @@ fun SettingsScreen(
                             Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(24.dp))
                             Spacer(modifier = Modifier.width(16.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Privacy Policy", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Text("Your data stays on device", style = MaterialTheme.typography.bodySmall)
+                                Text(stringResource(R.string.settings_privacy_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.settings_privacy_desc), style = MaterialTheme.typography.bodySmall)
                             }
                             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
                         }
@@ -1349,8 +1508,8 @@ fun SettingsScreen(
                             Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, modifier = Modifier.size(24.dp))
                             Spacer(modifier = Modifier.width(16.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Diagnostic Logs", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Text("View system events and debug info", style = MaterialTheme.typography.bodySmall)
+                                Text(stringResource(R.string.settings_diagnostic_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.settings_diagnostic_desc), style = MaterialTheme.typography.bodySmall)
                             }
                             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
                         }
@@ -1366,7 +1525,7 @@ fun SettingsScreen(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
                 ) {
-                    Text(if (showDangerZone) "Hide Danger Zone" else "Show Danger Zone")
+                    Text(if (showDangerZone) stringResource(R.string.settings_danger_zone_hide) else stringResource(R.string.settings_danger_zone_show))
                 }
 
                 AnimatedVisibility(visible = showDangerZone) {
@@ -1376,15 +1535,15 @@ fun SettingsScreen(
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Danger Zone", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
-                            Text("Deleting all data is permanent and cannot be undone.", style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(R.string.settings_danger_zone), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.settings_danger_zone_desc), style = MaterialTheme.typography.bodySmall)
                             Spacer(modifier = Modifier.height(12.dp))
                             Button(
                                 onClick = onWipeAllData,
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text("Wipe All App Data")
+                                Text(stringResource(R.string.settings_wipe_data))
                             }
                         }
                     }
@@ -1393,24 +1552,21 @@ fun SettingsScreen(
                 if (showDemoDialog) {
                     AlertDialog(
                         onDismissRequest = { showDemoDialog = false },
-                        title = { Text("Create Demo Alarms") },
+                        title = { Text(stringResource(R.string.settings_demo_dialog_title)) },
                         text = {
-                            Text(
-                                "We’ll add a small set of rich example alarms (weekday, weekend, gym, and smart wake-up). " +
-                                "Your existing alarms will not be changed, and you can edit or delete the demos anytime."
-                            )
+                            Text(stringResource(R.string.settings_demo_dialog_text))
                         },
                         confirmButton = {
                             TextButton(onClick = {
                                 showDemoDialog = false
                                 viewModel.seedDemoAlarms()
                             }) {
-                                Text("Create Demo Alarms")
+                                Text(stringResource(R.string.settings_demo_alarms_title))
                             }
                         },
                         dismissButton = {
                             TextButton(onClick = { showDemoDialog = false }) {
-                                Text("Cancel")
+                                Text(stringResource(R.string.btn_cancel))
                             }
                         }
                     )
@@ -1488,7 +1644,7 @@ fun PersonaCard(
                     if (isSelected) {
                         Icon(
                             imageVector = Icons.Default.Check,
-                            contentDescription = "Selected",
+                            contentDescription = stringResource(R.string.content_desc_selected),
                             tint = info.color
                         )
                     }
@@ -1506,12 +1662,12 @@ fun PersonaCard(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.PlayArrow,
-                                contentDescription = "Preview persona voice",
+                                contentDescription = stringResource(R.string.content_desc_preview_persona),
                                 tint = info.color
                             )
                         }
                         Text(
-                            text = "Tap to hear a short sample in this persona's voice.",
+                            text = stringResource(R.string.settings_persona_preview_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -1556,22 +1712,22 @@ fun IntelligenceHealthView(viewModel: SettingsViewModel, onWipeBrainMemory: () -
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Intelligence Health 🩺", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.settings_intelligence_health), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 if (isGenerating) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                 }
             }
             
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                HealthIndicator("Weather", statusParts["weather"] ?: "pending", Modifier.weight(1f))
-                HealthIndicator("Calendar", statusParts["calendar"] ?: "pending", Modifier.weight(1f))
-                HealthIndicator("AI Brain", aiState, Modifier.weight(1f))
-                HealthIndicator("AI Voice", aiState, Modifier.weight(1f))
+                HealthIndicator(stringResource(R.string.settings_health_weather), statusParts["weather"] ?: "pending", Modifier.weight(1f))
+                HealthIndicator(stringResource(R.string.settings_health_calendar), statusParts["calendar"] ?: "pending", Modifier.weight(1f))
+                HealthIndicator(stringResource(R.string.settings_health_ai_brain), aiState, Modifier.weight(1f))
+                HealthIndicator(stringResource(R.string.settings_health_ai_voice), aiState, Modifier.weight(1f))
             }
 
             error?.takeIf { it.isNotBlank() }?.let { e ->
                 Text(
-                    text = "Issue: ${e.take(80)}... (Tap for details)",
+                    text = stringResource(R.string.settings_issue_tap_details, e.take(80)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier
@@ -1604,7 +1760,7 @@ fun IntelligenceHealthView(viewModel: SettingsViewModel, onWipeBrainMemory: () -
                 error?.let { fullError ->
                     AlertDialog(
                         onDismissRequest = { showFullError = false },
-                        title = { Text("Diagnostic Log 🔍") },
+                        title = { Text(stringResource(R.string.settings_diagnostic_log_title)) },
                         text = { 
                             val scroll = rememberScrollState()
                             Text(
@@ -1614,7 +1770,7 @@ fun IntelligenceHealthView(viewModel: SettingsViewModel, onWipeBrainMemory: () -
                             )
                         },
                         confirmButton = {
-                            TextButton(onClick = { showFullError = false }) { Text("Close") }
+                            TextButton(onClick = { showFullError = false }) { Text(stringResource(R.string.btn_close)) }
                         }
                     )
                 }
@@ -1624,7 +1780,7 @@ fun IntelligenceHealthView(viewModel: SettingsViewModel, onWipeBrainMemory: () -
                 lastScript?.let { script ->
                     AlertDialog(
                         onDismissRequest = { showFullScript = false },
-                        title = { Text("Last Generated Briefing 📝") },
+                        title = { Text(stringResource(R.string.settings_briefing_preview_title)) },
                         text = { 
                             val scroll = rememberScrollState()
                             Text(
@@ -1634,7 +1790,7 @@ fun IntelligenceHealthView(viewModel: SettingsViewModel, onWipeBrainMemory: () -
                             )
                         },
                         confirmButton = {
-                            TextButton(onClick = { showFullScript = false }) { Text("Close") }
+                            TextButton(onClick = { showFullScript = false }) { Text(stringResource(R.string.btn_close)) }
                         }
                     )
                 }
@@ -1659,7 +1815,7 @@ fun IntelligenceHealthView(viewModel: SettingsViewModel, onWipeBrainMemory: () -
                     Icon(Icons.Default.Refresh, contentDescription = null)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(if (isGenerating) generatingProgress else "Test Intelligence Health")
+                Text(if (isGenerating) (if (generatingProgress == "Generating..." || generatingProgress.isBlank()) stringResource(R.string.settings_generating) else generatingProgress) else stringResource(R.string.settings_test_intelligence_health))
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -1672,7 +1828,7 @@ fun IntelligenceHealthView(viewModel: SettingsViewModel, onWipeBrainMemory: () -
             ) {
                 Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Reset Brain")
+                Text(stringResource(R.string.settings_reset_brain))
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -1712,13 +1868,18 @@ fun EditPromptsDialog(
     var promptZen by remember { mutableStateOf(alarmDefaults.promptZen) }
     var promptHypeman by remember { mutableStateOf(alarmDefaults.promptHypeman) }
 
+    val defaultPromptCoach = stringResource(R.string.persona_prompt_coach)
+    val defaultPromptComedian = stringResource(R.string.persona_prompt_comedian)
+    val defaultPromptZen = stringResource(R.string.persona_prompt_zen)
+    val defaultPromptHypeman = stringResource(R.string.persona_prompt_hypeman)
+
     val scrollState = rememberScrollState()
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                "Edit Prompts",
+                stringResource(R.string.settings_edit_prompts),
                 style = MaterialTheme.typography.titleLarge
             )
         },
@@ -1773,10 +1934,10 @@ fun EditPromptsDialog(
                 
                 OutlinedButton(
                     onClick = {
-                        promptCoach = "The Drill Sergeant. You are loud, demanding, and use military terms. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text."
-                        promptComedian = "The Sarcastic Best Friend. You are witty, dry, and slightly ironic. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text."
-                        promptZen = "The Zen Master. You are calm, poetic, and mindful. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text."
-                        promptHypeman = "The Hype-Man. You are extremely energetic, use caps, and over-the-top excited. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text."
+                        promptCoach = defaultPromptCoach
+                        promptComedian = defaultPromptComedian
+                        promptZen = defaultPromptZen
+                        promptHypeman = defaultPromptHypeman
                     },
                     modifier = Modifier.align(Alignment.End)
                 ) {
@@ -2006,7 +2167,7 @@ fun PreviewBriefingDialog(
         onDismissRequest = onDismiss,
         title = {
             Column {
-                Text("Briefing Preview 📝")
+                Text(stringResource(R.string.settings_briefing_preview))
                 if (sourceLabel != null) {
                     Text(
                         text = sourceLabel,
@@ -2036,7 +2197,7 @@ fun PreviewBriefingDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(stringResource(R.string.btn_close))
             }
         },
         shape = RoundedCornerShape(24.dp)

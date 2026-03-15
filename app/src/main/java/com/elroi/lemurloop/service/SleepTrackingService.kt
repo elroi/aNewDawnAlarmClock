@@ -114,10 +114,10 @@ class SleepTrackingService : Service(), SensorEventListener {
 
         return NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Sleep Tracking Active")
-            .setContentText("Monitoring your sleep...")
+            .setContentTitle(getString(R.string.notification_sleep_title))
+            .setContentText(getString(R.string.notification_sleep_monitoring))
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .addAction(R.mipmap.ic_launcher, "Stop", stopPendingIntent)
+            .addAction(R.mipmap.ic_launcher, getString(R.string.notification_sleep_stop), stopPendingIntent)
             .build()
     }
 

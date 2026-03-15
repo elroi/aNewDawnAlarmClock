@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">LemurLoop</string>
+    <string name="about_tagline">Wake up your way. Every morning.</string>
+    <string name="about_version_format">Version %1$s (%2$s)\nBuilt on %3$s</string>
+    <string name="about_built_by">Built by LemurLoop</string>
 
     <!-- Onboarding - Page 1 -->
     <string name="onboarding_back">Back</string>
@@ -21,6 +24,7 @@
     <string name="onboarding_2_desc_overlay">Lets the alarm appear over other apps or on your lock screen.</string>
     <string name="onboarding_core_all_set">All set! Tap below to continue.</string>
     <string name="onboarding_core_grant_hint">Grant permissions to proceed.</string>
+    <string name="onboarding_core_setup_progress">Core Setup: %1$d / %2$d</string>
 
     <!-- Onboarding - Page 3 (Briefing) - kept for Settings/Replay reference -->
     <string name="onboarding_3_title">Personas &amp; Personalization</string>
@@ -165,6 +169,18 @@
     <string name="settings_persona_label_hypeman">The Hype-Man</string>
     <string name="settings_persona_btn_reset">Reset to Defaults</string>
 
+    <!-- Persona display names (with emoji) and descriptions for Settings &amp; Wizard -->
+    <string name="persona_name_coach">🪖 The Drill Sergeant</string>
+    <string name="persona_desc_coach">No excuses. Just results. Move it!</string>
+    <string name="persona_name_comedian">🤡 The Sarcastic Friend</string>
+    <string name="persona_desc_comedian">Oh, you\'re awake. Impressive.</string>
+    <string name="persona_name_zen">🧘 The Zen Master</string>
+    <string name="persona_desc_zen">Breathe. The day awaits, mindfully.</string>
+    <string name="persona_name_hypeman">🚀 The Hype-Man</string>
+    <string name="persona_desc_hypeman">Let\'s gooo! You got this!</string>
+    <string name="persona_name_surprise">🎲 Surprise Me</string>
+    <string name="persona_desc_surprise">A random personality every morning.</string>
+
     <!-- Alarm Detail - Accountability -->
     <string name="alarm_detail_buddy_clear_content_desc">Clear buddy</string>
     <string name="alarm_detail_buddy_field_phone_or_type">Or type a phone number</string>
@@ -195,4 +211,393 @@
     <string name="vibration_pattern_staccato">Staccato Bursts</string>
     <string name="vibration_initial_gap_label">Initial Gap (Pause)</string>
     <string name="vibration_initial_gap_unit">%1$d sec</string>
+
+    <!-- Settings screen -->
+    <string name="settings_screen_title">Settings</string>
+
+    <!-- App language (in-app override) -->
+    <string name="settings_language">App language</string>
+    <string name="settings_language_system">System default</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_hebrew">עברית</string>
+
+    <!-- Settings - Search &amp; sections -->
+    <string name="settings_search_hint">Search settings</string>
+    <string name="settings_section_morning">Morning Experience 🌅</string>
+    <string name="settings_section_wakeup">Wake-Up Engine ⚙️</string>
+    <string name="settings_section_accountability">Accountability 🤝</string>
+    <string name="settings_section_intelligence">Intelligence 💡</string>
+    <string name="settings_section_help_system">Help &amp; System ℹ️</string>
+
+    <!-- Settings - System section rows -->
+    <string name="settings_about_version_credits">Version %1$s • Credits • Legal</string>
+    <string name="settings_demo_alarms_title">Create Demo Alarms</string>
+    <string name="settings_demo_alarms_desc">Add rich example alarms to explore LemurLoop. Existing alarms are kept.</string>
+    <string name="settings_privacy_title">Privacy Policy</string>
+    <string name="settings_privacy_desc">Your data stays on device</string>
+    <string name="settings_diagnostic_title">Diagnostic Logs</string>
+    <string name="settings_diagnostic_desc">View system events and debug info</string>
+
+    <!-- Settings - Danger zone -->
+    <string name="settings_danger_zone">Danger Zone</string>
+    <string name="settings_danger_zone_show">Show Danger Zone</string>
+    <string name="settings_danger_zone_hide">Hide Danger Zone</string>
+    <string name="settings_danger_zone_desc">Deleting all data is permanent and cannot be undone.</string>
+    <string name="settings_wipe_data">Wipe All App Data</string>
+
+    <!-- Settings - Demo alarms dialog -->
+    <string name="settings_demo_dialog_title">Create Demo Alarms</string>
+    <string name="settings_demo_dialog_text">We\'ll add a small set of rich example alarms (weekday, weekend, gym, and smart wake-up). Your existing alarms will not be changed, and you can edit or delete the demos anytime.</string>
+
+    <!-- Settings - Intelligence health -->
+    <string name="settings_intelligence_health">Intelligence Health 🩺</string>
+    <string name="settings_diagnostic_log_title">Diagnostic Log 🔍</string>
+    <string name="settings_briefing_preview_title">Last Generated Briefing 📝</string>
+    <string name="settings_briefing_preview">Briefing Preview 📝</string>
+    <string name="settings_reset_brain">Reset Brain</string>
+    <string name="btn_close">Close</string>
+    <string name="btn_discard">Discard</string>
+    <string name="btn_keep_editing">Keep Editing</string>
+    <string name="dialog_discard_title">Discard Unsaved Changes?</string>
+    <string name="dialog_discard_message">You have unsaved changes. Are you sure you want to discard them?</string>
+
+    <!-- Help screen -->
+    <string name="help_screen_title">App Help &amp; Features</string>
+    <string name="help_section_briefing_title">Wake-Up Briefing Generation</string>
+    <string name="help_section_briefing_content">The LemurLoop intelligence starts generating your custom briefing the moment your alarm rings. It gathers weather data, your calendar events, and a fun fact, then uses advanced AI to rewrite it in your selected persona\'s voice. By the time you dismiss the alarm, your briefing is ready! Note: Cloud AI requires a stable internet connection.</string>
+    <string name="help_section_evasive_title">Evasive Snooze</string>
+    <string name="help_section_evasive_content">For those who snooze in their sleep! Enable this to make the snooze button jump to a different random location on the screen every time you try to tap it. This forces you to focus your eyes and track the button, making it much harder to accidentally fall back asleep.</string>
+    <string name="help_section_gentle_title">Gentle Wake (Crescendo)</string>
+    <string name="help_section_gentle_content">A peaceful way to start your day. Instead of a sudden loud noise, Gentle Wake starts your chosen alarm sound at 0% volume and gradually increases it to maximum over several minutes. You can customize the ramp-up duration in the advanced settings.</string>
+    <string name="help_section_fade_title">Smooth Fade-Out</string>
+    <string name="help_section_fade_content">When you dismiss or snooze your alarm, the sound won\'t just \'snap\' off. LemurLoop gently fades the volume down over one second, providing a smoother transition from your alarm to your briefing or extra sleep.</string>
+    <string name="help_section_challenges_title">Math &amp; Face Challenges</string>
+    <string name="help_section_challenges_content">Prove you\'re awake! Math challenges require solving problems of your chosen difficulty. Face challenges use your front camera to ensure you\'re making specific expressions. Moving your facial muscles and performing mental arithmetic are scientifically proven to help wake up your brain.</string>
+    <string name="help_section_smart_title">Smart Wake-Up (Accountability)</string>
+    <string name="help_section_smart_content">The ultimate safety net. A few minutes after you dismiss your alarm, LemurLoop will send you a \'Pulse Check\'. If you don\'t respond within 60 seconds, it assumes you fell back asleep. It will then automatically trigger a loud secondary alarm or even text an alert to your chosen Accountability Buddy.</string>
+    <string name="help_section_buddy_title">Accountability Buddy</string>
+    <string name="help_section_buddy_content">Add a trusted friend as your buddy. If you fail to respond to a Smart Wake-Up check, your buddy will receive a text message (standard SMS rates apply) letting them know you\'re stuck in bed and need a real-life wake-up call!</string>
+
+    <!-- Diagnostic logs screen -->
+    <string name="diagnostic_no_logs">No logs yet</string>
+
+    <!-- Settings - Morning Experience (expanded) -->
+    <string name="settings_surprise_me">🎲 Surprise Me</string>
+    <string name="settings_surprise_me_desc">A random personality every morning.</string>
+    <string name="settings_companion_personality">Companion Personality</string>
+    <string name="settings_read_aloud_tts">Read Aloud (TTS)</string>
+    <string name="settings_briefing_timeout">Briefing Timeout</string>
+    <string name="settings_seconds_value">%1$ds</string>
+    <string name="settings_weather_report">Weather Report</string>
+    <string name="settings_calendar_events">Calendar Events</string>
+    <string name="settings_fun_fact">Fun Fact</string>
+    <string name="settings_advanced_customization">Advanced Customization</string>
+    <string name="settings_customize_persona_prompts">Customize Persona Prompts</string>
+    <string name="settings_edit_prompts">Edit Prompts</string>
+    <string name="persona_prompt_coach">The Drill Sergeant. You are loud, demanding, and use military terms. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.</string>
+    <string name="persona_prompt_comedian">The Sarcastic Best Friend. You are witty, dry, and slightly ironic. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.</string>
+    <string name="persona_prompt_zen">The Zen Master. You are calm, poetic, and mindful. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.</string>
+    <string name="persona_prompt_hypeman">The Hype-Man. You are extremely energetic, use caps, and over-the-top excited. STRICT RULE: You are translating the text. Do NOT change facts, time, or weather. Do NOT add new information. DO NOT combine the final trivia sentence with the rest of the text.</string>
+    <string name="settings_aura_report_content">Aura Report Content</string>
+
+    <!-- Settings - Wake-Up Engine (expanded) -->
+    <string name="settings_alarm_creation">Alarm Creation</string>
+    <string name="settings_default_alarm_behavior">Default Alarm Behavior</string>
+    <string name="settings_audio_haptics">Audio &amp; Haptics</string>
+    <string name="settings_alarm_sound">Alarm Sound</string>
+    <string name="settings_sound_source">Sound Source</string>
+    <string name="settings_vibrate">Vibrate</string>
+    <string name="settings_gentle_wake">Gentle Wake</string>
+    <string name="settings_requires_sound_or_vibrate">Requires Sound or Vibrate</string>
+    <string name="settings_crescendo_duration">Crescendo Duration</string>
+    <string name="settings_crescendo_unit_min">%1$d min</string>
+    <string name="settings_snooze_dismissal">Snooze &amp; Dismissal</string>
+    <string name="settings_snooze_duration">Snooze Duration</string>
+    <string name="settings_evasive_snooze">Evasive Snooze</string>
+    <string name="settings_movement_threshold">Movement Threshold</string>
+    <string name="settings_snoozes_count">%1$d snoozes</string>
+    <string name="settings_math_challenge">Math Challenge</string>
+    <string name="settings_advanced_math_options">Advanced Math Options</string>
+    <string name="settings_problem_count">Problem Count</string>
+    <string name="settings_gradual_difficulty">Gradual Difficulty</string>
+    <string name="settings_face_game">Face Game</string>
+    <string name="settings_fallback_method">Fallback Method</string>
+    <string name="settings_day_groups">Day Groups</string>
+    <string name="settings_select_weekend_days">Select your weekend days</string>
+    <string name="day_sun">Su</string>
+    <string name="day_mon">Mo</string>
+    <string name="day_tue">Tu</string>
+    <string name="day_wed">We</string>
+    <string name="day_thu">Th</string>
+    <string name="day_fri">Fr</string>
+    <string name="day_sat">Sa</string>
+    <string name="quick_select_weekdays">Weekdays</string>
+    <string name="quick_select_weekend">Weekend</string>
+    <string name="quick_select_every_day">Every day</string>
+
+    <!-- Settings - Intelligence (expanded) -->
+    <string name="settings_use_gemini_briefings">Use Gemini for briefings</string>
+    <string name="intel_aura_desc">Your Aura Report has an AI brain that writes the briefing and an optional voice that performs it. You can turn each on or off independently.</string>
+    <string name="intel_briefing_brain_title">Briefing Brain (Gemini)</string>
+    <string name="intel_briefing_brain_desc">Uses Gemini to turn weather, calendar and facts into a persona-specific script.</string>
+    <string name="intel_quick_gemini_test">Quick Gemini Test</string>
+    <string name="intel_testing_gemini">Testing Gemini…</string>
+    <string name="intel_last_result">Last result: %1$s</string>
+    <string name="intel_brain_off_fallback">If off, LemurLoop uses its built-in persona drafts only.</string>
+    <string name="intel_cloud_tts_desc">Uses Google Cloud Text-to-Speech with your key to read the briefing in a richer persona voice. Falls back to the on-device voice if unavailable.</string>
+    <string name="intel_cloud_tts_network_note">Sends briefing text to Google Cloud to synthesize audio and uses network data (including mobile). If Cloud TTS fails, LemurLoop falls back to on-device voice so alarms still work.</string>
+    <string name="intel_cloud_tts_manage_key">Manage your Cloud TTS key in API Credentials below.</string>
+    <string name="intel_add_cloud_tts_key_first">Add a Google Cloud TTS API key first.</string>
+    <string name="intel_preview_persona_voice">Preview Persona Voice</string>
+    <string name="intel_playing">Playing…</string>
+    <string name="intel_keys_explanation">Gemini uses the AI Studio key above to write your briefing. Cloud persona voices use the Google Cloud TTS key to turn that text into audio. Both keys stay on your device and are only sent to Google for these specific requests.</string>
+    <string name="settings_persona_voice_cloud_tts">Persona Voice (Cloud TTS)</string>
+    <string name="settings_use_cloud_voices">Use cloud-quality voices</string>
+    <string name="settings_api_credentials">API Credentials</string>
+    <string name="settings_gemini_api_key">Gemini API Key</string>
+    <string name="settings_test_api_key">Test API Key</string>
+    <string name="settings_testing_cloud_tts">Testing Cloud TTS…</string>
+    <string name="settings_get_key">Get Key</string>
+    <string name="settings_google_cloud_tts_label">Google Cloud TTS API Key (persona voice)</string>
+    <string name="settings_google_cloud_tts_hint">Google Cloud Text-to-Speech API key</string>
+    <string name="settings_health_weather">Weather</string>
+    <string name="settings_health_calendar">Calendar</string>
+    <string name="settings_health_ai_brain">AI Brain</string>
+    <string name="settings_health_ai_voice">AI Voice</string>
+    <string name="settings_issue_tap_details">Issue: %1$s… (Tap for details)</string>
+    <string name="settings_toast_brain_wiped">Brain memory wiped</string>
+    <string name="settings_toast_calendar_required">Calendar access is required to include events in your briefing</string>
+    <string name="settings_toast_saved">Settings saved successfully</string>
+    <string name="settings_toast_briefing_failed">Briefing generation failed. Please check your API key and AI settings.</string>
+    <string name="settings_toast_health_failed">Health test failed. Please check your API key and AI settings.</string>
+    <string name="settings_toast_demo_created">Created %1$d demo alarms. You can edit or delete them anytime.</string>
+    <string name="settings_toast_demo_exist">Demo alarms already exist. No new demo alarms were added.</string>
+
+    <!-- Main &amp; Alarm list -->
+    <string name="loading">Loading…</string>
+    <string name="alarm_list_title">LemurLoop</string>
+    <string name="alarm_list_active">Active</string>
+    <string name="alarm_list_inactive">Inactive</string>
+    <string name="alarm_list_deleted">Deleted %1$s%2$s</string>
+    <string name="alarm_list_undo">Undo</string>
+    <string name="alarm_list_empty">No alarms yet</string>
+    <string name="alarm_default_label">Alarm</string>
+    <string name="content_desc_help_for">Help for %1$s</string>
+    <string name="content_desc_settings">Settings</string>
+    <string name="settings_search_no_match">No settings match \"%1$s\"</string>
+    <string name="settings_preview_briefing">Preview Briefing</string>
+    <string name="settings_test_intelligence_health">Test Intelligence Health</string>
+    <string name="settings_generating">Generating…</string>
+    <string name="settings_style_guided_wizard">Guided Wizard</string>
+    <string name="settings_style_simple_setup">Simple Setup</string>
+    <string name="settings_snooze_disabled">Disabled</string>
+    <string name="settings_snooze_min">%1$d min</string>
+    <string name="settings_sound_default">Default</string>
+    <string name="settings_sound_unknown">Unknown</string>
+    <string name="settings_sound_custom">Custom Sound</string>
+    <string name="wakeup_check_title">Are you awake?</string>
+    <string name="wakeup_check_message">Tap the button below to confirm you\'re awake, otherwise the alarm will re-trigger!</string>
+    <string name="wakeup_check_seconds_remaining">seconds remaining</string>
+    <string name="wakeup_check_btn">I\'m Awake!</string>
+    <string name="dialog_delete_alarm_title">Delete Alarm?</string>
+    <string name="dialog_delete_alarm_message">Are you sure you want to delete this alarm?</string>
+    <string name="btn_delete">Delete</string>
+    <string name="btn_ok">OK</string>
+
+    <!-- Alarm Detail screen -->
+    <string name="alarm_detail_guided_wizard">Guided Wizard</string>
+    <string name="alarm_detail_label_optional">Label (optional)</string>
+    <string name="alarm_detail_select_sound">Select Sound</string>
+    <string name="alarm_detail_gentle_wake_desc">Slowly ramp up intensity</string>
+    <string name="alarm_detail_crescendo_duration">Crescendo duration</string>
+    <string name="alarm_detail_smooth_fade_desc">Gradually fade sound on dismiss or snooze</string>
+    <string name="alarm_detail_snooze_label">Snooze</string>
+    <string name="alarm_detail_snooze_duration">Snooze duration</string>
+    <string name="alarm_detail_evasive_desc">Snooze button jumps away to wake you up</string>
+    <string name="alarm_detail_starts_moving_after">Starts moving after</string>
+    <string name="alarm_detail_math_problems_count">Number of problems: %1$d</string>
+    <string name="alarm_detail_gradual_difficulty_desc">Starts easy and gets harder up to your selected level</string>
+    <string name="alarm_detail_fallback_math_difficulty">Fallback Math Difficulty</string>
+    <string name="alarm_detail_smart_check_desc">Requires a response 3 mins after dismissal</string>
+    <string name="alarm_detail_delay_before_check">Delay before check</string>
+    <string name="alarm_detail_response_timeout">Response timeout</string>
+    <string name="alarm_detail_briefing_title">Wake-up Briefing</string>
+    <string name="alarm_detail_briefing_desc">Personalized AI briefing when you wake up</string>
+    <string name="alarm_detail_tts_desc">Speak the briefing out loud</string>
+    <string name="alarm_detail_btn_save_alarm">Save alarm</string>
+    <string name="alarm_detail_set_time">Set time</string>
+    <string name="alarm_detail_sms_permission_title">📱 SMS Permission Required</string>
+    <string name="alarm_detail_allow_sms">Allow SMS</string>
+    <string name="alarm_detail_not_now">Not Now</string>
+    <string name="alarm_detail_accountability_buddy">Accountability Buddy</string>
+
+    <!-- Alarm Creation Wizard -->
+    <string name="wizard_quick_setup">Quick Setup</string>
+    <string name="wizard_label_placeholder">e.g. Work Morning (Optional)</string>
+    <string name="wizard_difficulty">Difficulty</string>
+    <string name="wizard_difficulty_easy">Easy</string>
+    <string name="wizard_difficulty_medium">Medium</string>
+    <string name="wizard_difficulty_hard">Hard</string>
+    <string name="wizard_math_problems_count">Number of Problems: %1$d</string>
+
+    <!-- Alarm Activity (ringing) -->
+    <string name="alarm_activity_math_challenge">Math Challenge</string>
+    <string name="alarm_activity_submit_answer">Submit Answer</string>
+    <string name="alarm_activity_dismiss">Dismiss</string>
+    <string name="alarm_activity_dismiss_time">Dismiss (%1$s)</string>
+    <string name="alarm_activity_incorrect_try_again">Incorrect, please try again</string>
+    <string name="alarm_snoozed_title">Alarm Snoozed</string>
+    <string name="alarm_snoozed_next_at">Next alarm at %1$s</string>
+
+    <!-- Content descriptions (a11y) -->
+    <string name="content_desc_clear_search">Clear search</string>
+    <string name="content_desc_selected">Selected</string>
+    <string name="content_desc_preview_persona">Preview persona voice</string>
+    <string name="content_desc_add_alarm">Add Alarm</string>
+    <string name="content_desc_delete">Delete</string>
+    <string name="content_desc_success">Success</string>
+    <string name="content_desc_share">Share</string>
+    <string name="content_desc_clear">Clear</string>
+    <string name="content_desc_snoozed">Snoozed</string>
+    <string name="content_desc_save_alarm">Save Alarm</string>
+    <string name="content_desc_app_logo">App Logo</string>
+    <string name="content_desc_lemur_logo">LemurLoop Logo</string>
+
+    <!-- Wizard - Wake-up features -->
+    <string name="wizard_daily_briefing">Daily Briefing</string>
+    <string name="wizard_daily_briefing_desc">AI summary of your day</string>
+    <string name="wizard_voice_synthesis">Voice Synthesis</string>
+    <string name="wizard_voice_synthesis_desc">Hear your persona speak</string>
+    <string name="wizard_wake_up_features">Wake-Up Features</string>
+    <string name="wizard_summary_persona">Persona</string>
+    <string name="wizard_summary_volume">Volume</string>
+    <string name="wizard_summary_gentle_wake">Gentle Wake (%1$dm)</string>
+    <string name="wizard_summary_fade_out">Fade-Out</string>
+    <string name="wizard_summary_smooth">Smooth</string>
+    <string name="wizard_summary_snooze">Snooze</string>
+    <string name="wizard_summary_off">Off</string>
+    <string name="wizard_summary_challenge">Challenge</string>
+    <string name="wizard_summary_smile">Smile to Dismiss</string>
+    <string name="wizard_summary_math">Math (%1$s)</string>
+    <string name="wizard_math_med">Med</string>
+    <string name="wizard_summary_smart_check">Smart Check</string>
+    <string name="wizard_summary_enabled">Enabled</string>
+    <string name="wizard_summary_guardian">Guardian</string>
+    <string name="wizard_summary_message">Message</string>
+    <string name="wizard_summary_delay">Delay</string>
+    <string name="wizard_summary_delay_min">%1$d min</string>
+    <string name="wizard_alarm_label">Alarm Label</string>
+    <string name="wizard_repeat_frequency">Repeat Frequency</string>
+    <string name="wizard_ai_wakeup_persona">AI Wake-Up Persona</string>
+    <string name="wizard_review_label">Review &amp; Label</string>
+    <string name="wizard_once">Once</string>
+    <string name="wizard_repeats_on_days">Repeats on %1$d days</string>
+    <string name="wizard_starts_in">Starts %1$s</string>
+    <string name="wizard_add_buddy">Add Accountability Buddy</string>
+    <string name="wizard_buddy_alerted_hint">They\'ll be alerted if you don\'t wake up</string>
+    <string name="wizard_wait_seconds">Wait %1$ds</string>
+    <string name="wizard_buddy_sms_hint">Tapping this sends an SMS invite. Your buddy must reply with a code to confirm they\'ll help you.</string>
+    <string name="wizard_camera_permission_required">Camera permission is required for this feature.</string>
+    <string name="wizard_enable_challenge_for_dynamics">Enable a challenge above to see dynamic settings.</string>
+    <string name="settings_persona_preview_hint">Tap to hear a short sample in this persona\'s voice.</string>
+
+    <!-- Alarm Detail - Section titles -->
+    <string name="alarm_detail_section_time">Time</string>
+    <string name="alarm_detail_section_repeat">Repeat</string>
+    <string name="alarm_detail_section_wakeup">Wake-up</string>
+    <string name="alarm_detail_section_dismissal">Dismissal challenge</string>
+    <string name="alarm_detail_section_intelligence">LemurLoop Intelligence</string>
+    <string name="alarm_detail_evasive_help_title">Evasive Snooze</string>
+    <string name="alarm_detail_evasive_help_content">The Snooze button will randomly jump around the screen each time you try to press it, forcing you to pay attention.</string>
+    <string name="alarm_detail_math_help_content">Requires you to solve math problems before you can dismiss the alarm. You can adjust the difficulty and the number of problems.</string>
+
+    <!-- Help &amp; misc -->
+    <string name="btn_got_it">Got it</string>
+    <string name="sleep_tracking_title">Sleep Tracking</string>
+    <string name="sleep_tracking_start">Start Sleep Tracking</string>
+    <string name="sleep_tracking_stop">Stop Tracking</string>
+    <string name="smile_fallback_math">Use Fallback (Math)</string>
+    <string name="smile_step_complete">Step Complete!</string>
+
+    <!-- Toasts -->
+    <string name="toast_location_weather">Location permission is required for weather in your briefing</string>
+    <string name="toast_location_auto">Location permission is required for auto-detect</string>
+    <string name="toast_all_data_wiped">All data wiped</string>
+    <string name="toast_sms_failed">Accountability SMS failed: %1$s</string>
+
+    <!-- Notifications -->
+    <string name="notification_alarm_title">Alarm</string>
+    <string name="notification_alarm_tap">Tap to open alarm and dismiss</string>
+    <string name="notification_sleep_title">Sleep Tracking Active</string>
+    <string name="notification_sleep_monitoring">Monitoring your sleep…</string>
+    <string name="notification_sleep_stop">Stop</string>
+
+    <!-- Face challenge prompts -->
+    <string name="face_prompt_smile">Flash a smile!</string>
+    <string name="face_prompt_biggest_smile">Biggest smile!</string>
+    <string name="face_prompt_wink_left">Wink your left eye!</string>
+    <string name="face_prompt_wink_right">Wink your right eye!</string>
+    <string name="face_prompt_tilt">Tilt your head!</string>
+    <string name="face_hint_smile">Open your mouth for better tracking</string>
+    <string name="face_hint_biggest_smile">Show those teeth! 😄</string>
+    <string name="face_hint_wink_left">Close just the left one</string>
+    <string name="face_hint_wink_right">Close just the right one</string>
+    <string name="face_hint_tilt">Roll it past 20°</string>
+    <string name="face_sit_up">🛋️ Sit up and hold the screen upright!</string>
+    <string name="face_hold_it">Hold it…</string>
+    <string name="face_position_face">Position your face in view</string>
+
+    <!-- Time until (relative) -->
+    <string name="time_until_one_time">One-time</string>
+    <string name="time_until_now">now</string>
+    <string name="time_until_in_d_h">in %1$dd %2$dh</string>
+    <string name="time_until_in_d">in %1$dd</string>
+    <string name="time_until_in_h_m">in %1$dh %2$dm</string>
+    <string name="time_until_in_h">in %1$dh</string>
+    <string name="time_until_in_m">in %1$dm</string>
+    <string name="wizard_buddy_default_name">Buddy</string>
+
+    <!-- Settings search result titles &amp; descriptions (for localized display) -->
+    <string name="search_morning_personality_title">Companion personality</string>
+    <string name="search_morning_personality_desc">Choose how LemurLoop talks to you in the morning</string>
+    <string name="search_briefing_tts_title">Read briefing aloud</string>
+    <string name="search_briefing_tts_desc">Enable text-to-speech for your morning briefing</string>
+    <string name="search_briefing_content_title">Aura report content</string>
+    <string name="search_briefing_content_desc">Weather, calendar events, and fun fact in your briefing</string>
+    <string name="search_alarm_creation_style_title">Alarm creation style</string>
+    <string name="search_alarm_creation_style_desc">Choose between guided wizard or simple setup</string>
+    <string name="search_alarm_sound_title">Alarm sound</string>
+    <string name="search_alarm_sound_desc">Pick the default alarm sound</string>
+    <string name="search_vibration_title">Vibration</string>
+    <string name="search_vibration_desc">Enable vibration and choose a pattern</string>
+    <string name="search_gentle_wake_title">Gentle wake</string>
+    <string name="search_gentle_wake_desc">Start softly and gradually increase intensity</string>
+    <string name="search_snooze_duration_title">Snooze duration</string>
+    <string name="search_snooze_duration_desc">How long each snooze lasts</string>
+    <string name="search_math_challenge_title">Math challenge</string>
+    <string name="search_math_challenge_desc">Solve math problems to dismiss your alarm</string>
+    <string name="search_face_game_title">Face game</string>
+    <string name="search_face_game_desc">Smile to dismiss your alarm</string>
+    <string name="search_weekend_days_title">Weekend days</string>
+    <string name="search_weekend_days_desc">Choose which days count as your weekend</string>
+    <string name="search_accountability_buddies_title">Accountability buddies</string>
+    <string name="search_accountability_buddies_desc">Manage who gets notified about your wake-ups</string>
+    <string name="search_cloud_ai_title">Cloud AI enhancement</string>
+    <string name="search_cloud_ai_desc">Use Gemini for personalized briefings</string>
+    <string name="search_gemini_api_key_title">Gemini API key</string>
+    <string name="search_gemini_api_key_desc">Manage your Gemini API credentials</string>
+    <string name="search_intelligence_health_title">Intelligence health</string>
+    <string name="search_intelligence_health_desc">Check the health of your AI, weather, and calendar</string>
+    <string name="search_about_title">About LemurLoop</string>
+    <string name="search_about_desc">Version, credits, and legal</string>
+    <string name="search_replay_tutorial_title">Replay tutorial</string>
+    <string name="search_replay_tutorial_desc">See the setup wizard again</string>
+    <string name="search_demo_alarms_title">Create demo alarms</string>
+    <string name="search_demo_alarms_desc">Add example alarms to explore LemurLoop</string>
+    <string name="search_privacy_policy_title">Privacy policy</string>
+    <string name="search_privacy_policy_desc">Learn how your data is handled</string>
+    <string name="search_diagnostic_logs_title">Diagnostic logs</string>
+    <string name="search_diagnostic_logs_desc">View system events and debug info</string>
+    <string name="search_danger_zone_title">Danger zone</string>
+    <string name="search_danger_zone_desc">Reset or wipe app data</string>
 </resources>

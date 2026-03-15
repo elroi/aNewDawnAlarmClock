@@ -22,11 +22,13 @@ mediapipeTasksGenai = "0.10.14"
 googleServices = "4.4.4"
 firebaseBom = "34.9.0"
 coreSplashscreen = "1.0.1"
+appcompat = "1.7.0"
 mockk = "1.12.5"
 coroutines = "1.6.4"
 [libraries]
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

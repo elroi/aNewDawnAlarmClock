@@ -21,8 +21,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elroi.lemurloop.R
 import com.elroi.lemurloop.service.AlarmIntentExtras
 import com.elroi.lemurloop.ui.theme.LemurLoopTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -116,7 +118,7 @@ fun WakeupCheckScreen(
         Spacer(modifier = Modifier.height(32.dp))
         
         Text(
-            text = "Are you awake?",
+            text = stringResource(R.string.wakeup_check_title),
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
@@ -125,7 +127,7 @@ fun WakeupCheckScreen(
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
-            text = "Tap the button below to confirm you're awake, otherwise the alarm will re-trigger!",
+            text = stringResource(R.string.wakeup_check_message),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -141,7 +143,7 @@ fun WakeupCheckScreen(
         )
         
         Text(
-            text = "seconds remaining",
+            text = stringResource(R.string.wakeup_check_seconds_remaining),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -156,7 +158,7 @@ fun WakeupCheckScreen(
             shape = MaterialTheme.shapes.large
         ) {
             Text(
-                "I'm Awake!",
+                stringResource(R.string.wakeup_check_btn),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
