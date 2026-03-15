@@ -16,6 +16,10 @@ Language is stored in DataStore (`user_settings`) under the key `app_language`; 
 - **Time display:** Times (e.g. `10:30`) are typically shown in the system/default format; they are not forced to RTL. Time pickers follow platform behavior.
 - **Numeric and formula content:** Any `Text` or `TextField` that shows only digits or arithmetic may be left-to-right. No code currently forces `LayoutDirection.Ltr` on these; if added for clarity, it should be documented here.
 
+## Translation (Hebrew)
+
+Hebrew strings live in [values-iw/strings.xml](../app/src/main/res/values-iw/strings.xml) (and a copy in [values-he/strings.xml](../app/src/main/res/values-he/strings.xml)). For consistent, context-aware wording in the alarm-clock domain, see **[HEBREW-TRANSLATION-GLOSSARY.md](HEBREW-TRANSLATION-GLOSSARY.md)**. When adding or editing Hebrew strings, keep both `values-iw` and `values-he` in sync and follow the glossary.
+
 ## RTL verification checklist (manual QA)
 
 Run the app with **App language** set to **Hebrew** (Settings → App language → עברית), then restart. Verify the following on each screen.
